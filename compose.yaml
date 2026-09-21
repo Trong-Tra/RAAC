@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:17
+    container_name: raac-pg
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: raac
+      POSTGRES_DB: raac
+    ports:
+      - "5433:5432"
+    volumes:
+      - raac-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d raac"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  raac-pgdata:
