@@ -22,6 +22,7 @@ function shortHash(h: string) {
 export default function ConsoleOverview() {
   const { address } = useWallet();
   const [papers, setPapers] = useState<Paper[] | null>(null);
+  const [stats, setStats] = useState<{ papers_submitted: number; councils_formed: number; reviews_submitted: number; reviews_anchored: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -37,6 +38,10 @@ export default function ConsoleOverview() {
 
   useEffect(() => {
     load();
+    fetch("/api/network/stats", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => { if (j.ok) setStats(j.data); })
+      .catch(() => {});
   }, []);
 
   const propose = async (id: string) => {
@@ -149,10 +154,12 @@ export default function ConsoleOverview() {
 
       <StatRow
         stats={[
-          { value: String(papers?.length ?? "—"), label: "PAPERS" },
+          { value: String(stats?.papers_submitted ?? papers?.length ?? "—"), label: "PAPERS" },
+          { value: String(stats?.councils_formed ?? "—"), label: "COUNCILS" },
+          { value: String(stats?.reviews_submitted ?? "—"), label: "REVIEWS" },
+          { value: String(stats?.reviews_anchored ?? "—"), label: "ANCHORED" },
           { value: "5", label: "COUNCIL SIZE" },
           { value: "84532", label: "CHAIN" },
-          { value: "BASE SEPOLIA", label: "NETWORK" },
         ]}
       />
 

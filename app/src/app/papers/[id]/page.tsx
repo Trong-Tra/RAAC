@@ -21,6 +21,7 @@ type Detail = {
     authorAddress: string;
     feeAmountWei: string | null;
     feeTxHash: string | null;
+    pdfUrl: string | null;
     createdAt: string;
   };
   council: { id: string; status: string; selectionHash: string } | null;
@@ -33,6 +34,9 @@ function shortAddr(a: string) {
 }
 function shortHash(h: string) {
   return `${h.slice(0, 10)}…${h.slice(-6)}`;
+}
+function copyText(t: string) {
+  if (typeof navigator !== "undefined" && navigator.clipboard) navigator.clipboard.writeText(t).catch(() => {});
 }
 
 export default function PaperDetailPage() {
@@ -232,15 +236,16 @@ export default function PaperDetailPage() {
         </h1>
         <p style={{ marginTop: 14, fontSize: 14, lineHeight: 1.65, color: "#8a8a8a", maxWidth: 760 }}>{paper.abstract}</p>
 
-        <div className="mono" style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap", fontSize: 9.5, letterSpacing: "0.12em" }}>
+        <div className="mono" style={{ marginTop: 18, display: "flex", gap: 10, flexWrap: "wrap", fontSize: 9.5, letterSpacing: "0.12em", alignItems: "center" }}>
           <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#c9c9c9" }}>{paper.domain.toUpperCase()}</span>
           <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#c9c9c9" }}>{paper.status.toUpperCase()}</span>
-          <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#5a5a5a" }}>{shortHash(paper.paperHash)}</span>
+          <button onClick={() => copyText(paper.paperHash)} title="Copy hash" style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#5a5a5a", background: "transparent", cursor: "pointer" }}>{shortHash(paper.paperHash)} · COPY</button>
           <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#5a5a5a" }}>{shortAddr(paper.authorAddress)}</span>
+          {paper.pdfUrl && <a href={paper.pdfUrl} target="_blank" rel="noreferrer" style={{ border: "1px solid #3a3a3a", padding: "4px 8px", color: "#e8e8e8", textDecoration: "none" }}>PDF ↗</a>}
         </div>
 
         <div className="mono" style={{ marginTop: 12, fontSize: 9.5, letterSpacing: "0.12em", color: "#5a5a5a" }}>
-          KEYWORDS: {paper.keywords.join(" · ").toUpperCase()} · FEE: {paper.feeAmountWei ? `${Number(BigInt(paper.feeAmountWei)) / 1e18} ETH` : "—"}
+          KEYWORDS: {paper.keywords.join(" · ").toUpperCase()} · FEE: {paper.feeAmountWei ? `${Number(BigInt(paper.feeAmountWei)) / 1e18} ETH` : "—"} {paper.pdfUrl && <span>· <a href={paper.pdfUrl} target="_blank" rel="noreferrer" style={{ color: "#8a8a8a" }}>ARXIV PDF</a></span>}
         </div>
       </div>
 
