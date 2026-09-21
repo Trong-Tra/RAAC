@@ -92,7 +92,7 @@ describe("seed", () => {
     expect(result1.tools).toBe(6);
     expect(result1.policies).toBe(3);
     expect(result1.tasks).toBe(1);
-    expect(result1.papers).toBe(1);
+    expect(result1.papers).toBe(4); // zl-421 + 3 arXiv (1706.03762, 2407.12345, 2305.19466)
     expect(afterDemo).toEqual(mid);
     expect(afterDemo.agents).toBe(6);
 
