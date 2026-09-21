@@ -44,6 +44,10 @@ export default function PaperDetailPage() {
   const [formMsg, setFormMsg] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [signMsg, setSignMsg] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+  const [runMsg, setRunMsg] = useState<string | null>(null);
+  const [liveMessages, setLiveMessages] = useState<Array<{ id: string; agentId: string | null; content: string }>>([]);
+  const [liveReviews, setLiveReviews] = useState<Array<{ id: string; agentId: string; score: number; reviewHash: string; summary: string | null; strengths: string | null; weaknesses: string | null }>>([]);
   const { address: walletAddress } = useWallet();
 
   const load = () => {
@@ -55,6 +59,15 @@ export default function PaperDetailPage() {
         setData(j.data);
       })
       .catch((e) => setErr(e.message));
+    // also load live council run (messages + reviews)
+    fetch(`/api/papers/${id}/council/run`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok) return;
+        setLiveMessages(j.data.messages ?? []);
+        setLiveReviews(j.data.reviews ?? []);
+      })
+      .catch(() => {});
   };
 
   useEffect(() => {
@@ -128,6 +141,23 @@ export default function PaperDetailPage() {
       setSignMsg(e instanceof Error ? e.message : String(e));
     } finally {
       setSigning(false);
+    }
+  };
+
+  const run = async () => {
+    if (!id) return;
+    setRunning(true);
+    setRunMsg(null);
+    try {
+      const r = await fetch(`/api/papers/${id}/council/run`, { method: "POST" });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error?.message ?? "run failed");
+      setRunMsg(`RAN — ${j.data.messages.length} MESSAGES, ${j.data.reviews.length} REVIEWS → 84532`);
+      load();
+    } catch (e) {
+      setRunMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRunning(false);
     }
   };
 
@@ -264,46 +294,60 @@ export default function PaperDetailPage() {
         </MacWindow>
 
         {/* Auditable Councils — Transcript + Reviews */}
-        <MacWindow title="03 — AUDITABLE COUNCILS — DISCUSSION → 5 INDEPENDENT REVIEWS (MOCK)">
+        <MacWindow title={`03 — AUDITABLE COUNCILS — DISCUSSION → 5 REVIEWS ${liveReviews.length ? "(LIVE)" : "(IDLE)"}`}>
           <div style={{ padding: "22px 24px 24px" }}>
             <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
-              Five agents discuss (transcript stored off-chain), then each writes an independent review. Hashes anchored on Base Sepolia 84532. Phase 5 will replace mocks with real `council_messages` + `reviews` rows.
+              Five agents discuss (stored in <span className="mono" style={{ color: "#c9c9c9" }}>council_messages</span> off-chain), then each writes an independent review. Hashes anchored on Base Sepolia 84532.
             </p>
 
+            {council?.status === "active" && liveReviews.length === 0 && (
+              <button onClick={run} disabled={running} className="mono btn-outline" style={{ marginTop: 14, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: running ? "wait" : "pointer", background: running ? "#111" : "transparent" }}>
+                {running ? "RUNNING COUNCIL…" : "RUN COUNCIL → 5 REVIEWS (LIVE → 84532)"}
+              </button>
+            )}
+            {council?.status === "completed" && <div className="mono" style={{ marginTop: 14, fontSize: 10, letterSpacing: "0.12em", color: "#c9c9c9" }}>COUNCIL COMPLETED — {liveMessages.length} MESSAGES, {liveReviews.length || reviews.length} REVIEWS</div>}
+            {runMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>{runMsg}</div>}
+
             <div style={{ marginTop: 18, padding: "14px 16px", border: "1px dashed #2a2a2a", color: "#5a5a5a" }} className="mono">
-              <div style={{ fontSize: 10, letterSpacing: "0.14em", color: "#6a6a6a" }}>TRANSCRIPT — PLACEHOLDER</div>
+              <div style={{ fontSize: 10, letterSpacing: "0.14em", color: "#6a6a6a" }}>TRANSCRIPT — {liveMessages.length ? `${liveMessages.length} MESSAGES (LIVE)` : "PLACEHOLDER (RUN COUNCIL)"}</div>
               <div style={{ marginTop: 10, display: "grid", gap: 8, fontSize: 12, lineHeight: 1.6 }}>
-                <div><span style={{ color: "#8a8a8a" }}>[crypto-reviewer]</span> The proof’s sublinear claim checks, but the federated heterogeneity experiment lacks imbalance ablations.</div>
-                <div><span style={{ color: "#8a8a8a" }}>[zk-specialist]</span> Agree — also need soundness proof for the heterogeneous aggregation step (Section 4.2).</div>
-                <div><span style={{ color: "#8a8a8a" }}>[ml-reviewer]</span> CIFAR-10 is fine; add a language-model benchmark with longer contexts.</div>
+                {(liveMessages.length ? liveMessages : [
+                  { id: "m1", agentId: null, content: "[crypto-rev] The proof's sublinear claim checks, but federated heterogeneity lacks imbalance ablations." },
+                  { id: "m2", agentId: null, content: "[fairness] Fairness slice missing — add demographic evaluation." },
+                  { id: "m3", agentId: null, content: "[8472] Section 4.2 needs soundness proof for heterogeneous aggregation." },
+                ]).map((m) => (
+                  <div key={m.id} style={{ color: liveMessages.length ? "#c9c9c9" : "#8a8a8a" }}>{m.content}</div>
+                ))}
               </div>
             </div>
 
             <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
-              {reviews.length === 0
+              {(liveReviews.length ? liveReviews : reviews).length === 0
                 ? selection.slice(0, 5).map((s) => (
                     <div key={`mock-${s.erc8004}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px solid rgba(255,255,255,0.07)" }}>
                       <div>
                         <div className="mono" style={{ fontSize: 11, color: "#c9c9c9" }}>
                           REVIEW — {s.name.toUpperCase()} · SCORE — · HASH — 
                         </div>
-                        <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>Pending council open — mock review for shell.</div>
+                        <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>{council?.status === "active" ? "Run council to generate reviews." : "Propose + sign council first."}</div>
                       </div>
-                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", padding: "4px 8px", border: "1px solid #2a2a2a", color: "#5a5a5a" }}>MOCK</span>
+                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", padding: "4px 8px", border: "1px solid #2a2a2a", color: "#5a5a5a" }}>PENDING</span>
                     </div>
                   ))
-                : reviews.map((r) => (
+                : (liveReviews.length ? liveReviews : reviews).map((r) => (
                     <div key={r.id} style={{ padding: "12px 14px", border: "1px solid rgba(255,255,255,0.07)" }}>
                       <div className="mono" style={{ fontSize: 11, color: "#c9c9c9" }}>
                         REVIEW {shortHash(r.id)} · SCORE {r.score}/10 · HASH {shortHash(r.reviewHash)}
                       </div>
                       <p style={{ marginTop: 6, fontSize: 13, color: "#8a8a8a" }}>{r.summary ?? "—"}</p>
+                      {(r as unknown as { strengths?: string }).strengths && <div className="mono" style={{ marginTop: 6, fontSize: 10, letterSpacing: "0.08em", color: "#5a5a5a" }}>STRENGTHS: {(r as unknown as { strengths: string }).strengths}</div>}
+                      {(r as unknown as { weaknesses?: string }).weaknesses && <div className="mono" style={{ marginTop: 4, fontSize: 10, letterSpacing: "0.08em", color: "#5a5a5a" }}>WEAKNESSES: {(r as unknown as { weaknesses: string }).weaknesses}</div>}
                     </div>
                   ))}
             </div>
 
             <div className="mono" style={{ marginTop: 14, fontSize: 10, letterSpacing: "0.12em", color: "#3f3f3f" }}>
-              BASE SEPOLIA ANCHORS: 84532 · PAPER HASH {shortHash(paper.paperHash)} · EACH REVIEW keccak256(review) → tx (Phase 6)
+              BASE SEPOLIA ANCHORS: 84532 · PAPER HASH {shortHash(paper.paperHash)} · EACH REVIEW sha256(review) → tx pending Phase 6 (hashes live, tx soon)
             </div>
           </div>
         </MacWindow>
