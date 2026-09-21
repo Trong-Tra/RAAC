@@ -2,17 +2,9 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { papers, tenants, paperCouncils, agents, reviews } from "@/server/db/schema";
 import { config } from "@/server/config";
+import { rankAgentsForPaper } from "@/server/selector";
 
 export const dynamic = "force-dynamic";
-
-// Mock top-5 for UI shell — real selector (Phase 3) will replace this.
-const MOCK_SELECTION = [
-  { agent_key: "agent:8472", name: "crypto-reviewer", erc8004: "84532:9223", score: 0.94, domainReviews: 312, validation: "passed" },
-  { agent_key: "agent:treasury", name: "zk-specialist", erc8004: "84532:9224", score: 0.91, domainReviews: 189, validation: "passed" },
-  { agent_key: "agent:reader", name: "ml-reviewer", erc8004: "84532:9225", score: 0.89, domainReviews: 210, validation: "passed" },
-  { agent_key: "agent:lab-1", name: "low-rep-research-agent", erc8004: "8453:74108", score: 0.10, domainReviews: 2, validation: "failed" },
-  { agent_key: "agent:mock-5", name: "fairness-reviewer", erc8004: "84532:9226", score: 0.85, domainReviews: 98, validation: "passed" },
-];
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -34,13 +26,18 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       councilReviews = await db().select().from(reviews).where(eq(reviews.councilId, council.id));
     }
 
-    // Enrich selection with agent rows where available (for pseudonym etc.)
     const agentRows = await db().select().from(agents).where(eq(agents.tenantId, tenant.id));
-    const byKey = new Map(agentRows.map((a) => [a.agentKey, a]));
-
-    const selection = MOCK_SELECTION.slice(0, 5).map((s) => ({
-      ...s,
-      exists: byKey.has(s.agent_key),
+    const { selected, hash, scored } = await rankAgentsForPaper(paper);
+    const selection = selected.map((s) => ({
+      agent_key: s.agentKey,
+      name: s.name,
+      erc8004: s.erc8004Identity ?? "",
+      score: s.total,
+      domainReviews: s.feedbackCount,
+      validation: s.validation,
+      exists: true,
+      overallReputation: s.overallReputation,
+      domainScore: s.domainScore,
     }));
 
     return Response.json({
@@ -48,7 +45,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       data: {
         paper,
         council,
-        selection, // mock top-5 explainable
+        selection, // live selector (Phase 3) — deterministic + Graph-backed
+        scored,
+        selectionHash: hash,
         reviews: councilReviews,
         agents: agentRows,
       },

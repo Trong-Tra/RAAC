@@ -88,12 +88,13 @@ describe("seed", () => {
     await seed();
     const afterDemo = await demoCounts();
 
-    expect(result1.agents).toBe(4); // agent:8472 + agent:lab-1 + agent:treasury + agent:reader
+    expect(result1.agents).toBe(6); // agent:8472 + lab-1 + treasury + reader + crypto-rev + fairness (RAAC)
     expect(result1.tools).toBe(6);
     expect(result1.policies).toBe(3);
     expect(result1.tasks).toBe(1);
+    expect(result1.papers).toBe(1);
     expect(afterDemo).toEqual(mid);
-    expect(afterDemo.agents).toBe(4);
+    expect(afterDemo.agents).toBe(6);
 
     const afterForeign = await foreignRows();
     expect(afterForeign.agentRows).toEqual(beforeForeign.agentRows);

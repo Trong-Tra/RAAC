@@ -38,6 +38,14 @@ const fixture = {
     agent_key: "agent:reader", name: "reader-agent", environment: "demo",
     status: "active", erc8004_identity: "84532:9225",
     declared_capabilities: ["github.get_pull_request", "github.read_file"],
+  }, {
+    agent_key: "agent:crypto-rev", name: "crypto-reviewer", environment: "demo",
+    status: "active", erc8004_identity: "84532:9226",
+    declared_capabilities: ["cryptography", "zero-knowledge", "review.paper"],
+  }, {
+    agent_key: "agent:fairness", name: "fairness-reviewer", environment: "demo",
+    status: "active", erc8004_identity: "84532:9227",
+    declared_capabilities: ["cryptography", "fairness", "review.paper"],
   }],
   tools: [
     { name: "github.get_pull_request", category: "coding", default_risk_class: "low", executor: "github", executor_config: {} },

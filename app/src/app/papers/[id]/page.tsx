@@ -38,8 +38,10 @@ export default function PaperDetailPage() {
   const id = params.id;
   const [data, setData] = useState<Detail | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [forming, setForming] = useState(false);
+  const [formMsg, setFormMsg] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = () => {
     if (!id) return;
     fetch(`/api/papers/${id}`, { cache: "no-store" })
       .then((r) => r.json())
@@ -48,7 +50,28 @@ export default function PaperDetailPage() {
         setData(j.data);
       })
       .catch((e) => setErr(e.message));
+  };
+
+  useEffect(() => {
+    load();
   }, [id]);
+
+  const propose = async () => {
+    if (!id) return;
+    setForming(true);
+    setFormMsg(null);
+    try {
+      const r = await fetch(`/api/papers/${id}/selection`, { method: "POST" });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error?.message ?? "propose failed");
+      setFormMsg(`COUNCIL ${j.data.council.id.slice(0, 8)} PROPOSED — HASH ${j.data.hash.slice(0, 10)}…`);
+      load();
+    } catch (e) {
+      setFormMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setForming(false);
+    }
+  };
 
   if (err) {
     return (
@@ -108,10 +131,10 @@ export default function PaperDetailPage() {
 
       <div className="section-pad" style={{ display: "grid", gap: 18 }}>
         {/* Selection — Routing */}
-        <MacWindow title="01 — ROUTING — TOP 5 SELECTED (MOCK, PHASE 3 → LIVE GRAPH)">
+        <MacWindow title="01 — ROUTING — TOP 5 SELECTED (LIVE — GRAPH + DETERMINISTIC)">
           <div style={{ padding: "22px 24px 24px" }}>
             <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
-              Ranked via The Graph Agent0 on Base Sepolia: <span className="mono" style={{ color: "#c9c9c9" }}>score = 0.5·overall + 0.4·domain + 0.1·recency − penalty</span>. Mock scores for shell; live selector (Phase 3) will replace this.
+              Ranked via The Graph Agent0 on Base Sepolia: <span className="mono" style={{ color: "#c9c9c9" }}>score = 0.5·overall + 0.4·domain + 0.1·recency − penalty</span>. Live from <span className="mono" style={{ color: "#e8e8e8" }}>AGENT0_SUBGRAPH_URL / THEGRAPH_API_KEY</span> or fallback; deterministic sort, validation failed excluded.
             </p>
             <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
               {selection.map((s, i) => (
@@ -143,19 +166,35 @@ export default function PaperDetailPage() {
         {/* Accountability — Signature */}
         <MacWindow title="02 — ACCOUNTABILITY — AUTHOR SIGNATURE (EIP-712)">
           <div style={{ padding: "22px 24px 24px" }}>
-            {council && council.status !== "proposed" ? (
-              <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
-                Council <span className="mono" style={{ color: "#e8e8e8" }}>{shortHash(council.id)}</span> formed — author signed <span className="mono" style={{ color: "#c9c9c9" }}>{shortHash(council.selectionHash)}</span>. No signature, no review.
-              </p>
-            ) : (
+            {!council ? (
               <>
                 <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
-                  Author must sign <span className="mono" style={{ color: "#c9c9c9" }}>RAAC CouncilFormation(selection_hash, paper_hash)</span> via EIP-712. This gate is the only way the council opens — Phase 4 will wire `viem verifyTypedData`.
+                  No council yet — propose one from the live ranking above. This creates <span className="mono" style={{ color: "#c9c9c9" }}>paper_councils</span> row + <span className="mono" style={{ color: "#c9c9c9" }}>agents.ranked → council.proposed</span> events.
+                </p>
+                <button
+                  onClick={propose}
+                  disabled={forming}
+                  className="mono btn-outline"
+                  style={{ marginTop: 16, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: forming ? "wait" : "pointer", background: forming ? "#111" : "transparent" }}
+                >
+                  {forming ? "PROPOSING…" : "PROPOSE COUNCIL (LIVE)"}
+                </button>
+                {formMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>{formMsg}</div>}
+              </>
+            ) : council.status === "proposed" ? (
+              <>
+                <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
+                  Council <span className="mono" style={{ color: "#e8e8e8" }}>{shortHash(council.id)}</span> proposed — selection hash <span className="mono" style={{ color: "#c9c9c9" }}>{shortHash(council.selectionHash)}</span>. Next: author signs <span className="mono" style={{ color: "#c9c9c9" }}>RAAC CouncilFormation</span> via EIP-712 (Phase 4).
                 </p>
                 <button className="mono btn-outline" style={{ marginTop: 16, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: "pointer", background: "transparent" }}>
                   SIGN COUNCIL (MOCK — PHASE 4)
                 </button>
+                {formMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>{formMsg}</div>}
               </>
+            ) : (
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
+                Council <span className="mono" style={{ color: "#e8e8e8" }}>{shortHash(council.id)}</span> formed — author signed <span className="mono" style={{ color: "#c9c9c9" }}>{shortHash(council.selectionHash)}</span>. No signature, no review.
+              </p>
             )}
           </div>
         </MacWindow>
