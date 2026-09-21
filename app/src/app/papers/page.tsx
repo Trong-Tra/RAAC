@@ -54,6 +54,11 @@ export default function PapersPage() {
         <p className="mono" style={{ marginTop: 14, fontSize: 9.5, letterSpacing: "0.16em", color: "#3f3f3f" }}>
           BASE SEPOLIA 84532 · HASHES ON-CHAIN · CONTENT OFF-CHAIN
         </p>
+        <div style={{ marginTop: 18 }}>
+          <Link href="/papers/new" className="mono" style={{ display: "inline-block", padding: "12px 22px", background: "#f4f4f4", color: "#000", border: "1px solid #f4f4f4", fontSize: 11, letterSpacing: "0.14em", textDecoration: "none" }}>
+            + NEW PAPER → 84532
+          </Link>
+        </div>
       </div>
 
       <div className="section-pad">
