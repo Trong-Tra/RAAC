@@ -46,8 +46,10 @@ export default function PaperDetailPage() {
   const [signMsg, setSignMsg] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const [runMsg, setRunMsg] = useState<string | null>(null);
+  const [anchoring, setAnchoring] = useState(false);
+  const [anchorMsg, setAnchorMsg] = useState<string | null>(null);
   const [liveMessages, setLiveMessages] = useState<Array<{ id: string; agentId: string | null; content: string }>>([]);
-  const [liveReviews, setLiveReviews] = useState<Array<{ id: string; agentId: string; score: number; reviewHash: string; summary: string | null; strengths: string | null; weaknesses: string | null }>>([]);
+  const [liveReviews, setLiveReviews] = useState<Array<{ id: string; agentId: string; score: number; reviewHash: string; summary: string | null; strengths: string | null; weaknesses: string | null; anchorTxHash?: string | null }>>([]);
   const { address: walletAddress } = useWallet();
 
   const load = () => {
@@ -66,6 +68,14 @@ export default function PaperDetailPage() {
         if (!j.ok) return;
         setLiveMessages(j.data.messages ?? []);
         setLiveReviews(j.data.reviews ?? []);
+      })
+      .catch(() => {});
+    // also load anchor status
+    fetch(`/api/papers/${id}/anchor`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok) return;
+        if (j.data.reviews) setLiveReviews(j.data.reviews as typeof liveReviews);
       })
       .catch(() => {});
   };
@@ -158,6 +168,23 @@ export default function PaperDetailPage() {
       setRunMsg(e instanceof Error ? e.message : String(e));
     } finally {
       setRunning(false);
+    }
+  };
+
+  const anchor = async () => {
+    if (!id) return;
+    setAnchoring(true);
+    setAnchorMsg(null);
+    try {
+      const r = await fetch(`/api/papers/${id}/anchor`, { method: "POST" });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error?.message ?? "anchor failed");
+      setAnchorMsg(`ANCHORED ${j.data.anchored.length} REVIEWS ON 84532`);
+      load();
+    } catch (e) {
+      setAnchorMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAnchoring(false);
     }
   };
 
@@ -307,6 +334,12 @@ export default function PaperDetailPage() {
             )}
             {council?.status === "completed" && <div className="mono" style={{ marginTop: 14, fontSize: 10, letterSpacing: "0.12em", color: "#c9c9c9" }}>COUNCIL COMPLETED — {liveMessages.length} MESSAGES, {liveReviews.length || reviews.length} REVIEWS</div>}
             {runMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>{runMsg}</div>}
+            {liveReviews.length > 0 && liveReviews.some((r) => !(r as unknown as { anchorTxHash?: string }).anchorTxHash) && (
+              <button onClick={anchor} disabled={anchoring} className="mono btn-outline" style={{ marginTop: 14, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: anchoring ? "wait" : "pointer", background: anchoring ? "#111" : "transparent" }}>
+                {anchoring ? "ANCHORING…" : "ANCHOR REVIEWS ON 84532 → BASESCAN"}
+              </button>
+            )}
+            {anchorMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: anchorMsg.startsWith("ANCHORED") ? "#c9c9c9" : "#8a8a8a" }}>{anchorMsg}</div>}
 
             <div style={{ marginTop: 18, padding: "14px 16px", border: "1px dashed #2a2a2a", color: "#5a5a5a" }} className="mono">
               <div style={{ fontSize: 10, letterSpacing: "0.14em", color: "#6a6a6a" }}>TRANSCRIPT — {liveMessages.length ? `${liveMessages.length} MESSAGES (LIVE)` : "PLACEHOLDER (RUN COUNCIL)"}</div>
@@ -334,20 +367,23 @@ export default function PaperDetailPage() {
                       <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", padding: "4px 8px", border: "1px solid #2a2a2a", color: "#5a5a5a" }}>PENDING</span>
                     </div>
                   ))
-                : (liveReviews.length ? liveReviews : reviews).map((r) => (
+                : (liveReviews.length ? liveReviews : reviews).map((r) => {
+                    const anchor = (r as unknown as { anchorTxHash?: string | null }).anchorTxHash;
+                    return (
                     <div key={r.id} style={{ padding: "12px 14px", border: "1px solid rgba(255,255,255,0.07)" }}>
                       <div className="mono" style={{ fontSize: 11, color: "#c9c9c9" }}>
-                        REVIEW {shortHash(r.id)} · SCORE {r.score}/10 · HASH {shortHash(r.reviewHash)}
+                        REVIEW {shortHash(r.id)} · SCORE {r.score}/10 · HASH {shortHash(r.reviewHash)} {anchor ? "· ANCHORED" : ""}
                       </div>
                       <p style={{ marginTop: 6, fontSize: 13, color: "#8a8a8a" }}>{r.summary ?? "—"}</p>
                       {(r as unknown as { strengths?: string }).strengths && <div className="mono" style={{ marginTop: 6, fontSize: 10, letterSpacing: "0.08em", color: "#5a5a5a" }}>STRENGTHS: {(r as unknown as { strengths: string }).strengths}</div>}
                       {(r as unknown as { weaknesses?: string }).weaknesses && <div className="mono" style={{ marginTop: 4, fontSize: 10, letterSpacing: "0.08em", color: "#5a5a5a" }}>WEAKNESSES: {(r as unknown as { weaknesses: string }).weaknesses}</div>}
+                      {anchor && <div className="mono" style={{ marginTop: 6, fontSize: 10, letterSpacing: "0.08em", color: "#8a8a8a" }}><a href={`https://sepolia.basescan.org/tx/${anchor}`} target="_blank" rel="noreferrer" style={{ color: "#8a8a8a" }}>VIEW ON BASESCAN → {shortHash(anchor)}</a></div>}
                     </div>
-                  ))}
+                  );})}
             </div>
 
             <div className="mono" style={{ marginTop: 14, fontSize: 10, letterSpacing: "0.12em", color: "#3f3f3f" }}>
-              BASE SEPOLIA ANCHORS: 84532 · PAPER HASH {shortHash(paper.paperHash)} · EACH REVIEW sha256(review) → tx pending Phase 6 (hashes live, tx soon)
+              BASE SEPOLIA ANCHORS: 84532 · PAPER HASH {shortHash(paper.paperHash)} · EACH REVIEW sha256(review) {liveReviews.some((r) => (r as unknown as { anchorTxHash?: string }).anchorTxHash) ? "→ TX ON 84532 (LIVE)" : "→ tx pending (run then anchor)"}
             </div>
           </div>
         </MacWindow>
