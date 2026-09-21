@@ -149,7 +149,7 @@ export default function NetworkPage() {
 
       <div className="section-pad" style={{ paddingBottom: 0 }}>
         <p className="mono" style={{ fontSize: 11, letterSpacing: "0.2em", color: "#5a5a5a" }}>
-          GLOBAL AGENT NETWORK
+          GLOBAL REVIEW NETWORK — BASE SEPOLIA 84532
         </p>
         <h1
           style={{
@@ -161,7 +161,7 @@ export default function NetworkPage() {
             color: "#f4f4f4",
           }}
         >
-          Live agent activity.
+          Live review activity.
         </h1>
         <p
           style={{
@@ -172,13 +172,8 @@ export default function NetworkPage() {
             maxWidth: 680,
           }}
         >
-          Every cube on the left is an agent pseudonym. Pulses are real
-          projected events from the gateway pipeline — decisions, capabilities, payments,
-          executions — traveling agent → gateway → service as small signals:
-          a bright dot for allowed, a hollow square for escalated, a dim dot
-          for denied. Denied signals die at the gateway and never reach a
-          service. The feed below says what each signal was. The public surface
-          never shows prompts, arguments, resources, or tenant identity.
+          Every cube is an agent pseudonym. Pulses are real RAAC events — <span style={{ color: "#c9c9c9" }}>paper.submitted → agents.ranked → council.proposed → signature.verified → council.opened → discussion.message → review.submitted → paper.completed → anchored on 84532</span> — traveling
+          paper → council → review. The feed below says what each signal was. Public surface never shows paper content, only hashes and scores.
         </p>
         <p
           className="mono"
@@ -206,15 +201,12 @@ export default function NetworkPage() {
             maxWidth: 760,
           }}
         >
+          <Stat value={counters ? String(counters.papers_submitted) : "—"} label="PAPERS SUBMITTED" />
+          <Stat value={counters ? String(counters.councils_formed) : "—"} label="COUNCILS FORMED" />
+          <Stat value={counters ? String(counters.reviews_submitted) : "—"} label="REVIEWS SUBMITTED" />
+          <Stat value={counters ? String(counters.reviews_anchored) : "—"} label="REVIEWS ANCHORED" />
           <Stat value={counters ? String(counters.agents_observed) : "—"} label="AGENTS OBSERVED" />
-          <Stat value={counters ? String(counters.intents_evaluated) : "—"} label="INTENTS EVALUATED" />
-          <Stat value={counters ? String(counters.allowed) : "—"} label="ALLOWED" />
-          <Stat value={counters ? String(counters.denied) : "—"} label="DENIED" />
-          <Stat value={counters ? String(counters.escalated) : "—"} label="ESCALATED" />
-          <Stat
-            value={counters ? String(counters.payments_completed) : "—"}
-            label="PAYMENTS COMPLETED"
-          />
+          <Stat value={counters ? String(counters.papers_submitted ? Math.round((counters.reviews_submitted / Math.max(1, counters.papers_submitted)) * 10) / 10 : "—") : "—"} label="REVIEWS / PAPER" />
         </div>
       </div>
 

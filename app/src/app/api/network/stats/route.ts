@@ -1,6 +1,6 @@
 import { and, count, eq, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { networkEvents } from "@/server/db/schema";
+import { networkEvents, papers, paperCouncils, reviews } from "@/server/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 // escalated, payments_completed}}.
 export async function GET() {
   try {
-    const [[observed], [evaluated], [allowed], [denied], [escalated], [paid]] = await Promise.all([
+    const [[observed], [evaluated], [allowed], [denied], [escalated], [paid], [papersCount], [councilsCount], [reviewsCount], [anchoredCount]] = await Promise.all([
       db()
         .select({ value: sql<number>`count(distinct ${networkEvents.agentPseudonym})` })
         .from(networkEvents),
@@ -33,6 +33,10 @@ export async function GET() {
         .select({ value: count() })
         .from(networkEvents)
         .where(and(eq(networkEvents.actionClass, "payment"), eq(networkEvents.outcome, "completed"))),
+      db().select({ value: count() }).from(papers),
+      db().select({ value: count() }).from(paperCouncils),
+      db().select({ value: count() }).from(reviews),
+      db().select({ value: count() }).from(reviews).where(eq(reviews.status, "anchored")),
     ]);
 
     return Response.json({
@@ -44,6 +48,11 @@ export async function GET() {
         denied: Number(denied?.value ?? 0),
         escalated: Number(escalated?.value ?? 0),
         payments_completed: Number(paid?.value ?? 0),
+        // RAAC
+        papers_submitted: Number(papersCount?.value ?? 0),
+        councils_formed: Number(councilsCount?.value ?? 0),
+        reviews_submitted: Number(reviewsCount?.value ?? 0),
+        reviews_anchored: Number(anchoredCount?.value ?? 0),
       },
     });
   } catch (err) {

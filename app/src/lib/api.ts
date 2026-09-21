@@ -175,6 +175,10 @@ export interface NetworkStats {
   denied: number;
   escalated: number;
   payments_completed: number;
+  papers_submitted: number;
+  councils_formed: number;
+  reviews_submitted: number;
+  reviews_anchored: number;
 }
 
 export interface ResolveCapability {
