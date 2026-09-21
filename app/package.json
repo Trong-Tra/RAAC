@@ -25,7 +25,6 @@
     "@modelcontextprotocol/sdk": "1.30.0",
     "@x402/hedera": "2.25.0",
     "drizzle-orm": "^0.44.0",
-    "langsmith": "^0.7.1",
     "next": "^15.1.0",
     "postgres": "^3.4.0",
     "react": "^19.0.0",

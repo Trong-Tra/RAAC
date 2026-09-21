@@ -1,6 +1,5 @@
-import { config } from "../config";
 import type { NormalizedIntent, RiskClass } from "../domain";
-import { extractReasoningRef, traceAssistedNormalize } from "../reasoning/langsmith";
+import { extractReasoningRef } from "../reasoning/langsmith";
 
 export interface NormalizeInput {
   tool: string;
@@ -101,23 +100,6 @@ export function normalize({ tool, args, taskId }: NormalizeInput): NormalizedInt
   return intent;
 }
 
-// Optional LLM assist: only behind LLM_INTENT_PROVIDER; any error (or unset env)
-// → the deterministic rules above are the output. With the env unset, zero LLM code executes.
 export async function normalizeIntent(input: NormalizeInput): Promise<NormalizedIntent> {
-  const base = normalize(input);
-  const provider = config().LLM_INTENT_PROVIDER;
-  if (!provider) return base;
-  try {
-    return await llmAssist(provider, input, base);
-  } catch {
-    return base;
-  }
-}
-
-async function llmAssist(provider: string, input: NormalizeInput, base: NormalizedIntent): Promise<NormalizedIntent> {
-  // plan-11: the LLM-assist path records a real LangSmith run for this
-  // normalization (traceable wrapper in reasoning/langsmith.ts). Missing key
-  // or any failure → base untouched (passthrough preserved, ref null/absent).
-  void provider;
-  return traceAssistedNormalize(input, base);
+  return normalize(input);
 }
