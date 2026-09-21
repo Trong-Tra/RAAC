@@ -13,7 +13,7 @@ const NAV = [
 ];
 
 export default function SiteHeader({ active }: { active?: string }) {
-  const { address, connect, disconnect } = useWallet();
+  const { address, chainId, isCorrectChain, connect, disconnect, switchToBaseSepolia } = useWallet();
 
   return (
     <header className="site-header">
@@ -45,22 +45,31 @@ export default function SiteHeader({ active }: { active?: string }) {
       </nav>
 
       {address ? (
-        <button
-          onClick={disconnect}
-          className="btn-outline mono"
-          style={{
-            background: "transparent",
-            cursor: "pointer",
-            fontSize: 11,
-            letterSpacing: "0.14em",
-          }}
-          title="Disconnect (mock)"
-        >
-          {address}
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: isCorrectChain ? "#6f6" : "#fa6", border: `1px solid ${isCorrectChain ? "#2a4" : "#a50"}`, padding: "4px 8px" }}>
+            {chainId ? `84532 ${isCorrectChain ? "✓" : "→ SWITCH"}` : "…"}
+          </span>
+          <button
+            onClick={() => (isCorrectChain ? disconnect() : switchToBaseSepolia())}
+            className="btn-outline mono"
+            style={{
+              background: isCorrectChain ? "transparent" : "#1a1a00",
+              cursor: "pointer",
+              fontSize: 11,
+              letterSpacing: "0.12em",
+              maxWidth: 140,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+            title={isCorrectChain ? "Disconnect" : "Switch to Base Sepolia 84532"}
+          >
+            {isCorrectChain ? `${address.slice(0, 6)}…${address.slice(-4)}` : "SWITCH TO 84532"}
+          </button>
+        </div>
       ) : (
         <button
-          onClick={connect}
+          onClick={() => void connect()}
           className="btn-outline mono"
           style={{
             background: "transparent",
