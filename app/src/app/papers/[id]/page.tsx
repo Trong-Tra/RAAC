@@ -6,6 +6,8 @@ import { useParams } from "next/navigation";
 import MacWindow from "@/components/MacWindow";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import { useWallet } from "@/components/WalletProvider";
+import { RAAC_DOMAIN, RAAC_TYPES } from "@/lib/council-message";
 
 type Detail = {
   paper: {
@@ -40,6 +42,9 @@ export default function PaperDetailPage() {
   const [err, setErr] = useState<string | null>(null);
   const [forming, setForming] = useState(false);
   const [formMsg, setFormMsg] = useState<string | null>(null);
+  const [signing, setSigning] = useState(false);
+  const [signMsg, setSignMsg] = useState<string | null>(null);
+  const { address: walletAddress } = useWallet();
 
   const load = () => {
     if (!id) return;
@@ -70,6 +75,59 @@ export default function PaperDetailPage() {
       setFormMsg(e instanceof Error ? e.message : String(e));
     } finally {
       setForming(false);
+    }
+  };
+
+  const sign = async () => {
+    if (!id || !data) return;
+    if (!walletAddress) {
+      setSignMsg("CONNECT WALLET FIRST — 84532 Base Sepolia");
+      return;
+    }
+    if (!data.council) {
+      setSignMsg("PROPOSE COUNCIL FIRST");
+      return;
+    }
+    setSigning(true);
+    setSignMsg(null);
+    try {
+      const anyWindow = window as unknown as { ethereum?: { request: (a: unknown) => Promise<string> } };
+      if (!anyWindow.ethereum) throw new Error("No injected wallet — install MetaMask/Rabby and switch to Base Sepolia 84532");
+      const paperId = data.paper.id;
+      const paperHash = data.paper.paperHash;
+      const selectionHash = data.council.selectionHash;
+      const author = walletAddress as `0x${string}`;
+      // EIP-712 via eth_signTypedData_v4
+      const typedData = JSON.stringify({
+        types: { EIP712Domain: [
+          { name: "name", type: "string" },
+          { name: "version", type: "string" },
+          { name: "chainId", type: "uint256" },
+          { name: "verifyingContract", type: "address" },
+        ], ...RAAC_TYPES },
+        primaryType: "CouncilFormation",
+        domain: RAAC_DOMAIN,
+        message: { paperId, paperHash, selectionHash, author },
+      });
+      const signature = await anyWindow.ethereum.request({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        method: "eth_signTypedData_v4",
+        params: [author, typedData],
+      } as unknown as never) as string;
+
+      const r = await fetch(`/api/papers/${id}/council/verify`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ signature, author }),
+      });
+      const j = await r.json();
+      if (!j.ok) throw new Error(j.error?.message ?? "verify failed");
+      setSignMsg(`SIGNED — COUNCIL ${j.data.council.id.slice(0, 8)} ACTIVE ON 84532`);
+      load();
+    } catch (e) {
+      setSignMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSigning(false);
     }
   };
 
@@ -169,7 +227,7 @@ export default function PaperDetailPage() {
             {!council ? (
               <>
                 <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
-                  No council yet — propose one from the live ranking above. This creates <span className="mono" style={{ color: "#c9c9c9" }}>paper_councils</span> row + <span className="mono" style={{ color: "#c9c9c9" }}>agents.ranked → council.proposed</span> events.
+                  No council yet — propose one from the live ranking above. This creates <span className="mono" style={{ color: "#c9c9c9" }}>paper_councils</span> row + <span className="mono" style={{ color: "#c9c9c9" }}>agents.ranked → council.proposed</span> events on Base Sepolia 84532.
                 </p>
                 <button
                   onClick={propose}
@@ -177,23 +235,29 @@ export default function PaperDetailPage() {
                   className="mono btn-outline"
                   style={{ marginTop: 16, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: forming ? "wait" : "pointer", background: forming ? "#111" : "transparent" }}
                 >
-                  {forming ? "PROPOSING…" : "PROPOSE COUNCIL (LIVE)"}
+                  {forming ? "PROPOSING…" : "PROPOSE COUNCIL (LIVE → 84532)"}
                 </button>
                 {formMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>{formMsg}</div>}
               </>
             ) : council.status === "proposed" ? (
               <>
                 <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
-                  Council <span className="mono" style={{ color: "#e8e8e8" }}>{shortHash(council.id)}</span> proposed — selection hash <span className="mono" style={{ color: "#c9c9c9" }}>{shortHash(council.selectionHash)}</span>. Next: author signs <span className="mono" style={{ color: "#c9c9c9" }}>RAAC CouncilFormation</span> via EIP-712 (Phase 4).
+                  Council <span className="mono" style={{ color: "#e8e8e8" }}>{shortHash(council.id)}</span> proposed — selection hash <span className="mono" style={{ color: "#c9c9c9" }}>{shortHash(council.selectionHash)}</span>. Sign <span className="mono" style={{ color: "#c9c9c9" }}>RAAC CouncilFormation</span> via EIP-712 on <span className="mono" style={{ color: "#e8e8e8" }}>84532</span> to open.
                 </p>
-                <button className="mono btn-outline" style={{ marginTop: 16, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: "pointer", background: "transparent" }}>
-                  SIGN COUNCIL (MOCK — PHASE 4)
+                <button
+                  onClick={sign}
+                  disabled={signing}
+                  className="mono btn-outline"
+                  style={{ marginTop: 16, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: signing ? "wait" : "pointer", background: signing ? "#111" : "transparent" }}
+                >
+                  {signing ? "SIGNING…" : walletAddress ? `SIGN AS ${shortAddr(walletAddress)} → 84532` : "CONNECT WALLET TO SIGN"}
                 </button>
-                {formMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>{formMsg}</div>}
+                {(formMsg || signMsg) && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: signMsg?.startsWith("SIGNED") ? "#c9c9c9" : "#8a8a8a" }}>{signMsg ?? formMsg}</div>}
+                <div className="mono" style={{ marginTop: 8, fontSize: 9, letterSpacing: "0.12em", color: "#3f3f3f" }}>DOMAIN RAAC v1 · chainId 84532 · verifyingContract 0x000…000</div>
               </>
             ) : (
               <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
-                Council <span className="mono" style={{ color: "#e8e8e8" }}>{shortHash(council.id)}</span> formed — author signed <span className="mono" style={{ color: "#c9c9c9" }}>{shortHash(council.selectionHash)}</span>. No signature, no review.
+                Council <span className="mono" style={{ color: "#e8e8e8" }}>{shortHash(council.id)}</span> <span style={{ color: "#c9c9c9" }}>{council.status.toUpperCase()}</span> — author signed <span className="mono" style={{ color: "#c9c9c9" }}>{shortHash(council.selectionHash)}</span> verified on <span className="mono" style={{ color: "#e8e8e8" }}>84532</span>. No signature, no review.
               </p>
             )}
           </div>
