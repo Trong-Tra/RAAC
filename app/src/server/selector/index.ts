@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client";
-import { agents, tenants } from "../db/schema";
+import { agents } from "../db/schema";
 import { config } from "../config";
 import { HttpAgent0Client } from "../graph/agent0";
 

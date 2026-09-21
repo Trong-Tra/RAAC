@@ -25,19 +25,13 @@ export default function ConsoleLayout({
     [approvals.data],
   );
 
-  const ITEMS = [
+  const ITEMS: Array<{ label: string; href: string; badge?: string }> = [
     { label: "OVERVIEW", href: "/console" },
+    { label: "PAPERS", href: "/papers" },
     { label: "AGENTS", href: "/console/agents" },
-    { label: "TASKS", href: "/console/tasks" },
+    { label: "COUNCILS", href: "/console/tasks" },
     { label: "POLICIES", href: "/console/policies" },
-    {
-      label: "APPROVALS",
-      href: "/console/approvals",
-      badge: pendingApprovals > 0 ? String(pendingApprovals) : undefined,
-    },
-    { label: "APPROVERS", href: "/console/approvers" },
     { label: "AUDIT", href: "/console/audit" },
-    { label: "PAYMENTS", href: "/console/payments" },
     { label: "SETTINGS", href: "/console/settings" },
   ];
 
@@ -93,9 +87,9 @@ export default function ConsoleLayout({
                   color: "#8a8a8a",
                 }}
               >
-                The console is your tenant dashboard — agents, tasks,
-                policies, approvals, and audit. Connect a wallet to prove
-                tenant ownership (mock button for now).
+                The console is your RAAC dashboard — papers, councils,
+                agents, and audit on Base Sepolia 84532. Connect a wallet
+                (demo).
               </p>
               <button
                 onClick={connect}
