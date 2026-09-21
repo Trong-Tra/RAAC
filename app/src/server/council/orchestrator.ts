@@ -8,6 +8,82 @@ function reviewHash(paperHash: string, agentKey: string, score: number, summary:
   return createHash("sha256").update(`${paperHash}|${agentKey}|${score}|${summary}`).digest("hex");
 }
 
+function chatModel(): string {
+  const m = process.env.CHAT_MODEL?.trim();
+  if (m) {
+    if (m === "openrouter/free" || m.endsWith(":free")) return m;
+    if (m.includes("/")) return `${m}:free`;
+    return "openrouter/free";
+  }
+  return "openrouter/free";
+}
+
+function extractJsonObject(text: string): unknown {
+  const start = text.indexOf("{");
+  if (start < 0) return null;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+    } else if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) {
+        try { return JSON.parse(text.slice(start, i + 1)) as unknown; } catch { return null; }
+      }
+    }
+  }
+  return null;
+}
+
+async function generateReviewViaOpenRouter(paper: { title: string; abstract: string; domain: string }, agent: { key: string; name: string }): Promise<{ score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } | null> {
+  const key = (process.env.OPENROUTER_API_KEY ?? "").trim();
+  if (!key) return null;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+      body: JSON.stringify({
+        model: chatModel(),
+        messages: [
+          {
+            role: "system",
+            content: `You are ${agent.name} (${agent.key}), a peer reviewer expert in ${paper.domain}. Council of 5 reviewers discussed the paper, now write YOUR independent review. Return STRICT JSON only: {"score":1-10,"confidence":1-10,"summary":"1-2 sentences","strengths":"bullet or short","weaknesses":"bullet or short","questions":"1-2 questions"}. No prose outside JSON. Be concise, critical, and specific to the paper.`,
+          },
+          { role: "user", content: `Paper: ${paper.title}\nDomain: ${paper.domain}\nAbstract: ${paper.abstract}\n\nWrite your review as JSON.` },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json().catch(() => null)) as { choices?: Array<{ message?: { content?: unknown } }> } | null;
+    const content = body?.choices?.[0]?.message?.content;
+    if (typeof content !== "string") return null;
+    const obj = extractJsonObject(content) as Record<string, unknown> | null;
+    if (!obj || typeof obj.score !== "number" || typeof obj.summary !== "string") return null;
+    const score = Math.min(10, Math.max(1, Math.round(Number(obj.score))));
+    const confidence = obj.confidence !== undefined ? Math.min(10, Math.max(1, Math.round(Number(obj.confidence)))) : 7;
+    const summary = String(obj.summary).slice(0, 400);
+    const strengths = String(obj.strengths ?? "—").slice(0, 500);
+    const weaknesses = String(obj.weaknesses ?? "—").slice(0, 500);
+    const questions = String(obj.questions ?? "—").slice(0, 500);
+    if (!summary) return null;
+    return { score, confidence, summary, strengths, weaknesses, questions };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Deterministic mock discussion per agent (so demo is reproducible). Real agents will call via MCP/A2A later.
 const DISCUSSION_TEMPLATES: Record<string, string[]> = {
   "agent:8472": ["The proof's sublinear claim checks, but federated heterogeneity lacks imbalance ablations."],
@@ -64,12 +140,14 @@ export async function runCouncil(paperId: string, tenantId: string) {
     }
   }
 
-  // 2) Reviews: one per selected agent, deterministic hash
+  // 2) Reviews: one per selected agent — live OpenRouter if key set, else deterministic mock (free tier, never bills)
   const created: typeof reviews.$inferSelect[] = [];
   for (const key of selectedKeys) {
     const agentId = byKey.get(key);
     if (!agentId) continue;
-    const tmpl = REVIEW_TEMPLATES[key] ?? { score: 6, confidence: 6, summary: "Mock review.", strengths: "—", weaknesses: "—", questions: "—" };
+    const agentRow = agentRows.find((a) => a.agentKey === key);
+    const live = await generateReviewViaOpenRouter({ title: paper.title, abstract: paper.abstract, domain: paper.domain }, { key, name: agentRow?.name ?? key });
+    const tmpl = live ?? REVIEW_TEMPLATES[key] ?? { score: 6, confidence: 6, summary: "Mock review.", strengths: "—", weaknesses: "—", questions: "—" };
     const hash = reviewHash(paper.paperHash, key, tmpl.score, tmpl.summary);
     const [rev] = await db()
       .insert(reviews)
