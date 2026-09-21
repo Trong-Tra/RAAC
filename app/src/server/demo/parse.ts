@@ -38,8 +38,15 @@ export interface ParsedIntent {
 }
 
 export function chatModel(): string {
-  const m = process.env.CHAT_MODEL;
-  return m && m.trim() !== "" ? m.trim() : "openai/gpt-4o-mini";
+  const m = process.env.CHAT_MODEL?.trim();
+  if (m) {
+    // Enforce free tier: never bill — free models are `:free` suffixed or the `openrouter/free` auto-router.
+    if (m === "openrouter/free" || m.endsWith(":free")) return m;
+    // If user set a paid id (e.g. openai/gpt-4o-mini), coerce to its free variant if it exists.
+    if (m.includes("/")) return `${m}:free`;
+    return "openrouter/free";
+  }
+  return "openrouter/free";
 }
 
 export function parseProviderConfigured(): boolean {
