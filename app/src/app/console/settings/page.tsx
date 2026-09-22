@@ -12,12 +12,12 @@ export default function ConsoleSettings() {
   return (
     <div>
       <PageHead
-        eyebrow="CONSOLE — SETTINGS"
-        title="Review network controls."
-        sub="Fee, selector, council, and trust — RAAC on Base Sepolia. Mock controls for demo."
+        eyebrow="CONSOLE — SYSTEM"
+        title="System."
+        sub="Network, selector, and trust — RAAC on Base Sepolia 84532. Read-only for demo."
       />
       <div style={{ marginTop: 28 }}>
-        <Panel title="CONFIGURATION">
+        <Panel title="SYSTEM — READ-ONLY">
           <div className="mono" style={{ display: "grid", gap: 14, fontSize: 12 }}>
             {ROWS.map(([k, v]) => (
               <div
@@ -37,12 +37,6 @@ export default function ConsoleSettings() {
               </div>
             ))}
           </div>
-          <button
-            className="mono btn-outline"
-            style={{ marginTop: 24, background: "transparent", cursor: "pointer" }}
-          >
-            SAVE
-          </button>
         </Panel>
       </div>
     </div>

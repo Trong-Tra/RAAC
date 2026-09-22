@@ -18,7 +18,7 @@ export default function ConsoleLayout({
   const ITEMS: Array<{ label: string; href: string; badge?: string }> = [
     { label: "OVERVIEW", href: "/console" },
     { label: "AUDIT", href: "/console/audit" },
-    { label: "SETTINGS", href: "/console/settings" },
+    { label: "SYSTEM", href: "/console/settings" },
   ];
 
   return (
