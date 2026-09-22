@@ -12,6 +12,7 @@ type Paper = {
   domain: string;
   status: string;
   paperHash: string;
+  authorAddress: string;
   createdAt: string;
 };
 
@@ -143,22 +144,6 @@ export default function ConsoleOverview() {
     }
   };
 
-  const reset = async () => {
-    setBusy("reset");
-    setMsg(null);
-    try {
-      const r = await fetch("/api/demo/seed", { method: "POST" });
-      const j = await r.json();
-      if (!j.ok) throw new Error(j.error?.message);
-      setMsg(`RESET ${j.data.papers} paper(s) → 84532`);
-      load();
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(null);
-    }
-  };
-
   const submitArxiv = async () => {
     const url = arxivUrl.trim();
     if (!url) { setMsg("Paste an arXiv URL — e.g. https://arxiv.org/abs/1706.03762"); return; }
@@ -189,7 +174,7 @@ export default function ConsoleOverview() {
       <PageHead
         eyebrow="CONSOLE — RAAC DEMO"
         title="Papers → councils → reviews."
-        sub="Demo environment inside the console — no separate demo page. Submit is seeded (zl-421), then propose → sign (84532) → run. All on Base Sepolia 84532. Routing · Accountability · Auditable Councils."
+        sub="Your wallet-tied papers — submit arXiv, then propose → sign (84532) → run. All on Base Sepolia 84532. Routing · Accountability · Auditable Councils."
       />
 
       <StatRow
@@ -218,11 +203,8 @@ export default function ConsoleOverview() {
       </div>
 
       <div style={{ marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <button onClick={reset} disabled={busy === "reset"} className="mono btn-outline" style={{ padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: busy ? "wait" : "pointer", background: busy === "reset" ? "#111" : "transparent" }}>
-          RESET DEMO (SEED)
-        </button>
         <Link href="/papers" className="mono btn-outline" style={{ padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", textDecoration: "none" }}>
-          OPEN /PAPERS →
+          OPEN /PAPERS (GLOBAL) →
         </Link>
         <Link href="/network" className="mono btn-outline" style={{ padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", textDecoration: "none" }}>
           NETWORK →
@@ -231,54 +213,75 @@ export default function ConsoleOverview() {
 
       {msg && <div className="mono" style={{ marginTop: 14, fontSize: 11, letterSpacing: "0.08em", color: msg.startsWith("SIGNED") || msg.startsWith("RAN") || msg.startsWith("PROPOSED") ? "#c9c9c9" : "#8a8a8a" }}>{msg}</div>}
 
-      <div style={{ marginTop: 24, display: "grid", gap: 16 }}>
-        {!papers ? (
-          <Panel title="PAPERS — LOADING"><div className="mono" style={{ fontSize: 11, color: "#5a5a5a", letterSpacing: "0.12em" }}>LOADING…</div></Panel>
-        ) : papers.length === 0 ? (
-          <Panel title="PAPERS — EMPTY"><div style={{ fontSize: 13, color: "#8a8a8a" }}>No papers — hit RESET DEMO.</div></Panel>
-        ) : (
-          papers.map((p) => {
-            const isRunning = busy === p.id;
-            const cnt = liveCounts[p.id] ?? 0;
-            return (
-            <Panel key={p.id} title={`${p.title.slice(0, 48)} — ${p.status.toUpperCase()} · ${p.domain.toUpperCase()}`}>
-              <div style={{ display: "grid", gap: 12 }}>
-                <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#5a5a5a" }}>
-                  {shortHash(p.paperHash)} · {new Date(p.createdAt).toLocaleDateString()} · {p.id.slice(0, 8)} {isRunning && `· ${cnt}/5 REVIEWS`}
-                </div>
-                {isRunning && (
-                  <div style={{ display: "grid", gap: 6 }}>
-                    <div className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#e8e8e8", display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ width: 7, height: 7, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />
-                      COUNCIL RUNNING — {cnt}/5 REVIEWS (each appears as agent finishes)
-                    </div>
-                    <div style={{ display: "flex", gap: 4 }}>
-                      {[0,1,2,3,4].map((i) => (
-                        <div key={i} style={{ flex: 1, height: 4, background: i < cnt ? "#e8e8e8" : "#1a1a1a", border: "1px solid #2a2a2a", transition: "background 0.4s" }} />
-                      ))}
-                    </div>
-                    <div style={{ height: 4, background: "linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%)", backgroundSize: "200% 100%", animation: "raac-shimmer 1.4s linear infinite", borderRadius: 2, opacity: 0.7 }} />
+      {(() => {
+        if (!papers) return <div style={{ marginTop: 24 }}><Panel title="PAPERS — LOADING"><div className="mono" style={{ fontSize: 11, color: "#5a5a5a", letterSpacing: "0.12em" }}>LOADING…</div></Panel></div>;
+        if (papers.length === 0) return <div style={{ marginTop: 24 }}><Panel title="PAPERS — EMPTY"><div style={{ fontSize: 13, color: "#8a8a8a" }}>No papers yet — submit an arXiv above as your wallet.</div></Panel></div>;
+        const my = address ? papers.filter((p) => p.authorAddress.toLowerCase() === address.toLowerCase()) : [];
+        const demo = papers.filter((p) => !address || p.authorAddress.toLowerCase() !== address.toLowerCase());
+        const sections: Array<{ label: string; list: typeof papers; walletTied: boolean }> = [];
+        if (address) sections.push({ label: `MY PAPERS — WALLET-TIED (${my.length}) · ${address.slice(0,6)}…${address.slice(-4)}`, list: my, walletTied: true });
+        sections.push({ label: address ? `DEMO / GLOBAL PAPERS (${demo.length}) — 0xDead or other authors` : `PAPERS (${papers.length}) — CONNECT WALLET TO SEE YOURS`, list: address ? demo : papers, walletTied: false });
+        return (
+          <div style={{ marginTop: 24, display: "grid", gap: 24 }}>
+            {sections.map((sec) => (
+              <div key={sec.label}>
+                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.16em", color: sec.walletTied ? "#c9c9c9" : "#5a5a5a", marginBottom: 12 }}>{sec.label}</div>
+                {sec.list.length === 0 ? (
+                  <Panel title={sec.walletTied ? "NO WALLET PAPERS YET" : "EMPTY"}>
+                    <div style={{ fontSize: 13, color: "#8a8a8a" }}>{sec.walletTied ? "Submit an arXiv above as your wallet — it will appear here, private to you. Global papers stay in /papers (anonymized)." : "No demo papers."}</div>
+                  </Panel>
+                ) : (
+                  <div style={{ display: "grid", gap: 16 }}>
+                    {sec.list.map((p) => {
+                      const isRunning = busy === p.id;
+                      const cnt = liveCounts[p.id] ?? 0;
+                      const isMine = sec.walletTied;
+                      return (
+                        <Panel key={p.id} title={`${p.title.slice(0, 48)} — ${p.status.toUpperCase()} · ${p.domain.toUpperCase()} ${isMine ? "· YOURS" : ""}`}>
+                          <div style={{ display: "grid", gap: 12 }}>
+                            <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#5a5a5a" }}>
+                              {shortHash(p.paperHash)} · {new Date(p.createdAt).toLocaleDateString()} · {p.id.slice(0, 8)} {isMine ? "· WALLET-TIED" : "· GLOBAL DEMO"} {isRunning && `· ${cnt}/5 REVIEWS`}
+                            </div>
+                            {isRunning && (
+                              <div style={{ display: "grid", gap: 6 }}>
+                                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#e8e8e8", display: "flex", alignItems: "center", gap: 8 }}>
+                                  <span style={{ width: 7, height: 7, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />
+                                  COUNCIL RUNNING — {cnt}/5 REVIEWS (each appears as agent finishes)
+                                </div>
+                                <div style={{ display: "flex", gap: 4 }}>
+                                  {[0,1,2,3,4].map((i) => (
+                                    <div key={i} style={{ flex: 1, height: 4, background: i < cnt ? "#e8e8e8" : "#1a1a1a", border: "1px solid #2a2a2a", transition: "background 0.4s" }} />
+                                  ))}
+                                </div>
+                                <div style={{ height: 4, background: "linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%)", backgroundSize: "200% 100%", animation: "raac-shimmer 1.4s linear infinite", borderRadius: 2, opacity: 0.7 }} />
+                              </div>
+                            )}
+                            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                              <button onClick={() => propose(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", opacity: busy && busy!==p.id ? 0.5 : 1 }}>
+                                PROPOSE
+                              </button>
+                              <button onClick={() => sign(p)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", opacity: busy && busy!==p.id ? 0.5 : 1 }}>
+                                SIGN (84532)
+                              </button>
+                              <button onClick={() => run(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", background: isRunning ? "#111" : "transparent" }}>
+                                {isRunning ? `RUNNING ${cnt}/5…` : "RUN → 5 REVIEWS"}
+                              </button>
+                              <Link href={`/papers/${p.id}`} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", textDecoration: "none" }}>
+                                OPEN → {isMine ? "PRIVATE" : "GLOBAL VIEW"}
+                              </Link>
+                            </div>
+                            {!isMine && <div className="mono" style={{ fontSize: 9, letterSpacing: "0.08em", color: "#3f3f3f" }}>Global demo paper — private reviews still via OPEN (currently shared tenant; wallet tie on new submits).</div>}
+                          </div>
+                        </Panel>
+                      );
+                    })}
                   </div>
                 )}
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button onClick={() => propose(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", opacity: busy && busy!==p.id ? 0.5 : 1 }}>
-                    PROPOSE
-                  </button>
-                  <button onClick={() => sign(p)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", opacity: busy && busy!==p.id ? 0.5 : 1 }}>
-                    SIGN (84532)
-                  </button>
-                  <button onClick={() => run(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", background: isRunning ? "#111" : "transparent" }}>
-                    {isRunning ? `RUNNING ${cnt}/5…` : "RUN → 5 REVIEWS"}
-                  </button>
-                  <Link href={`/papers/${p.id}`} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", textDecoration: "none" }}>
-                    OPEN →
-                  </Link>
-                </div>
               </div>
-            </Panel>
-            );})
-        )}
-      </div>
+            ))}
+          </div>
+        );
+      })()}
 
       <div className="mono" style={{ marginTop: 18, fontSize: 9.5, letterSpacing: "0.12em", color: "#3f3f3f" }}>
         FLOW: PROPOSE (agents.ranked → council.proposed) → SIGN (EIP-712 on 84532 → signature.verified → council.opened) → RUN (discussion.message×5 + review.submitted×5 + paper.completed) — all Base Sepolia 84532.

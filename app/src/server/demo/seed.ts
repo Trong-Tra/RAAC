@@ -179,7 +179,7 @@ function councilFixture(): Array<{ name: string; members: string[]; threshold: n
   ];
 }
 
-export async function seed(): Promise<{ agents: number; tools: number; policies: number; tasks: number }> {
+export async function seed(): Promise<{ agents: number; tools: number; policies: number; tasks: number; papers: number }> {
   let [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));
   if (!tenant) {
     await db().insert(tenants).values({ slug: fixture.tenant.slug, name: fixture.tenant.name }).onConflictDoNothing({ target: tenants.slug });

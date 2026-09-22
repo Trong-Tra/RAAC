@@ -69,34 +69,33 @@ export default function PapersPage() {
         ) : !papers ? (
           <div className="mono" style={{ fontSize: 11, letterSpacing: "0.14em", color: "#3f3f3f" }}>LOADING PAPERS…</div>
         ) : papers.length === 0 ? (
-          <MacWindow title="PAPERS — EMPTY">
+          <MacWindow title="PAPERS — EMPTY (GLOBAL)">
             <div style={{ padding: "26px 24px 28px", color: "#8a8a8a", fontSize: 14 }}>
-              No papers yet — seed the demo tenant (<span className="mono" style={{ color: "#c9c9c9" }}>POST /api/demo/seed</span>).
+              No papers yet — submit an arXiv via <span className="mono" style={{ color: "#c9c9c9" }}>/console</span> (wallet) or <span className="mono" style={{ color: "#c9c9c9" }}>/papers/new</span>.
             </div>
           </MacWindow>
         ) : (
           <div style={{ display: "grid", gap: 18 }}>
             {papers.map((p) => (
-              <Link key={p.id} href={`/papers/${p.id}`} style={{ textDecoration: "none" }}>
-                <MacWindow title={`PAPER — ${p.domain.toUpperCase()} · ${p.status.toUpperCase()}`}>
-                  <div style={{ padding: "24px 24px 22px" }}>
-                    <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#e8e8e8", lineHeight: 1.35 }}>
-                      {p.title}
-                    </div>
-                    <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.14em", color: "#5a5a5a" }}>
-                      {shortHash(p.paperHash)} · {p.keywords.join(" · ")} · {new Date(p.createdAt).toLocaleDateString()}
-                    </div>
-                    <p style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "#8a8a8a", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-                      {p.abstract}
-                    </p>
-                    <div className="mono" style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", fontSize: 9.5, letterSpacing: "0.12em" }}>
-                      <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#c9c9c9" }}>{p.status.toUpperCase()}</span>
-                      <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#8a8a8a" }}>{p.domain.toUpperCase()}</span>
-                      <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#8a8a8a" }}>{p.feeAmountWei ? `${Number(BigInt(p.feeAmountWei)) / 1e18} ETH FEE` : "FEE PENDING"}</span>
-                    </div>
+              <MacWindow key={p.id} title={`PAPER — ${p.domain.toUpperCase()} · ${p.status.toUpperCase()} — GLOBAL (ANONYMIZED)`}>
+                <div style={{ padding: "24px 24px 22px" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#e8e8e8", lineHeight: 1.35 }}>
+                    {p.title}
                   </div>
-                </MacWindow>
-              </Link>
+                  <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.14em", color: "#5a5a5a" }}>
+                    {shortHash(p.paperHash)} · {p.domain.toUpperCase()} · {new Date(p.createdAt).toLocaleDateString()} · GLOBAL
+                  </div>
+                  <p style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "#5a5a5a", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                    Abstract redacted on global surface — hashes and domain only. Full content is private to author wallet.
+                  </p>
+                  <div className="mono" style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", fontSize: 9.5, letterSpacing: "0.12em" }}>
+                    <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#c9c9c9" }}>{p.status.toUpperCase()}</span>
+                    <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#8a8a8a" }}>{p.domain.toUpperCase()}</span>
+                    <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#5a5a5a" }}>{shortHash(p.paperHash)} · GLOBAL HASH</span>
+                  </div>
+                  <div className="mono" style={{ marginTop: 12, fontSize: 9, letterSpacing: "0.1em", color: "#3f3f3f" }}>PRIVATE DETAILS → CONSOLE WITH WALLET (author-tied) — not linked from global</div>
+                </div>
+              </MacWindow>
             ))}
           </div>
         )}
