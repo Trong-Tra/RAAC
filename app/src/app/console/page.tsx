@@ -203,12 +203,13 @@ export default function ConsoleOverview() {
         ]}
       />
 
+      <style>{`.arxiv-submit{background:#f4f4f4 !important;color:#000 !important;border:1px solid #f4f4f4 !important}.arxiv-submit:hover{background:#fff !important;color:#000 !important;border-color:#fff !important}.arxiv-submit:disabled{background:#2a2a2a !important;color:#8a8a8a !important;border-color:#2a2a2a !important;opacity:1 !important;cursor:wait !important}`}</style>
       {/* LIVE-DEMO: arXiv digest → mock network picks top 5 (always our 5) */}
       <div style={{ marginTop: 18, padding: "14px 16px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", display: "grid", gap: 12 }}>
         <div className="mono" style={{ fontSize: 10, letterSpacing: "0.14em", color: "#6a6a6a" }}>LIVE-DEMO — ARXIV → DIGEST → 5 AGENTS (MOCK PICK, ALWAYS OUR 5)</div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
           <input value={arxivUrl} onChange={(e) => setArxivUrl(e.target.value)} placeholder="https://arxiv.org/abs/1706.03762 or 1706.03762" style={{ flex: "1 1 320px", minWidth: 240, background: "#0a0a0a", border: "1px solid #2a2a2a", color: "#e8e8e8", padding: "11px 14px", fontSize: 13, outline: "none" }} />
-          <button onClick={submitArxiv} disabled={submitting} className="mono" style={{ padding: "11px 18px", background: "#f4f4f4", color: "#000", border: "1px solid #f4f4f4", fontSize: 11, letterSpacing: "0.14em", cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1 }}>
+          <button onClick={submitArxiv} disabled={submitting} className="mono arxiv-submit" style={{ padding: "11px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: submitting ? "wait" : "pointer" }}>
             {submitting ? "DIGESTING…" : "SUBMIT ARXIV → CONSOLE"}
           </button>
         </div>

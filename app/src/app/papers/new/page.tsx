@@ -73,8 +73,9 @@ export default function NewPaperPage() {
 
             {err && <div className="mono" style={{ fontSize: 11, letterSpacing: "0.08em", color: "#ff6b6b", border: "1px solid #3a2a2a", padding: "10px 12px" }}>{err}</div>}
 
+            <style>{`.arxiv-submit{background:#f4f4f4 !important;color:#000 !important;border:1px solid #f4f4f4 !important}.arxiv-submit:hover{background:#fff !important;color:#000 !important;border-color:#fff !important}.arxiv-submit:disabled{background:#2a2a2a !important;color:#8a8a8a !important;border-color:#2a2a2a !important;opacity:1 !important}`}</style>
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-              <button onClick={submit} disabled={busy} className="mono" style={{ padding: "12px 22px", background: "#f4f4f4", color: "#000", border: "1px solid #f4f4f4", fontSize: 11, letterSpacing: "0.14em", cursor: busy ? "wait" : "pointer", opacity: busy ? 0.7 : 1 }}>
+              <button onClick={submit} disabled={busy} className="mono arxiv-submit" style={{ padding: "12px 22px", fontSize: 11, letterSpacing: "0.14em", cursor: busy ? "wait" : "pointer" }}>
                 {busy ? "FETCHING ARXIV…" : "SUBMIT ARXIV → 84532"}
               </button>
               <Link href="/papers" className="mono btn-outline" style={{ padding: "12px 22px", fontSize: 11, letterSpacing: "0.14em", textDecoration: "none" }}>CANCEL</Link>
