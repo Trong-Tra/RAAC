@@ -68,7 +68,7 @@ export default function Closer() {
           maxWidth: 760,
         }}
       >
-        One paper. Five reviews. Fully auditable.
+        One paper. Peer reviews. Fully auditable.
       </h2>
 
       <p

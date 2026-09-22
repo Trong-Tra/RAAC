@@ -5,7 +5,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import { useWallet } from "@/components/WalletProvider";
 
-const PIPELINE = "paper → rank → council → 5 reviews";
+const PIPELINE = "paper → rank → council → reviews";
 const TYPE_MS = 34;
 const TYPE_START_DELAY = 600;
 

@@ -360,7 +360,7 @@ export default function PaperDetailPage() {
         </MacWindow>
 
         {/* Auditable Councils — Transcript + Reviews */}
-        <MacWindow title={`03 — AUDITABLE COUNCILS — DISCUSSION → 5 REVIEWS ${liveReviews.length ? "(LIVE)" : "(IDLE)"}`}>
+        <MacWindow title={`03 — AUDITABLE COUNCILS — DISCUSSION → REVIEWS ${liveReviews.length ? "(LIVE)" : "(IDLE)"}`}>
           <div style={{ padding: "22px 24px 24px" }}>
             <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>
               Five agents discuss (stored in <span className="mono" style={{ color: "#c9c9c9" }}>council_messages</span> off-chain), then each writes an independent review. Hashes anchored on Base Sepolia 84532.
@@ -368,13 +368,13 @@ export default function PaperDetailPage() {
 
             {council?.status === "active" && liveReviews.length === 0 && (
               <button onClick={run} disabled={running} className="mono btn-outline" style={{ marginTop: 14, padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: running ? "wait" : "pointer", background: running ? "#111" : "transparent" }}>
-                {running ? "RUNNING COUNCIL…" : "RUN COUNCIL → 5 REVIEWS (LIVE → 84532)"}
+                {running ? "RUNNING COUNCIL…" : "RUN COUNCIL → REVIEWS (LIVE → 84532)"}
               </button>
             )}
             {running && (
               <div className="mono" style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 10, fontSize: 10, letterSpacing: "0.12em", color: "#e8e8e8" }}>
                 <span style={{ width: 8, height: 8, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />
-                COUNCIL RUNNING — {liveReviews.length}/5 REVIEWS • {liveMessages.length}/5 MESSAGES • each review appears as agent finishes (no refresh needed)
+                COUNCIL RUNNING — {liveReviews.length} REVIEWS • {liveMessages.length} MESSAGES • each review appears as agent finishes (no refresh needed)
               </div>
             )}
             {council?.status === "completed" && <div className="mono" style={{ marginTop: 14, fontSize: 10, letterSpacing: "0.12em", color: "#c9c9c9" }}>COUNCIL COMPLETED — {liveMessages.length} MESSAGES, {liveReviews.length || reviews.length} REVIEWS</div>}
@@ -524,7 +524,7 @@ export default function PaperDetailPage() {
                         <div key={`pending-${s.erc8004}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px dashed rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.02)" }}>
                           <span style={{ width: 8, height: 8, background: "#8a8a8a", display: "inline-block", animation: `raac-pulse 1s ease-in-out infinite`, animationDelay: `${idx * 0.2}s` }} />
                           <div style={{ flex: 1 }}>
-                            <div className="mono" style={{ fontSize: 11, color: "#8a8a8a" }}>REVIEW — {s.name.toUpperCase()} · {s.erc8004} · PROCESSING… {displayed.length + idx + 1}/5</div>
+                            <div className="mono" style={{ fontSize: 11, color: "#8a8a8a" }}>REVIEW — {s.name.toUpperCase()} · {s.erc8004} · PROCESSING…</div>
                             <div style={{ marginTop: 4, height: 6, background: "linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%)", backgroundSize: "200% 100%", animation: "raac-shimmer 1.4s linear infinite", borderRadius: 2, width: `${70 + idx * 7}%` }} />
                             <div className="mono" style={{ marginTop: 6, fontSize: 9, letterSpacing: "0.08em", color: "#5a5a5a" }}>{s.name} drafting 7-section review via ar5iv + {liveReviews.length > 0 ? "dual-key fallback" : "openrouter/free"}…</div>
                           </div>

@@ -240,14 +240,14 @@ export default function ConsoleOverview() {
                         <Panel key={p.id} title={`${p.title.slice(0, 48)} — ${p.status.toUpperCase()} · ${p.domain.toUpperCase()} ${isMine ? "· YOURS" : ""}`}>
                           <div style={{ display: "grid", gap: 12 }}>
                             <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#5a5a5a" }}>
-                              {shortHash(p.paperHash)} · {new Date(p.createdAt).toLocaleDateString()} · {p.id.slice(0, 8)} {isMine ? "· WALLET-TIED" : "· GLOBAL DEMO"} {isRunning && `· ${cnt}/5 REVIEWS`}
+                              {shortHash(p.paperHash)} · {new Date(p.createdAt).toLocaleDateString()} · {p.id.slice(0, 8)} {isMine ? "· WALLET-TIED" : "· GLOBAL DEMO"} {isRunning && `· ${cnt} REVIEWS`}
                             </div>
                             {isRunning && (
                               <div style={{ display: "grid", gap: 6 }}>
-                                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#e8e8e8", display: "flex", alignItems: "center", gap: 8 }}>
-                                  <span style={{ width: 7, height: 7, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />
-                                  COUNCIL RUNNING — {cnt}/5 REVIEWS (each appears as agent finishes)
-                                </div>
+                    <div className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#e8e8e8", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 7, height: 7, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />
+                      COUNCIL RUNNING — {cnt} REVIEWS (each appears as agent finishes)
+                    </div>
                                 <div style={{ display: "flex", gap: 4 }}>
                                   {[0,1,2,3,4].map((i) => (
                                     <div key={i} style={{ flex: 1, height: 4, background: i < cnt ? "#e8e8e8" : "#1a1a1a", border: "1px solid #2a2a2a", transition: "background 0.4s" }} />
@@ -263,9 +263,9 @@ export default function ConsoleOverview() {
                               <button onClick={() => sign(p)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", opacity: busy && busy!==p.id ? 0.5 : 1 }}>
                                 SIGN (84532)
                               </button>
-                              <button onClick={() => run(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", background: isRunning ? "#111" : "transparent" }}>
-                                {isRunning ? `RUNNING ${cnt}/5…` : "RUN → 5 REVIEWS"}
-                              </button>
+                  <button onClick={() => run(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", background: isRunning ? "#111" : "transparent" }}>
+                    {isRunning ? `RUNNING ${cnt}…` : "RUN → REVIEWS"}
+                  </button>
                               <Link href={`/papers/${p.id}`} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", textDecoration: "none" }}>
                                 OPEN → {isMine ? "PRIVATE" : "GLOBAL VIEW"}
                               </Link>

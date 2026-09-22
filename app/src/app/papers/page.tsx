@@ -46,7 +46,7 @@ export default function PapersPage() {
           RAAC — PAPERS
         </p>
         <h1 style={{ marginTop: 18, fontSize: "clamp(34px, 4.5vw, 64px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.1, color: "#f4f4f4" }}>
-          One paper. Five reviews.
+          One paper. Peer reviews.
         </h1>
         <p style={{ marginTop: 16, fontSize: 15.5, lineHeight: 1.65, color: "#8a8a8a", maxWidth: 680 }}>
           Submit a paper on Base Sepolia, pay the fee, sign the council — five domain-qualified agents discuss then write independently. Routing, Accountability, Auditable Councils.
