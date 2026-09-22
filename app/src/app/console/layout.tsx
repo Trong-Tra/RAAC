@@ -2,13 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo } from "react";
 import MacWindow from "@/components/MacWindow";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import { useWallet } from "@/components/WalletProvider";
-import { deriveApprovals } from "@/components/console/derive";
-import { getAuditEventsPaged, useApi } from "@/lib/api";
 
 export default function ConsoleLayout({
   children,
@@ -17,20 +14,9 @@ export default function ConsoleLayout({
 }) {
   const pathname = usePathname();
   const { address, connect } = useWallet();
-  const approvals = useApi("console-layout-approvals", () =>
-    getAuditEventsPaged({ maxPages: 3 }),
-  );
-  const pendingApprovals = useMemo(
-    () => deriveApprovals(approvals.data ?? []).pending.length,
-    [approvals.data],
-  );
 
   const ITEMS: Array<{ label: string; href: string; badge?: string }> = [
     { label: "OVERVIEW", href: "/console" },
-    { label: "PAPERS", href: "/papers" },
-    { label: "AGENTS", href: "/console/agents" },
-    { label: "COUNCILS", href: "/console/tasks" },
-    { label: "POLICIES", href: "/console/policies" },
     { label: "AUDIT", href: "/console/audit" },
     { label: "SETTINGS", href: "/console/settings" },
   ];

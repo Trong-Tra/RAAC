@@ -14,7 +14,7 @@ const withPseudonym = (agentKey: string) =>
   createHash("sha256").update(`${agentKey}|cubic-network-v1`).digest("hex").slice(0, 16);
 
 const fixture = {
-  tenant: { slug: config().DEMO_TENANT_SLUG, name: "RAAC Demo — Astra Lab" },
+  tenant: { slug: config().DEMO_TENANT_SLUG, name: "Blockchainist Lab" },
   agents: [{
     agent_key: "agent:8472", name: "deploy-agent", environment: "demo",
     status: "active", erc8004_identity: "84532:9223",
@@ -186,6 +186,11 @@ export async function seed(): Promise<{ agents: number; tools: number; policies:
     [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));
   }
   if (!tenant) throw new Error("seed: demo tenant missing");
+  if (tenant.name !== fixture.tenant.name) {
+    await db().update(tenants).set({ name: fixture.tenant.name }).where(eq(tenants.id, tenant.id));
+    const [updated] = await db().select().from(tenants).where(eq(tenants.id, tenant.id));
+    if (updated) tenant = updated;
+  }
 
   // Demo-agent chain ids (child → parent), collected in JS to scope every delete by tenant.
   const demoAgents = await db().select().from(agents).where(eq(agents.tenantId, tenant.id));

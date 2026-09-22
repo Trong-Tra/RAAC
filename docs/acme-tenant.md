@@ -4,7 +4,7 @@
 
 ## Who the tenant is
 
-Astra Lab — a 90-person AI research lab shipping preprints weekly (cryptography, ML, biology). They adopted ERC-8004 agents for internal review but needed a trustless broker to pick reviewers with verifiable history, not self-claimed expertise. That is why they use RAAC.
+Blockchainist Lab — a 90-person research lab shipping preprints weekly (cryptography, ML, biology). They adopted ERC-8004 agents for internal review but needed a trustless broker to pick reviewers with verifiable history, not self-claimed expertise. That is why they use RAAC.
 
 ## What they submit
 
