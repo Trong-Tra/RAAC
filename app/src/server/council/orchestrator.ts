@@ -81,10 +81,20 @@ function getOpenRouterKeys(): string[] {
   return raw;
 }
 
+const REVIEW_PERSONAS: Record<string, { lens: string; focus: string; voice: string }> = {
+  "agent:8472": { lens: "Systems & Deployment", focus: "reproducibility, artifact completeness, cost/scale, deployment soundness, ablation coverage under heterogeneity (imbalanced shards, 100+ parties)", voice: "pragmatic systems reviewer — skeptical of scalability claims without heterogeneity stress and real deployment constraints" },
+  "agent:reader": { lens: "Clarity & Evaluation Breadth", focus: "writing precision, figure/table legibility, benchmark breadth (beyond CIFAR-10 to long-context LM like WikiText-103), terminology misuse", voice: "meticulous reader — rewards clear exposition, penalizes narrow evaluation" },
+  "agent:treasury": { lens: "Theory & Soundness", focus: "formal proofs (Sec.4.2 aggregation), threat model (honest-but-curious vs malicious aggregator), assumptions hidden in theorems", voice: "formal theorist — demands rigorous proofs and explicit assumptions" },
+  "agent:crypto-rev": { lens: "Cryptography & Security", focus: "ZK soundness, zero-knowledge properties, sublinear verification proof, security under malicious aggregator, related ZK-federated work", voice: "cryptographer — deep on proof soundness and security guarantees" },
+  "agent:fairness": { lens: "Fairness & Robustness", focus: "fairness across shards, demographic slices, bias, robustness to non-IID partitions, ethical implications", voice: "fairness auditor — insists on demographic and robustness evaluation" },
+  "agent:lab-1": { lens: "Novelty & Related Work", focus: "differentiation from prior ZK-federated [16], related work last 2-3 years, incremental vs breakthrough", voice: "novelty scout — strict on related work and contribution delta" },
+};
+
 async function generateReviewViaOpenRouter(paper: { title: string; abstract: string; domain: string; pdfUrl: string | null }, agent: { key: string; name: string }): Promise<{ score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } | null> {
   const keys = getOpenRouterKeys();
   if (keys.length === 0) return null;
   const fullText = await fetchArxivFullText(paper.pdfUrl);
+  const persona = REVIEW_PERSONAS[agent.key] ?? { lens: "General ML", focus: "technical soundness and evaluation rigor", voice: "generalist reviewer" };
   // Small stagger to avoid 429 on free tier (5 sequential reviews)
   await new Promise((r) => setTimeout(r, 1200));
   for (let ki = 0; ki < keys.length; ki++) {
@@ -103,7 +113,7 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
         messages: [
           {
             role: "system",
-            content: `You are ${agent.name} (${agent.key}), an expert peer reviewer in ${paper.domain} for RAAC (Routing, Accountability, Auditable Councils) on Base Sepolia 84532. You have read the FULL paper via arXiv ${paper.pdfUrl ?? ""} (DB only stores URL+abstract for UI, you read via arXiv). Council of 5 discussed, now write YOUR independent academic review following EXACTLY the 7-section template below. Return STRICT JSON only, no prose outside JSON. Be precise, critical, and cite specific pointers (section, equation, table, number, quote).
+            content: `You are ${agent.name} (${agent.key}), ${persona.voice} for RAAC on Base Sepolia 84532 — LENS: ${persona.lens}. FOCUS: ${persona.focus}. You have read the FULL paper via arXiv ${paper.pdfUrl ?? ""} (DB only stores URL+abstract). Council of 5 discussed, now write YOUR independent review through YOUR lens — it should read differently from the other 4 agents' reviews. Follow EXACTLY the 7-section template. Return STRICT JSON only. Be precise, critical, cite specific pointers (section, equation, table, number, quote). Emphasize your lens in [3] and [5].
 
 === ACADEMIC REVIEW TEMPLATE ===
 [1] MANUSCRIPT SUMMARY (1 short paragraph, max 150 words)
@@ -231,21 +241,30 @@ JSON shape you MUST return:
 }
 
 function academicMockFor(paper: { title: string; abstract: string; domain: string; pdfUrl: string | null }, agent: { key: string; name: string }, base: { score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string }): { score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } {
-  // Rich 7-section mock so UI shows full academic format even when rate-limited (429). Deterministic per agent+paper.
+  const persona = REVIEW_PERSONAS[agent.key] ?? { lens: "General ML", focus: "technical soundness", voice: "generalist" };
+  // Rich 7-section mock so UI shows full academic format even when rate-limited (429). Deterministic per agent+paper, lens-aware.
+  const lensIssue: Record<string, { claim: string; evidence: string; gap: string; action: string; cat: string }> = {
+    "agent:8472": { claim: "System scales to 100+ heterogeneous parties", evidence: "Only CIFAR-10, 5-10 parties, balanced shards Sec.4/Table2", gap: "No 90/10 imbalance, no 100-party, no cost/latency breakdown", action: "Add 90/10 non-IID + 100-party + cost profile; report verifier/aggregator wall-clock", cat: "Evaluation rigor" },
+    "agent:reader": { claim: "Evaluation is credible and broad", evidence: "CIFAR-10 only, Fig.2 tiny, terminology loose Sec.3.1", gap: "Single benchmark, no long-context LM (WikiText-103), figure illegible", action: "Add long-context benchmark + fix Fig.2 + define partition protocol", cat: "Evaluation rigor" },
+    "agent:treasury": { claim: "Aggregation soundness proven (Sec.4.2)", evidence: "Proof sketch assumes honest aggregator, no malicious case", gap: "Threat model unstated, soundness under malicious aggregator unproven", action: "Formalize threat model; prove or explicitly limit to honest-but-curious", cat: "Security soundness" },
+    "agent:crypto-rev": { claim: "Sublinear ZK verification with privacy", evidence: "ZK construction Sec.3 cites prior work, proof sketch terse", gap: "ZK properties (completeness/soundness/ZK) not tied to construction, related ZK-federated delta thin", action: "Map each ZK property to construction step + head-to-head vs [16]", cat: "Technical soundness" },
+    "agent:fairness": { claim: "Federated inference preserves utility fairly", evidence: "No demographic/fairness slice, shard accuracy variance not reported", gap: "Fairness across shards/partitions unevaluated, bias risk hidden", action: "Report per-shard/demographic accuracy + fairness metrics", cat: "Hidden assumptions" },
+  };
+  const li = lensIssue[agent.key] ?? { claim: `Paper claims ${base.summary.slice(0,60)}`, evidence: `Abstract + ${paper.pdfUrl ?? "PDF"} Sec.3/Table2 limited support`, gap: base.weaknesses, action: base.questions, cat: "Evaluation rigor" };
   const obj = {
-    manuscript_summary: `${paper.title} addresses ${paper.domain} via ${base.summary.slice(0,120)} — mock academic summary (rate-limit fallback) using ${agent.name} perspective.`,
-    overall_assessment: `This is a ${paper.domain} contribution with ${base.strengths.toLowerCase()}. The key gap is ${base.weaknesses.toLowerCase()}. Recommendation follows from evaluation rigor and soundness.`,
+    manuscript_summary: `${paper.title} addresses ${paper.domain} via ${base.summary.slice(0,120)} — mock academic summary through ${persona.lens} lens (${agent.name}).`,
+    overall_assessment: `This is a ${paper.domain} contribution viewed through ${persona.lens}: ${base.strengths.toLowerCase()}. The central ${persona.lens.toLowerCase()} gap is ${li.gap.toLowerCase()}.`,
     major_issues: [
-      { claim: `Paper claims ${base.summary.slice(0,60)}`, evidence: `Abstract + ${paper.pdfUrl ?? "PDF not fetched"} Sec.3/Table2 shows limited support`, gap: base.weaknesses, required_action: base.questions, category: "Evaluation rigor" },
+      { claim: li.claim, evidence: li.evidence, gap: li.gap, required_action: li.action, category: li.cat },
       { claim: "Novelty over prior ZK-federated work", evidence: "Related work Sec.2 cites [16] but delta is thin", gap: "Incremental mechanism vs. [16], no ablation vs. prior", required_action: "Add head-to-head vs. [16] on same benchmark", category: "Novelty" },
       { claim: "Sublinear verification holds generally", evidence: "Proof sketch Sec.4.2 assumes honest aggregator", gap: "Malicious aggregator not modeled, soundness unproven", required_action: "Formalize threat model and prove or state limitation", category: "Security soundness" },
     ],
-    minor_issues: ["Notation: Rényi spelling/undefined symbols Sec.3.1", "Fig.2 legibility at print scale", "Missing definition of heterogeneous partition protocol p.4"],
+    minor_issues: persona.lens === "Clarity & Evaluation Breadth" ? ["Fig.2 legibility at print scale — enlarge to 300dpi", "Undefined: heterogeneous partition protocol p.4", "Terminology: 'federated inference' vs 'federated learning' loose Sec.1"] : persona.lens === "Cryptography & Security" ? ["Notation: Rényi spelling Sec.3.1, missing ZK parameter definitions", "Citation: missing last 2 years ZK-federated work", "Equation (3) variable scope ambiguous"] : ["Notation: Rényi spelling/undefined symbols Sec.3.1", "Fig.2 legibility at print scale", "Missing definition of heterogeneous partition protocol p.4"],
     strengths: base.strengths.split(";").map(s=>s.trim()).filter(Boolean),
-    questions: [base.questions, "How does verification scale to 100+ parties with 90/10 non-IID splits?"],
+    questions: [base.questions, persona.lens === "Fairness & Robustness" ? "What is per-demographic accuracy variance across shards?" : persona.lens === "Systems & Deployment" ? "What is verifier wall-clock at 100 parties with 90/10 splits?" : "How does verification scale to 100+ parties with 90/10 non-IID splits?"],
     recommendation: base.score >= 8 ? "Minor Revision" : base.score >= 6 ? "Major Revision" : "Reject & Resubmit",
     confidence: base.confidence >= 8 ? "High" : base.confidence >= 6 ? "Medium" : "Low",
-    justification: `Score ${base.score}/10 reflects ${base.strengths} against ${base.weaknesses}. See major issues 1-2.`,
+    justification: `Score ${base.score}/10 from ${persona.lens} perspective: ${base.strengths} against ${li.gap}. See major issue 1.`,
     score: base.score,
     confidence_score: base.confidence,
   };
