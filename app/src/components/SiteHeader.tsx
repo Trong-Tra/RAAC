@@ -46,8 +46,8 @@ export default function SiteHeader({ active }: { active?: string }) {
 
       {address ? (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: isCorrectChain ? "#6f6" : "#fa6", border: `1px solid ${isCorrectChain ? "#2a4" : "#a50"}`, padding: "4px 8px" }}>
-            {chainId ? `84532 ${isCorrectChain ? "✓" : "→ SWITCH"}` : "…"}
+          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: isCorrectChain ? "#6f6" : "#fa6", border: `1px solid ${isCorrectChain ? "#2a4" : "#a50"}`, padding: "4px 8px", minWidth: 132, textAlign: "center", display: "inline-block" }}>
+            {chainId ? `Chain-ID: ${chainId}` : "Chain-ID: …"}
           </span>
           <button
             onClick={() => (isCorrectChain ? disconnect() : switchToBaseSepolia())}
