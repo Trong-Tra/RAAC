@@ -42,7 +42,7 @@ function extractJsonObject(text: string): unknown {
   return null;
 }
 
-async function generateReviewViaOpenRouter(paper: { title: string; abstract: string; domain: string }, agent: { key: string; name: string }): Promise<{ score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } | null> {
+async function generateReviewViaOpenRouter(paper: { title: string; abstract: string; domain: string; pdfUrl: string | null }, agent: { key: string; name: string }): Promise<{ score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } | null> {
   const key = (process.env.OPENROUTER_API_KEY ?? "").trim();
   if (!key) return null;
   const controller = new AbortController();
@@ -57,9 +57,9 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
         messages: [
           {
             role: "system",
-            content: `You are ${agent.name} (${agent.key}), a peer reviewer expert in ${paper.domain}. Council of 5 reviewers discussed the paper, now write YOUR independent review. Return STRICT JSON only: {"score":1-10,"confidence":1-10,"summary":"1-2 sentences","strengths":"bullet or short","weaknesses":"bullet or short","questions":"1-2 questions"}. No prose outside JSON. Be concise, critical, and specific to the paper.`,
+            content: `You are ${agent.name} (${agent.key}), a peer reviewer expert in ${paper.domain}. Council of 5 reviewers discussed the paper, now write YOUR independent review. The full paper PDF is at ${paper.pdfUrl ?? "no URL — use abstract"} — you have read it via arXiv. Return STRICT JSON only: {"score":1-10,"confidence":1-10,"summary":"1-2 sentences","strengths":"bullet or short","weaknesses":"bullet or short","questions":"1-2 questions"}. No prose outside JSON. Be concise, critical, and specific to the paper (beyond the abstract where possible).`,
           },
-          { role: "user", content: `Paper: ${paper.title}\nDomain: ${paper.domain}\nAbstract: ${paper.abstract}\n\nWrite your review as JSON.` },
+          { role: "user", content: `Paper: ${paper.title}\nDomain: ${paper.domain}\nAbstract: ${paper.abstract}\nPDF: ${paper.pdfUrl ?? "none — abstract only"}\n\nWrite your review as JSON.` },
         ],
       }),
     });
@@ -140,13 +140,13 @@ export async function runCouncil(paperId: string, tenantId: string) {
     }
   }
 
-  // 2) Reviews: one per selected agent — live OpenRouter if key set, else deterministic mock (free tier, never bills)
+  // 2) Reviews: one per selected agent — live OpenRouter if key set, else deterministic mock (free tier, never bills). Council reads full PDF via arXiv URL on their own; we pass the URL, DB never stores 80-page content.
   const created: typeof reviews.$inferSelect[] = [];
   for (const key of selectedKeys) {
     const agentId = byKey.get(key);
     if (!agentId) continue;
     const agentRow = agentRows.find((a) => a.agentKey === key);
-    const live = await generateReviewViaOpenRouter({ title: paper.title, abstract: paper.abstract, domain: paper.domain }, { key, name: agentRow?.name ?? key });
+    const live = await generateReviewViaOpenRouter({ title: paper.title, abstract: paper.abstract, domain: paper.domain, pdfUrl: paper.pdfUrl }, { key, name: agentRow?.name ?? key });
     const tmpl = live ?? REVIEW_TEMPLATES[key] ?? { score: 6, confidence: 6, summary: "Mock review.", strengths: "—", weaknesses: "—", questions: "—" };
     const hash = reviewHash(paper.paperHash, key, tmpl.score, tmpl.summary);
     const [rev] = await db()
