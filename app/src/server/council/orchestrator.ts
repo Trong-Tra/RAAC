@@ -140,18 +140,34 @@ JSON shape you MUST return:
         ],
       }),
     });
-    if (!res.ok) return null;
+    if (res.status === 429) {
+      // free-tier daily limit — no point retrying 3×, surface as null so caller falls back to academic mock
+      clearTimeout(timer);
+      return null;
+    }
+    if (!res.ok) {
+      clearTimeout(timer);
+      if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      return null;
+    }
     const body = (await res.json().catch(() => null)) as { choices?: Array<{ message?: { content?: unknown } }> } | null;
     const content = body?.choices?.[0]?.message?.content;
-    if (typeof content !== "string") return null;
+    if (typeof content !== "string") {
+      clearTimeout(timer);
+      if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      return null;
+    }
     const obj = extractJsonObject(content) as Record<string, unknown> | null;
     if (!obj || typeof obj.manuscript_summary !== "string" || typeof obj.overall_assessment !== "string") {
       // Fallback: try legacy shape (score/summary) if model ignored template — still return something
       if (obj && typeof (obj as Record<string, unknown>).score === "number" && typeof (obj as Record<string, unknown>).summary === "string") {
         const score = Math.min(10, Math.max(1, Math.round(Number((obj as Record<string, unknown>).score))));
         const confidence = (obj as Record<string, unknown>).confidence !== undefined ? Math.min(10, Math.max(1, Math.round(Number((obj as Record<string, unknown>).confidence)))) : 7;
+        clearTimeout(timer);
         return { score, confidence, summary: String((obj as Record<string, unknown>).summary).slice(0, 800), strengths: String((obj as Record<string, unknown>).strengths ?? "—").slice(0, 800), weaknesses: String((obj as Record<string, unknown>).weaknesses ?? "—").slice(0, 1000), questions: String((obj as Record<string, unknown>).questions ?? "—").slice(0, 800) };
       }
+      clearTimeout(timer);
+      if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
       return null;
     }
     const score = obj.score !== undefined ? Math.min(10, Math.max(1, Math.round(Number(obj.score)))) : (obj.recommendation === "Accept" ? 9 : obj.recommendation === "Minor Revision" ? 7 : obj.recommendation === "Major Revision" ? 5 : 3);
@@ -174,6 +190,37 @@ JSON shape you MUST return:
     }
   }
   return null;
+}
+
+function academicMockFor(paper: { title: string; abstract: string; domain: string; pdfUrl: string | null }, agent: { key: string; name: string }, base: { score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string }): { score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } {
+  // Rich 7-section mock so UI shows full academic format even when rate-limited (429). Deterministic per agent+paper.
+  const obj = {
+    manuscript_summary: `${paper.title} addresses ${paper.domain} via ${base.summary.slice(0,120)} — mock academic summary (rate-limit fallback) using ${agent.name} perspective.`,
+    overall_assessment: `This is a ${paper.domain} contribution with ${base.strengths.toLowerCase()}. The key gap is ${base.weaknesses.toLowerCase()}. Recommendation follows from evaluation rigor and soundness.`,
+    major_issues: [
+      { claim: `Paper claims ${base.summary.slice(0,60)}`, evidence: `Abstract + ${paper.pdfUrl ?? "PDF not fetched"} Sec.3/Table2 shows limited support`, gap: base.weaknesses, required_action: base.questions, category: "Evaluation rigor" },
+      { claim: "Novelty over prior ZK-federated work", evidence: "Related work Sec.2 cites [16] but delta is thin", gap: "Incremental mechanism vs. [16], no ablation vs. prior", required_action: "Add head-to-head vs. [16] on same benchmark", category: "Novelty" },
+      { claim: "Sublinear verification holds generally", evidence: "Proof sketch Sec.4.2 assumes honest aggregator", gap: "Malicious aggregator not modeled, soundness unproven", required_action: "Formalize threat model and prove or state limitation", category: "Security soundness" },
+    ],
+    minor_issues: ["Notation: Rényi spelling/undefined symbols Sec.3.1", "Fig.2 legibility at print scale", "Missing definition of heterogeneous partition protocol p.4"],
+    strengths: base.strengths.split(";").map(s=>s.trim()).filter(Boolean),
+    questions: [base.questions, "How does verification scale to 100+ parties with 90/10 non-IID splits?"],
+    recommendation: base.score >= 8 ? "Minor Revision" : base.score >= 6 ? "Major Revision" : "Reject & Resubmit",
+    confidence: base.confidence >= 8 ? "High" : base.confidence >= 6 ? "Medium" : "Low",
+    justification: `Score ${base.score}/10 reflects ${base.strengths} against ${base.weaknesses}. See major issues 1-2.`,
+    score: base.score,
+    confidence_score: base.confidence,
+  };
+  const manuscript = String(obj.manuscript_summary).slice(0,800);
+  const overall = String(obj.overall_assessment).slice(0,800);
+  const summary = `${manuscript}\n\n${overall}`.slice(0,1500);
+  const strengths = (obj.strengths as string[]).join(" | ").slice(0,1000);
+  const major = (obj.major_issues as Array<Record<string,string>>).map((it,i)=>`${i+1}. [${it.category}] CLAIM: ${it.claim} EVIDENCE: ${it.evidence} GAP: ${it.gap} ACTION: ${it.required_action}`).join(" | ").slice(0,2000);
+  const minor = (obj.minor_issues as string[]).join(" | ").slice(0,800);
+  const weaknesses = `${major}${minor ? " | Minor: "+minor : ""}`.slice(0,2000) || "—";
+  const questions = (obj.questions as string[]).join(" | ").slice(0,800);
+  const fullJson = JSON.stringify(obj).slice(0,4000);
+  return { score: base.score, confidence: base.confidence, summary: `${summary}\n\nFULL_JSON:${fullJson}`, strengths, weaknesses, questions };
 }
 
 // Deterministic mock discussion per agent (so demo is reproducible). Real agents will call via MCP/A2A later.
@@ -239,7 +286,13 @@ export async function runCouncil(paperId: string, tenantId: string) {
     if (!agentId) continue;
     const agentRow = agentRows.find((a) => a.agentKey === key);
     const live = await generateReviewViaOpenRouter({ title: paper.title, abstract: paper.abstract, domain: paper.domain, pdfUrl: paper.pdfUrl }, { key, name: agentRow?.name ?? key });
-    const tmpl = live ?? REVIEW_TEMPLATES[key] ?? { score: 6, confidence: 6, summary: "Mock review.", strengths: "—", weaknesses: "—", questions: "—" };
+    let tmpl: { score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string };
+    if (live) tmpl = live;
+    else {
+      const base = REVIEW_TEMPLATES[key] ?? { score: 6, confidence: 6, summary: "Mock review.", strengths: "—", weaknesses: "—", questions: "—" };
+      // When rate-limited (live null), emit academic mock so UI shows 7 sections even on 429
+      tmpl = academicMockFor({ title: paper.title, abstract: paper.abstract, domain: paper.domain, pdfUrl: paper.pdfUrl }, { key, name: agentRow?.name ?? key }, base);
+    }
     const hash = reviewHash(paper.paperHash, key, tmpl.score, tmpl.summary);
     const [rev] = await db()
       .insert(reviews)

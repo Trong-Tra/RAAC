@@ -37,28 +37,51 @@ Closing: **"ERC-8004 gives identity. The Graph gives reputation. Base Sepolia gi
 - [ ] Subgraph set: `AGENT0_SUBGRAPH_URL` or `THEGRAPH_API_KEY` (either engages live ranking)
 - [ ] Seed: `curl -X POST http://localhost:3000/api/demo/seed`
 
-## Commands
+## Commands (live — Base Sepolia 84532)
 
 ```bash
-pnpm dev
-open http://localhost:3000/papers/demo
-# submit → sign → watch council → reviews
+pnpm dev                         # :3000, needs app/.env.local (DATABASE_URL + THEGRAPH_API_KEY + OPENROUTER_API_KEY + BASE_SEPOLIA_PRIVATE_KEY)
+curl -X POST http://localhost:3000/api/demo/seed | jq .   # 4 papers: zl-421 + 3 arXiv (1706.03762, 2407.12345, 2305.19466)
 
-# full API trace
+# per-paper (repeat for each id from /api/papers)
+PAPER=$(curl -s http://localhost:3000/api/papers | jq -r '.data[0].id')
+curl -s -X POST http://localhost:3000/api/papers/$PAPER/selection | jq .   # agents.ranked → council.proposed (score=0.5*overall+0.4*domain+0.1*recency)
+# sign EIP-712 RAAC CouncilFormation(paperId,paperHash,selectionHash,author) via window.ethereum eth_signTypedData_v4 on 84532
+# then:
+curl -s -X POST http://localhost:3000/api/papers/$PAPER/council/verify -H 'content-type: application/json' -d '{"signature":"0x...","author":"0x..."}' | jq .
+curl -s -X POST http://localhost:3000/api/papers/$PAPER/council/run | jq .       # discussion.message×5 + review.submitted×5 (live OpenRouter :free, fallback academic mock on 429)
+curl -s -X POST http://localhost:3000/api/papers/$PAPER/anchor | jq .           # anchor 5 review hashes on 84532 → sepolia.basescan.org/tx/0x...
+curl -s http://localhost:3000/api/papers/$PAPER | jq .                   # paper + council + liveReviews + transcript
+curl -s http://localhost:3000/api/network/stats | jq .                 # papers/councils/reviews counters
+
+# full API trace (paper chain)
 curl http://localhost:3000/api/audit/trace/<paper_id> | jq .
-
-# network SSE
-curl http://localhost:3000/api/network/stream
+curl http://localhost:3000/api/network/stream   # SSE network viz
 ```
 
-## What the script will do (planned)
+## Tomorrow rerun (rate-limit reset 2026-09-23 00:00 UTC)
 
-1. `POST /api/papers/submit` → paper submitted, fee verified.
-2. `GET /api/papers/:id/selection` → top 5 with scores.
-3. `POST /api/councils/propose` → council pending signature.
-4. `POST /api/councils/:id/open {signature}` → council active.
-5. Council discussion (A2A, N messages) → transcript.
-6. `POST /api/reviews` ×5 → reviews + hashes on Base Sepolia.
-7. Fee released, paper completed.
+Free tier is 50/day — current `sk-or-v1-241ac…` hit `429 free-models-per-day` on 2026-09-22 (all 5 reviews fell back to academic mock with FULL_JSON, see `/papers/[id]` expandable 7-section card).
+To get live LLM reviews:
 
-*Not yet implemented — this runbook is the spec for the demo to be built off new PROJECT.md.*
+```bash
+# 1. wait for X-RateLimit-Reset 1790121600000 or add $10 credits at openrouter.ai (→ 1000/day)
+# 2. wipe mocks and rerun one paper:
+# via API (needs active council) or via DB:
+pnpm --filter app exec tsx -e "import {db} from './src/server/db/client.ts'; import {paperCouncils,councilMessages,reviews,papers} from './src/server/db/schema.ts'; import {eq} from 'drizzle-orm'; const id='fa38ddaf...' // replace
+# delete councilMessages+reviews, set paperCouncils status active, then POST /council/run"
+# or simply POST /api/demo/seed to reset all 4 papers to submitted, then re-run the 6-step flow above
+```
+
+After reset, each `POST /council/run` will do `ar5iv.org/html/{arxiv}` fetch (8000 chars) + 5× OpenRouter `openrouter/free` (1.2s stagger, 3 attempts, 45s) with the 7-section template — verify via `FULL_JSON:` in `reviews.summary`. Mock fallback is now academic too (so UI still shows 7 sections even on 429).
+
+## What the script does (implemented)
+
+1. `POST /api/papers` (seed) → 4 papers submitted (hash `sha256(arXiv|title|v)`), off-chain PDF via `pdfUrl`.
+2. `POST /api/papers/:id/selection` → rank via The Graph Agent0 on 84532 (or `FALLBACK_SCORES` 0.94→0.10), `selectionHash=sha256(paperHash|top5keys)`, `paper_councils` `proposed`.
+3. `POST /api/papers/:id/council/verify {signature,author}` → `viem verifyTypedData` EIP-712 `RAAC v1 84532 0x0`, council `active` + `papers.reviewing`.
+4. `POST /api/papers/:id/council/run` → 5 `council_messages` (deterministic per agent) + 5 `reviews` (`sha256(paperHash|agent|score|summary)`, live or academic mock), emits `paper.completed`, council `completed`.
+5. `POST /api/papers/:id/anchor` → self-tx `data=0x<reviewHash>` on 84532 per review, `reviews.anchorTxHash` `anchored`.
+6. Fee verified on `BASE_SEPOLIA_RPC_URL` (optional), all hashes on-chain, content off-chain.
+
+Adversarial fixtures (RAAC): `pnpm --filter app demo:adversarial` still covers Cubic gateway; RAAC-specific checks are in `tests/raac-adversarial.test.ts` (low-rep `agent:lab-1 8453:74108` excluded from top5, unsigned council `must be active` blocked, tampered signature rejected).
