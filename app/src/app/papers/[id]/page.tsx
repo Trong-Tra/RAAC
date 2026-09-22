@@ -359,7 +359,7 @@ export default function PaperDetailPage() {
               </div>
             </div>
 
-            <div style={{ marginTop: 18, display: "grid", gap: 10 }}>
+            <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
               {(liveReviews.length ? liveReviews : reviews).length === 0
                 ? selection.slice(0, 5).map((s) => (
                     <div key={`mock-${s.erc8004}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px solid rgba(255,255,255,0.07)" }}>
@@ -374,16 +374,99 @@ export default function PaperDetailPage() {
                   ))
                 : (liveReviews.length ? liveReviews : reviews).map((r) => {
                     const anchor = (r as unknown as { anchorTxHash?: string | null }).anchorTxHash;
+                    const raw = r as unknown as { summary: string | null; strengths: string | null; weaknesses: string | null; questions: string | null; confidence: number | null };
+                    const summary = raw.summary ?? "";
+                    const isLive = summary.includes("FULL_JSON:");
+                    let parsed: Record<string, unknown> | null = null;
+                    let manuscript = "";
+                    let overall = "";
+                    if (isLive) {
+                      const idx = summary.indexOf("FULL_JSON:");
+                      const head = summary.slice(0, idx).trim();
+                      const parts = head.split("\n\n");
+                      manuscript = parts[0] ?? "";
+                      overall = parts[1] ?? "";
+                      try { parsed = JSON.parse(summary.slice(idx + 10)) as Record<string, unknown>; } catch { parsed = null; }
+                    }
+                    const major = parsed?.major_issues as Array<Record<string,string>> | undefined;
+                    const minor = parsed?.minor_issues as string[] | undefined;
+                    const strengthsArr = parsed?.strengths as string[] | undefined;
+                    const questionsArr = parsed?.questions as string[] | undefined;
+                    const recommendation = parsed?.recommendation as string | undefined;
+                    const confidenceLabel = parsed?.confidence as string | undefined;
+                    const justification = parsed?.justification as string | undefined;
                     return (
-                    <div key={r.id} style={{ padding: "12px 14px", border: "1px solid rgba(255,255,255,0.07)" }}>
-                      <div className="mono" style={{ fontSize: 11, color: "#c9c9c9" }}>
-                        REVIEW {shortHash(r.id)} · SCORE {r.score}/10 · HASH {shortHash(r.reviewHash)} {anchor ? "· ANCHORED" : ""}
+                    <details key={r.id} open={isLive} style={{ border: "1px solid rgba(255,255,255,0.08)", background: isLive ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                      <summary style={{ padding: "12px 14px", cursor: "pointer", listStyle: "none", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                        <span className="mono" style={{ fontSize: 11, color: isLive ? "#e8e8e8" : "#c9c9c9" }}>
+                          REVIEW {shortHash(r.id)} · {r.score}/10 {recommendation ? `· ${recommendation.toUpperCase()}` : ""} · {isLive ? "LIVE" : "MOCK"} {anchor ? "· ANCHORED" : ""}
+                        </span>
+                        <span className="mono" style={{ fontSize: 9, letterSpacing: "0.1em", padding: "3px 7px", border: "1px solid #2a2a2a", color: r.score >= 7 ? "#c9c9c9" : r.score >= 5 ? "#8a8a8a" : "#ff6b6b" }}>{r.score}/10</span>
+                      </summary>
+                      <div style={{ padding: "0 14px 14px", display: "grid", gap: 14 }}>
+                        <div className="mono" style={{ fontSize: 9, letterSpacing: "0.1em", color: "#3f3f3f" }}>HASH {shortHash(r.reviewHash)} · CONF {raw.confidence ?? "—"}/10 {confidenceLabel ? `· ${confidenceLabel.toUpperCase()}` : ""} {anchor && <a href={`https://sepolia.basescan.org/tx/${anchor}`} target="_blank" rel="noreferrer" style={{ color: "#8a8a8a" }}>· BASESCAN {shortHash(anchor)} ↗</a>}</div>
+                        {!isLive ? (
+                          <>
+                            <p style={{ fontSize: 13, lineHeight: 1.6, color: "#8a8a8a" }}>{summary || "—"}</p>
+                            {raw.strengths && <div style={{ fontSize: 12, lineHeight: 1.6, color: "#5a5a5a" }}><span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#6a6a6a" }}>STRENGTHS — </span>{raw.strengths}</div>}
+                            {raw.weaknesses && <div style={{ fontSize: 12, lineHeight: 1.6, color: "#5a5a5a" }}><span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#6a6a6a" }}>WEAKNESSES — </span>{raw.weaknesses}</div>}
+                            {raw.questions && <div style={{ fontSize: 12, lineHeight: 1.6, color: "#5a5a5a" }}><span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#6a6a6a" }}>QUESTIONS — </span>{raw.questions}</div>}
+                            <div className="mono" style={{ fontSize: 9, letterSpacing: "0.1em", color: "#5a3a3a", border: "1px dashed #3a2a2a", padding: "8px 10px" }}>⚠ MOCK REVIEW — OpenRouter free tier rate-limit hit (50/day). Live academic review will show 7 sections with claim/evidence/gap/action per major issue. Reset daily at 00:00 UTC or add 10 credits to OpenRouter.</div>
+                          </>
+                        ) : (
+                          <>
+                            <div>
+                              <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "#6a6a6a" }}>[1] MANUSCRIPT SUMMARY</div>
+                              <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.65, color: "#c9c9c9" }}>{manuscript || (parsed?.manuscript_summary as string) || "—"}</p>
+                            </div>
+                            <div>
+                              <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "#6a6a6a" }}>[2] OVERALL ASSESSMENT</div>
+                              <p style={{ marginTop: 6, fontSize: 13, lineHeight: 1.65, color: "#8a8a8a" }}>{overall || (parsed?.overall_assessment as string) || "—"}</p>
+                              {recommendation && <div className="mono" style={{ marginTop: 6, fontSize: 10, letterSpacing: "0.08em", color: "#e8e8e8" }}>→ {recommendation.toUpperCase()} · CONFIDENCE {confidenceLabel ?? raw.confidence} {justification ? `· ${justification.slice(0,200)}` : ""}</div>}
+                            </div>
+                            {major && major.length > 0 && (
+                              <div>
+                                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "#6a6a6a" }}>[3] MAJOR ISSUES — {major.length}</div>
+                                <div style={{ marginTop: 8, display: "grid", gap: 10 }}>
+                                  {major.map((it, idx) => (
+                                    <div key={idx} style={{ padding: "10px 12px", border: "1px solid #1e1e1e", background: "#0a0a0a" }}>
+                                      <div className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "#e8e8e8" }}>{idx+1}. [{(it.category ?? "ISSUE").toUpperCase()}]</div>
+                                      <div style={{ marginTop: 6, fontSize: 12, lineHeight: 1.6, color: "#8a8a8a" }}><span style={{ color: "#6a6a6a" }}>CLAIM:</span> {it.claim || "—"}</div>
+                                      <div style={{ fontSize: 12, lineHeight: 1.6, color: "#8a8a8a" }}><span style={{ color: "#6a6a6a" }}>EVIDENCE:</span> {it.evidence || "—"}</div>
+                                      <div style={{ fontSize: 12, lineHeight: 1.6, color: "#c9a6a6" }}><span style={{ color: "#6a6a6a" }}>GAP:</span> {it.gap || "—"}</div>
+                                      <div style={{ fontSize: 12, lineHeight: 1.6, color: "#a6c9a6" }}><span style={{ color: "#6a6a6a" }}>REQUIRED:</span> {it.required_action || "—"}</div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {minor && minor.length > 0 && (
+                              <div>
+                                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "#6a6a6a" }}>[4] MINOR ISSUES</div>
+                                <ul style={{ marginTop: 6, paddingLeft: 18, fontSize: 12, lineHeight: 1.6, color: "#5a5a5a" }}>{minor.map((m,i)=><li key={i}>{m}</li>)}</ul>
+                              </div>
+                            )}
+                            <div>
+                              <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "#6a6a6a" }}>[5] STRENGTHS</div>
+                              <ul style={{ marginTop: 6, paddingLeft: 18, fontSize: 12, lineHeight: 1.6, color: "#8a8a8a" }}>{(strengthsArr ?? (raw.strengths ? [raw.strengths] : [])).map((s,i)=><li key={i}>{s}</li>)}</ul>
+                            </div>
+                            {questionsArr && questionsArr.length > 0 && (
+                              <div>
+                                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "#6a6a6a" }}>[6] QUESTIONS</div>
+                                <ul style={{ marginTop: 6, paddingLeft: 18, fontSize: 12, lineHeight: 1.6, color: "#5a5a5a" }}>{questionsArr.map((q,i)=><li key={i}>{q}</li>)}</ul>
+                              </div>
+                            )}
+                            {justification && (
+                              <div>
+                                <div className="mono" style={{ fontSize: 9, letterSpacing: "0.14em", color: "#6a6a6a" }}>[7] JUSTIFICATION</div>
+                                <p style={{ marginTop: 6, fontSize: 12, lineHeight: 1.6, color: "#8a8a8a" }}>{justification}</p>
+                              </div>
+                            )}
+                            {(raw.weaknesses && !major) && <div style={{ fontSize: 12, lineHeight: 1.6, color: "#5a5a5a" }}><span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#6a6a6a" }}>WEAKNESSES — </span>{raw.weaknesses}</div>}
+                          </>
+                        )}
                       </div>
-                      <p style={{ marginTop: 6, fontSize: 13, color: "#8a8a8a" }}>{r.summary ?? "—"}</p>
-                      {(r as unknown as { strengths?: string }).strengths && <div className="mono" style={{ marginTop: 6, fontSize: 10, letterSpacing: "0.08em", color: "#5a5a5a" }}>STRENGTHS: {(r as unknown as { strengths: string }).strengths}</div>}
-                      {(r as unknown as { weaknesses?: string }).weaknesses && <div className="mono" style={{ marginTop: 4, fontSize: 10, letterSpacing: "0.08em", color: "#5a5a5a" }}>WEAKNESSES: {(r as unknown as { weaknesses: string }).weaknesses}</div>}
-                      {anchor && <div className="mono" style={{ marginTop: 6, fontSize: 10, letterSpacing: "0.08em", color: "#8a8a8a" }}><a href={`https://sepolia.basescan.org/tx/${anchor}`} target="_blank" rel="noreferrer" style={{ color: "#8a8a8a" }}>VIEW ON BASESCAN → {shortHash(anchor)}</a></div>}
-                    </div>
+                    </details>
                   );})}
             </div>
 
