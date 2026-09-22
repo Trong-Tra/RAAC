@@ -66,13 +66,30 @@ async function fetchArxivFullText(pdfUrl: string | null): Promise<string | null>
   } catch { return null; } finally { clearTimeout(t); }
 }
 
+function getOpenRouterKeys(): string[] {
+  const raw: string[] = [];
+  const a = (process.env.OPENROUTER_API_KEY ?? "").trim();
+  const b = (process.env.OPENROUTER_API_KEY_2 ?? "").trim();
+  const c = (process.env.OPENROUTER_API_KEYS ?? "").trim();
+  for (const chunk of [a, b, c]) {
+    if (!chunk) continue;
+    for (const k of chunk.split(",")) {
+      const t = k.trim();
+      if (t && !raw.includes(t)) raw.push(t);
+    }
+  }
+  return raw;
+}
+
 async function generateReviewViaOpenRouter(paper: { title: string; abstract: string; domain: string; pdfUrl: string | null }, agent: { key: string; name: string }): Promise<{ score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } | null> {
-  const key = (process.env.OPENROUTER_API_KEY ?? "").trim();
-  if (!key) return null;
+  const keys = getOpenRouterKeys();
+  if (keys.length === 0) return null;
   const fullText = await fetchArxivFullText(paper.pdfUrl);
   // Small stagger to avoid 429 on free tier (5 sequential reviews)
   await new Promise((r) => setTimeout(r, 1200));
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let ki = 0; ki < keys.length; ki++) {
+    const key = keys[ki];
+    for (let attempt = 0; attempt < 3; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 45000);
     try {
@@ -141,13 +158,21 @@ JSON shape you MUST return:
       }),
     });
     if (res.status === 429) {
-      // free-tier daily limit — no point retrying 3×, surface as null so caller falls back to academic mock
+      // free-tier daily limit on this key — try next key if available, else fall back to academic mock
       clearTimeout(timer);
+      if (ki < keys.length - 1) {
+        await new Promise((r) => setTimeout(r, 500));
+        break; // break attempt loop → next key
+      }
       return null;
     }
     if (!res.ok) {
       clearTimeout(timer);
       if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      if (ki < keys.length - 1) {
+        await new Promise((r) => setTimeout(r, 500));
+        break;
+      }
       return null;
     }
     const body = (await res.json().catch(() => null)) as { choices?: Array<{ message?: { content?: unknown } }> } | null;
@@ -155,6 +180,10 @@ JSON shape you MUST return:
     if (typeof content !== "string") {
       clearTimeout(timer);
       if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      if (ki < keys.length - 1) {
+        await new Promise((r) => setTimeout(r, 500));
+        break;
+      }
       return null;
     }
     const obj = extractJsonObject(content) as Record<string, unknown> | null;
@@ -168,6 +197,10 @@ JSON shape you MUST return:
       }
       clearTimeout(timer);
       if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      if (ki < keys.length - 1) {
+        await new Promise((r) => setTimeout(r, 500));
+        break;
+      }
       return null;
     }
     const score = obj.score !== undefined ? Math.min(10, Math.max(1, Math.round(Number(obj.score)))) : (obj.recommendation === "Accept" ? 9 : obj.recommendation === "Minor Revision" ? 7 : obj.recommendation === "Major Revision" ? 5 : 3);
@@ -186,7 +219,12 @@ JSON shape you MUST return:
     } catch (e) {
       clearTimeout(timer);
       if (attempt < 2) { await new Promise((r) => setTimeout(r, 2000)); continue; }
+      if (ki < keys.length - 1) {
+        await new Promise((r) => setTimeout(r, 500));
+        break;
+      }
       return null;
+    }
     }
   }
   return null;

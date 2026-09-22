@@ -24,6 +24,10 @@ const schema = z.object({
   HEDERA_OPERATOR_ID: z.string().min(1).optional(),
   HEDERA_OPERATOR_KEY: z.string().min(1).optional(),
   APPROVER_PRIVATE_KEYS: z.string().min(1).optional(),
+  OPENROUTER_API_KEY: z.string().min(1).optional(),
+  OPENROUTER_API_KEY_2: z.string().min(1).optional(),
+  OPENROUTER_API_KEYS: z.string().min(1).optional(),
+  CHAT_MODEL: z.string().min(1).optional(),
 });
 
 export type Config = z.infer<typeof schema>;
@@ -57,6 +61,10 @@ export function config(): Config {
       AGENT0_SUBGRAPH_URL: parsed.data.AGENT0_SUBGRAPH_URL ? "set" : "unset",
       THEGRAPH_API_KEY: parsed.data.THEGRAPH_API_KEY ? "set" : "unset",
       GITHUB_TOKEN: parsed.data.GITHUB_TOKEN ? "set" : "unset",
+      OPENROUTER_API_KEY: parsed.data.OPENROUTER_API_KEY ? "set" : "unset",
+      OPENROUTER_API_KEY_2: parsed.data.OPENROUTER_API_KEY_2 ? "set" : "unset",
+      OPENROUTER_API_KEYS: parsed.data.OPENROUTER_API_KEYS ? "set" : "unset",
+      CHAT_MODEL: parsed.data.CHAT_MODEL ? parsed.data.CHAT_MODEL : "unset",
     });
   }
   return globalThis.__cubicConfig ?? globalThis.__raacConfig!;
