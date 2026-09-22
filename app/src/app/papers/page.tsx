@@ -54,11 +54,7 @@ export default function PapersPage() {
         <p className="mono" style={{ marginTop: 14, fontSize: 9.5, letterSpacing: "0.16em", color: "#3f3f3f" }}>
           BASE SEPOLIA 84532 · HASHES ON-CHAIN · CONTENT OFF-CHAIN
         </p>
-        <div style={{ marginTop: 18 }}>
-          <Link href="/papers/new" className="mono" style={{ display: "inline-block", padding: "12px 22px", background: "#f4f4f4", color: "#000", border: "1px solid #f4f4f4", fontSize: 11, letterSpacing: "0.14em", textDecoration: "none" }}>
-            + NEW PAPER → 84532
-          </Link>
-        </div>
+        <p className="mono" style={{ marginTop: 12, fontSize: 9.5, letterSpacing: "0.12em", color: "#3f3f3f" }}>SUBMIT → CONSOLE (WALLET REQUIRED) — global is read-only</p>
       </div>
 
       <div className="section-pad">
@@ -71,7 +67,7 @@ export default function PapersPage() {
         ) : papers.length === 0 ? (
           <MacWindow title="PAPERS — EMPTY (GLOBAL)">
             <div style={{ padding: "26px 24px 28px", color: "#8a8a8a", fontSize: 14 }}>
-              No papers yet — submit an arXiv via <span className="mono" style={{ color: "#c9c9c9" }}>/console</span> (wallet) or <span className="mono" style={{ color: "#c9c9c9" }}>/papers/new</span>.
+              No papers yet — submit an arXiv via <span className="mono" style={{ color: "#c9c9c9" }}>/console</span> (connect wallet).
             </div>
           </MacWindow>
         ) : (
