@@ -70,21 +70,73 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
   const key = (process.env.OPENROUTER_API_KEY ?? "").trim();
   if (!key) return null;
   const fullText = await fetchArxivFullText(paper.pdfUrl);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
-  try {
-    const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+  // Small stagger to avoid 429 on free tier (5 sequential reviews)
+  await new Promise((r) => setTimeout(r, 1200));
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 45000);
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       signal: controller.signal,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model: chatModel(),
+        max_tokens: 2500,
         messages: [
           {
             role: "system",
-            content: `You are ${agent.name} (${agent.key}), a peer reviewer expert in ${paper.domain}. Council of 5 discussed the paper on arXiv ${paper.pdfUrl ?? ""} — you have read the full paper via arXiv (DB only stores URL, not 80-page content, per RAAC design). Return STRICT JSON only: {"score":1-10,"confidence":1-10,"summary":"1-2 sentences","strengths":"bullet or short","weaknesses":"bullet or short","questions":"1-2 questions"}. No prose outside JSON. Be concise, critical, specific to the full paper.`,
+            content: `You are ${agent.name} (${agent.key}), an expert peer reviewer in ${paper.domain} for RAAC (Routing, Accountability, Auditable Councils) on Base Sepolia 84532. You have read the FULL paper via arXiv ${paper.pdfUrl ?? ""} (DB only stores URL+abstract for UI, you read via arXiv). Council of 5 discussed, now write YOUR independent academic review following EXACTLY the 7-section template below. Return STRICT JSON only, no prose outside JSON. Be precise, critical, and cite specific pointers (section, equation, table, number, quote).
+
+=== ACADEMIC REVIEW TEMPLATE ===
+[1] MANUSCRIPT SUMMARY (1 short paragraph, max 150 words)
+   - State problem, proposed approach, and claimed contributions
+   - Use the paper's OWN terminology for key mechanisms
+   - Do NOT evaluate here — only restate
+
+[2] OVERALL ASSESSMENT (2-4 sentences)
+   - One-sentence verdict on what the paper IS
+   - State the single most important issue in one sentence
+   - End with overall recommendation and its justification
+
+[3] MAJOR ISSUES (numbered list, aim for 4-8 items)
+   For EACH issue, follow:
+   (a) CLAIM — what paper asserts
+   (b) EVIDENCE — what paper actually shows, with specific pointer (section/equation/table/number/quote)
+   (c) GAP — precisely where claim and evidence diverge, why it matters
+   (d) REQUIRED ACTION — what authors must do (experiment, proof, rewrite, limitation statement)
+   Categories to check in order: Novelty, Claims vs. proof, Hidden assumptions, Security soundness, Technical soundness (pick weakest mechanism deep), Evaluation rigor, Related work (last 2-3 years), Scope/clarity
+
+[4] MINOR ISSUES (bullet list)
+   - Notation, undefined symbols, spelling ("Rényi"), missing definitions, figure legibility, terminology misuse — each with location
+
+[5] STRENGTHS (numbered 3-6, substantive)
+   - Specific, not generic. Name exact experiment, theorem, or design. If none, say so and lower score.
+
+[6] QUESTIONS FOR THE AUTHORS (optional, 2-5)
+   - Clarification questions for editor
+
+[7] RECOMMENDATION + CONFIDENCE
+   - One of: Accept / Minor Revision / Major Revision / Reject & Resubmit / Reject
+   - Confidence: High (expert in exact area) / Medium / Low
+   - One-paragraph justification referencing top 2-3 issues from [3]
+
+JSON shape you MUST return:
+{
+  "manuscript_summary": "string (max 150 words)",
+  "overall_assessment": "string (2-4 sentences)",
+  "major_issues": [{"claim":"...","evidence":"...","gap":"...","required_action":"...","category":"Novelty|..."}],
+  "minor_issues": ["..."],
+  "strengths": ["..."],
+  "questions": ["..."],
+  "recommendation": "Accept|Minor Revision|Major Revision|Reject & Resubmit|Reject",
+  "confidence": "High|Medium|Low",
+  "justification": "string",
+  "score": 1-10,
+  "confidence_score": 1-10
+}`,
           },
-          { role: "user", content: `Title: ${paper.title}\nDomain: ${paper.domain}\nAbstract: ${paper.abstract}\n${fullText ? `Full paper (first 8000 chars from ${paper.pdfUrl}):\n${fullText}\n` : `PDF: ${paper.pdfUrl ?? "none — abstract only"}\n`}Write your review as JSON.` },
+          { role: "user", content: `Title: ${paper.title}\nDomain: ${paper.domain}\nAbstract: ${paper.abstract}\n${fullText ? `Full paper (first 8000 chars from ${paper.pdfUrl}):\n${fullText}\n` : `PDF: ${paper.pdfUrl ?? "none — abstract only"}\n`}Write your review JSON now.` },
         ],
       }),
     });
@@ -93,20 +145,35 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
     const content = body?.choices?.[0]?.message?.content;
     if (typeof content !== "string") return null;
     const obj = extractJsonObject(content) as Record<string, unknown> | null;
-    if (!obj || typeof obj.score !== "number" || typeof obj.summary !== "string") return null;
-    const score = Math.min(10, Math.max(1, Math.round(Number(obj.score))));
-    const confidence = obj.confidence !== undefined ? Math.min(10, Math.max(1, Math.round(Number(obj.confidence)))) : 7;
-    const summary = String(obj.summary).slice(0, 400);
-    const strengths = String(obj.strengths ?? "—").slice(0, 500);
-    const weaknesses = String(obj.weaknesses ?? "—").slice(0, 500);
-    const questions = String(obj.questions ?? "—").slice(0, 500);
-    if (!summary) return null;
-    return { score, confidence, summary, strengths, weaknesses, questions };
-  } catch {
-    return null;
-  } finally {
+    if (!obj || typeof obj.manuscript_summary !== "string" || typeof obj.overall_assessment !== "string") {
+      // Fallback: try legacy shape (score/summary) if model ignored template — still return something
+      if (obj && typeof (obj as Record<string, unknown>).score === "number" && typeof (obj as Record<string, unknown>).summary === "string") {
+        const score = Math.min(10, Math.max(1, Math.round(Number((obj as Record<string, unknown>).score))));
+        const confidence = (obj as Record<string, unknown>).confidence !== undefined ? Math.min(10, Math.max(1, Math.round(Number((obj as Record<string, unknown>).confidence)))) : 7;
+        return { score, confidence, summary: String((obj as Record<string, unknown>).summary).slice(0, 800), strengths: String((obj as Record<string, unknown>).strengths ?? "—").slice(0, 800), weaknesses: String((obj as Record<string, unknown>).weaknesses ?? "—").slice(0, 1000), questions: String((obj as Record<string, unknown>).questions ?? "—").slice(0, 800) };
+      }
+      return null;
+    }
+    const score = obj.score !== undefined ? Math.min(10, Math.max(1, Math.round(Number(obj.score)))) : (obj.recommendation === "Accept" ? 9 : obj.recommendation === "Minor Revision" ? 7 : obj.recommendation === "Major Revision" ? 5 : 3);
+    const confidence = obj.confidence_score !== undefined ? Math.min(10, Math.max(1, Math.round(Number(obj.confidence_score)))) : (obj.confidence === "High" ? 9 : obj.confidence === "Medium" ? 7 : 5);
+    const manuscript = String(obj.manuscript_summary).slice(0, 800);
+    const overall = String(obj.overall_assessment).slice(0, 800);
+    const summary = `${manuscript}\n\n${overall}`.slice(0, 1500);
+    const strengths = Array.isArray(obj.strengths) ? (obj.strengths as string[]).join(" | ").slice(0, 1000) : String(obj.strengths ?? "—").slice(0, 1000);
+    const major = Array.isArray(obj.major_issues) ? (obj.major_issues as Array<Record<string, string>>).map((it, i) => `${i + 1}. [${it.category ?? "Issue"}] CLAIM: ${it.claim ?? ""} EVIDENCE: ${it.evidence ?? ""} GAP: ${it.gap ?? ""} ACTION: ${it.required_action ?? ""}`).join(" | ").slice(0, 2000) : "";
+    const minor = Array.isArray(obj.minor_issues) ? (obj.minor_issues as string[]).join(" | ").slice(0, 800) : "";
+    const weaknesses = `${major}${minor ? " | Minor: " + minor : ""}`.slice(0, 2000) || "—";
+    const questions = Array.isArray(obj.questions) ? (obj.questions as string[]).join(" | ").slice(0, 800) : String(obj.questions ?? "—").slice(0, 800);
+    const fullJson = JSON.stringify(obj).slice(0, 4000);
     clearTimeout(timer);
+    return { score, confidence, summary: `${summary}\n\nFULL_JSON:${fullJson}`, strengths, weaknesses, questions };
+    } catch (e) {
+      clearTimeout(timer);
+      if (attempt < 2) { await new Promise((r) => setTimeout(r, 2000)); continue; }
+      return null;
+    }
   }
+  return null;
 }
 
 // Deterministic mock discussion per agent (so demo is reproducible). Real agents will call via MCP/A2A later.
