@@ -42,11 +42,36 @@ function extractJsonObject(text: string): unknown {
   return null;
 }
 
+async function fetchArxivFullText(pdfUrl: string | null): Promise<string | null> {
+  if (!pdfUrl || !pdfUrl.includes("arxiv.org")) return null;
+  const m = pdfUrl.match(/(\d{4}\.\d{4,5})(v\d+)?/);
+  const id = m ? m[1] : null;
+  if (!id) return null;
+  const controller = new AbortController();
+  const t = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(`https://ar5iv.org/html/${id}`, { signal: controller.signal, headers: { "User-Agent": "RAAC/1.0" } });
+    if (!res.ok) return null;
+    const html = await res.text();
+    // Extract main paper text: try ltx_page_main, else fallback to body
+    let main = html;
+    const mainMatch = html.match(/<div[^>]*class="[^"]*ltx_page_main[^"]*"[^>]*>([\s\S]*?)<div[^>]*class="[^"]*ltx_page_footer[^"]*"/);
+    if (mainMatch) main = mainMatch[1];
+    // strip tags, normalize, find Abstract start to skip head JS
+    let text = main.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+    const absIdx = text.indexOf("Abstract");
+    if (absIdx > 0 && absIdx < 5000) text = text.slice(absIdx);
+    text = text.slice(0, 8000);
+    return text.length > 800 ? text : null;
+  } catch { return null; } finally { clearTimeout(t); }
+}
+
 async function generateReviewViaOpenRouter(paper: { title: string; abstract: string; domain: string; pdfUrl: string | null }, agent: { key: string; name: string }): Promise<{ score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string } | null> {
   const key = (process.env.OPENROUTER_API_KEY ?? "").trim();
   if (!key) return null;
+  const fullText = await fetchArxivFullText(paper.pdfUrl);
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 15000);
+  const timer = setTimeout(() => controller.abort(), 20000);
   try {
     const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -57,9 +82,9 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
         messages: [
           {
             role: "system",
-            content: `You are ${agent.name} (${agent.key}), a peer reviewer expert in ${paper.domain}. Council of 5 reviewers discussed the paper, now write YOUR independent review. The full paper PDF is at ${paper.pdfUrl ?? "no URL — use abstract"} — you have read it via arXiv. Return STRICT JSON only: {"score":1-10,"confidence":1-10,"summary":"1-2 sentences","strengths":"bullet or short","weaknesses":"bullet or short","questions":"1-2 questions"}. No prose outside JSON. Be concise, critical, and specific to the paper (beyond the abstract where possible).`,
+            content: `You are ${agent.name} (${agent.key}), a peer reviewer expert in ${paper.domain}. Council of 5 discussed the paper on arXiv ${paper.pdfUrl ?? ""} — you have read the full paper via arXiv (DB only stores URL, not 80-page content, per RAAC design). Return STRICT JSON only: {"score":1-10,"confidence":1-10,"summary":"1-2 sentences","strengths":"bullet or short","weaknesses":"bullet or short","questions":"1-2 questions"}. No prose outside JSON. Be concise, critical, specific to the full paper.`,
           },
-          { role: "user", content: `Paper: ${paper.title}\nDomain: ${paper.domain}\nAbstract: ${paper.abstract}\nPDF: ${paper.pdfUrl ?? "none — abstract only"}\n\nWrite your review as JSON.` },
+          { role: "user", content: `Title: ${paper.title}\nDomain: ${paper.domain}\nAbstract: ${paper.abstract}\n${fullText ? `Full paper (first 8000 chars from ${paper.pdfUrl}):\n${fullText}\n` : `PDF: ${paper.pdfUrl ?? "none — abstract only"}\n`}Write your review as JSON.` },
         ],
       }),
     });
