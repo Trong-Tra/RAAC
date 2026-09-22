@@ -46,7 +46,7 @@ export default function SiteHeader({ active }: { active?: string }) {
 
       {address ? (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: isCorrectChain ? "#6f6" : "#fa6", border: `1px solid ${isCorrectChain ? "#2a4" : "#a50"}`, padding: "4px 8px", minWidth: 132, textAlign: "center", display: "inline-block" }}>
+          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: isCorrectChain ? "#6f6" : "#fa6", border: `1px solid ${isCorrectChain ? "#2a4" : "#a50"}`, padding: "0 16px", minWidth: 132, height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box" }}>
             {chainId ? `Chain-ID: ${chainId}` : "Chain-ID: …"}
           </span>
           <button
@@ -61,6 +61,12 @@ export default function SiteHeader({ active }: { active?: string }) {
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              height: 32,
+              padding: "0 16px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxSizing: "border-box",
             }}
             title={isCorrectChain ? "Disconnect" : "Switch to Base Sepolia 84532"}
           >
@@ -76,6 +82,12 @@ export default function SiteHeader({ active }: { active?: string }) {
             cursor: "pointer",
             fontSize: 11,
             letterSpacing: "0.14em",
+            height: 32,
+            padding: "0 16px",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            boxSizing: "border-box",
           }}
         >
           CONNECT WALLET
