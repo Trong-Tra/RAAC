@@ -25,6 +25,9 @@ export default function ConsoleOverview() {
   const [stats, setStats] = useState<{ papers_submitted: number; councils_formed: number; reviews_submitted: number; reviews_anchored: number } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [arxivUrl, setArxivUrl] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [liveCounts, setLiveCounts] = useState<Record<string, number>>({});
 
   const load = () => {
     fetch("/api/papers", { cache: "no-store" })
@@ -115,16 +118,28 @@ export default function ConsoleOverview() {
   const run = async (id: string) => {
     setBusy(id);
     setMsg(null);
+    // poll live counts so each review appears as agent finishes (no refresh)
+    const poll = setInterval(async () => {
+      try {
+        const rr = await fetch(`/api/papers/${id}/council/run`, { cache: "no-store" }).then((r) => r.json());
+        if (rr.ok) setLiveCounts((m) => ({ ...m, [id]: (rr.data.reviews?.length ?? 0) }));
+        if (rr.ok && (rr.data.reviews?.length ?? 0) >= 5) clearInterval(poll);
+      } catch {}
+    }, 1500);
     try {
       const r = await fetch(`/api/papers/${id}/council/run`, { method: "POST" });
       const j = await r.json();
       if (!j.ok) throw new Error(j.error?.message);
       setMsg(`RAN ${j.data.reviews.length} REVIEWS → 84532`);
+      setLiveCounts((m) => ({ ...m, [id]: j.data.reviews.length }));
       load();
     } catch (e) {
       setMsg(e instanceof Error ? e.message : String(e));
     } finally {
+      clearInterval(poll);
       setBusy(null);
+      // final poll to catch any last review
+      fetch(`/api/papers/${id}/council/run`, { cache: "no-store" }).then((r)=>r.json()).then((jj)=>{ if(jj.ok) setLiveCounts((m)=>({...m,[id]:jj.data.reviews?.length??0}));}).catch(()=>{});
     }
   };
 
@@ -144,8 +159,33 @@ export default function ConsoleOverview() {
     }
   };
 
+  const submitArxiv = async () => {
+    const url = arxivUrl.trim();
+    if (!url) { setMsg("Paste an arXiv URL — e.g. https://arxiv.org/abs/1706.03762"); return; }
+    if (!url.includes("arxiv.org") && !/^\d{4}\.\d{4,5}/.test(url)) { setMsg("Invalid arXiv URL or ID"); return; }
+    setSubmitting(true);
+    setMsg(null);
+    try {
+      const res = await fetch("/api/papers", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ arxivUrl: url, authorAddress: address && /^0x[0-9a-fA-F]{40}$/.test(address) ? address : undefined }),
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error?.message ?? "submit failed");
+      setMsg(`SUBMITTED ${j.data.title.slice(0,40)}… → ${j.data.id.slice(0,8)} · ${j.data.domain}`);
+      setArxivUrl("");
+      load();
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div>
+      <style>{`@keyframes raac-pulse { 0%,100%{opacity:1} 50%{opacity:0.25}} @keyframes raac-shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0}}`}</style>
       <PageHead
         eyebrow="CONSOLE — RAAC DEMO"
         title="Papers → councils → reviews."
@@ -162,6 +202,19 @@ export default function ConsoleOverview() {
           { value: "84532", label: "CHAIN" },
         ]}
       />
+
+      {/* LIVE-DEMO: arXiv digest → mock network picks top 5 (always our 5) */}
+      <div style={{ marginTop: 18, padding: "14px 16px", border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)", display: "grid", gap: 12 }}>
+        <div className="mono" style={{ fontSize: 10, letterSpacing: "0.14em", color: "#6a6a6a" }}>LIVE-DEMO — ARXIV → DIGEST → 5 AGENTS (MOCK PICK, ALWAYS OUR 5)</div>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+          <input value={arxivUrl} onChange={(e) => setArxivUrl(e.target.value)} placeholder="https://arxiv.org/abs/1706.03762 or 1706.03762" style={{ flex: "1 1 320px", minWidth: 240, background: "#0a0a0a", border: "1px solid #2a2a2a", color: "#e8e8e8", padding: "11px 14px", fontSize: 13, outline: "none" }} />
+          <button onClick={submitArxiv} disabled={submitting} className="mono" style={{ padding: "11px 18px", background: "#f4f4f4", color: "#000", border: "1px solid #f4f4f4", fontSize: 11, letterSpacing: "0.14em", cursor: submitting ? "wait" : "pointer", opacity: submitting ? 0.7 : 1 }}>
+            {submitting ? "DIGESTING…" : "SUBMIT ARXIV → CONSOLE"}
+          </button>
+        </div>
+        <div className="mono" style={{ fontSize: 9, letterSpacing: "0.08em", color: "#3f3f3f" }}>CONNECT WALLET FIRST → author is your 0x… on 84532; else 0xDead. We fetch title/abstract/categories from arXiv, hash sha256(arxivId|title) → paperHash, digest domain automatically.</div>
+        {!address && <div className="mono" style={{ fontSize: 9, letterSpacing: "0.1em", color: "#8a8a8a" }}>⚠ Wallet not connected — submit will be 0xDead (demo). Connect to sign as yourself.</div>}
+      </div>
 
       <div style={{ marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap" }}>
         <button onClick={reset} disabled={busy === "reset"} className="mono btn-outline" style={{ padding: "10px 18px", fontSize: 11, letterSpacing: "0.14em", cursor: busy ? "wait" : "pointer", background: busy === "reset" ? "#111" : "transparent" }}>
@@ -183,21 +236,38 @@ export default function ConsoleOverview() {
         ) : papers.length === 0 ? (
           <Panel title="PAPERS — EMPTY"><div style={{ fontSize: 13, color: "#8a8a8a" }}>No papers — hit RESET DEMO.</div></Panel>
         ) : (
-          papers.map((p) => (
+          papers.map((p) => {
+            const isRunning = busy === p.id;
+            const cnt = liveCounts[p.id] ?? 0;
+            return (
             <Panel key={p.id} title={`${p.title.slice(0, 48)} — ${p.status.toUpperCase()} · ${p.domain.toUpperCase()}`}>
               <div style={{ display: "grid", gap: 12 }}>
                 <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#5a5a5a" }}>
-                  {shortHash(p.paperHash)} · {new Date(p.createdAt).toLocaleDateString()} · {p.id.slice(0, 8)}
+                  {shortHash(p.paperHash)} · {new Date(p.createdAt).toLocaleDateString()} · {p.id.slice(0, 8)} {isRunning && `· ${cnt}/5 REVIEWS`}
                 </div>
+                {isRunning && (
+                  <div style={{ display: "grid", gap: 6 }}>
+                    <div className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: "#e8e8e8", display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ width: 7, height: 7, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />
+                      COUNCIL RUNNING — {cnt}/5 REVIEWS (each appears as agent finishes)
+                    </div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[0,1,2,3,4].map((i) => (
+                        <div key={i} style={{ flex: 1, height: 4, background: i < cnt ? "#e8e8e8" : "#1a1a1a", border: "1px solid #2a2a2a", transition: "background 0.4s" }} />
+                      ))}
+                    </div>
+                    <div style={{ height: 4, background: "linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%)", backgroundSize: "200% 100%", animation: "raac-shimmer 1.4s linear infinite", borderRadius: 2, opacity: 0.7 }} />
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button onClick={() => propose(p.id)} disabled={busy === p.id} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer" }}>
+                  <button onClick={() => propose(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", opacity: busy && busy!==p.id ? 0.5 : 1 }}>
                     PROPOSE
                   </button>
-                  <button onClick={() => sign(p)} disabled={busy === p.id} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer" }}>
+                  <button onClick={() => sign(p)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", opacity: busy && busy!==p.id ? 0.5 : 1 }}>
                     SIGN (84532)
                   </button>
-                  <button onClick={() => run(p.id)} disabled={busy === p.id} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer" }}>
-                    RUN → 5 REVIEWS
+                  <button onClick={() => run(p.id)} disabled={!!busy} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", cursor: busy ? "wait" : "pointer", background: isRunning ? "#111" : "transparent" }}>
+                    {isRunning ? `RUNNING ${cnt}/5…` : "RUN → 5 REVIEWS"}
                   </button>
                   <Link href={`/papers/${p.id}`} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", textDecoration: "none" }}>
                     OPEN →
@@ -205,7 +275,7 @@ export default function ConsoleOverview() {
                 </div>
               </div>
             </Panel>
-          ))
+            );})
         )}
       </div>
 

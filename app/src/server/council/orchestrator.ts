@@ -223,7 +223,7 @@ JSON shape you MUST return:
     const minor = Array.isArray(obj.minor_issues) ? (obj.minor_issues as string[]).join(" | ").slice(0, 800) : "";
     const weaknesses = `${major}${minor ? " | Minor: " + minor : ""}`.slice(0, 2000) || "—";
     const questions = Array.isArray(obj.questions) ? (obj.questions as string[]).join(" | ").slice(0, 800) : String(obj.questions ?? "—").slice(0, 800);
-    const fullJson = JSON.stringify(obj).slice(0, 4000);
+    const fullJson = JSON.stringify(obj).slice(0, 8000);
     clearTimeout(timer);
     return { score, confidence, summary: `${summary}\n\nFULL_JSON:${fullJson}`, strengths, weaknesses, questions };
     } catch (e) {
@@ -276,7 +276,7 @@ function academicMockFor(paper: { title: string; abstract: string; domain: strin
   const minor = (obj.minor_issues as string[]).join(" | ").slice(0,800);
   const weaknesses = `${major}${minor ? " | Minor: "+minor : ""}`.slice(0,2000) || "—";
   const questions = (obj.questions as string[]).join(" | ").slice(0,800);
-  const fullJson = JSON.stringify(obj).slice(0,4000);
+  const fullJson = JSON.stringify(obj).slice(0,8000);
   return { score: base.score, confidence: base.confidence, summary: `${summary}\n\nFULL_JSON:${fullJson}`, strengths, weaknesses, questions };
 }
 

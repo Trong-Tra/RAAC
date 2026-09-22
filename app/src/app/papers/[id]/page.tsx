@@ -84,9 +84,39 @@ export default function PaperDetailPage() {
       .catch(() => {});
   };
 
+  const pollLive = () => {
+    if (!id) return;
+    fetch(`/api/papers/${id}/council/run`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok) return;
+        setLiveMessages(j.data.messages ?? []);
+        setLiveReviews((prev) => {
+          const next = j.data.reviews ?? [];
+          // animate new arrivals: keep prev length check outside
+          return next;
+        });
+        if (j.data.council?.status === "completed" || (j.data.reviews?.length ?? 0) >= 5) {
+          // refresh main data to flip paper status
+          fetch(`/api/papers/${id}`, { cache: "no-store" }).then((r) => r.json()).then((jj) => { if (jj.ok) setData(jj.data); }).catch(()=>{});
+        }
+      })
+      .catch(() => {});
+  };
+
   useEffect(() => {
     load();
   }, [id]);
+
+  // live polling while council is active and <5 reviews — incremental reveal without refresh
+  useEffect(() => {
+    const isActive = data?.council?.status === "active";
+    const needPoll = isActive && liveReviews.length < 5;
+    const shouldPoll = running || needPoll;
+    if (!shouldPoll) return;
+    const iv = setInterval(pollLive, 2000);
+    return () => clearInterval(iv);
+  }, [data?.council?.status, liveReviews.length, running, id]);
 
   const propose = async () => {
     if (!id) return;
@@ -162,16 +192,20 @@ export default function PaperDetailPage() {
     if (!id) return;
     setRunning(true);
     setRunMsg(null);
+    // start polling immediately so each review appears as agent finishes (no refresh needed)
+    const pollIv = setInterval(pollLive, 1500);
     try {
       const r = await fetch(`/api/papers/${id}/council/run`, { method: "POST" });
       const j = await r.json();
       if (!j.ok) throw new Error(j.error?.message ?? "run failed");
       setRunMsg(`RAN — ${j.data.messages.length} MESSAGES, ${j.data.reviews.length} REVIEWS → 84532`);
-      load();
     } catch (e) {
       setRunMsg(e instanceof Error ? e.message : String(e));
     } finally {
+      clearInterval(pollIv);
       setRunning(false);
+      load();
+      pollLive();
     }
   };
 
@@ -337,6 +371,12 @@ export default function PaperDetailPage() {
                 {running ? "RUNNING COUNCIL…" : "RUN COUNCIL → 5 REVIEWS (LIVE → 84532)"}
               </button>
             )}
+            {running && (
+              <div className="mono" style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 10, fontSize: 10, letterSpacing: "0.12em", color: "#e8e8e8" }}>
+                <span style={{ width: 8, height: 8, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />
+                COUNCIL RUNNING — {liveReviews.length}/5 REVIEWS • {liveMessages.length}/5 MESSAGES • each review appears as agent finishes (no refresh needed)
+              </div>
+            )}
             {council?.status === "completed" && <div className="mono" style={{ marginTop: 14, fontSize: 10, letterSpacing: "0.12em", color: "#c9c9c9" }}>COUNCIL COMPLETED — {liveMessages.length} MESSAGES, {liveReviews.length || reviews.length} REVIEWS</div>}
             {runMsg && <div className="mono" style={{ marginTop: 10, fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>{runMsg}</div>}
             {liveReviews.length > 0 && liveReviews.some((r) => !(r as unknown as { anchorTxHash?: string }).anchorTxHash) && (
@@ -359,20 +399,32 @@ export default function PaperDetailPage() {
               </div>
             </div>
 
+            <style>{`@keyframes raac-pulse { 0%,100%{opacity:1} 50%{opacity:0.25}} @keyframes raac-shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0}}`}</style>
             <div style={{ marginTop: 18, display: "grid", gap: 12 }}>
               {(liveReviews.length ? liveReviews : reviews).length === 0
-                ? selection.slice(0, 5).map((s) => (
-                    <div key={`mock-${s.erc8004}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px solid rgba(255,255,255,0.07)" }}>
-                      <div>
-                        <div className="mono" style={{ fontSize: 11, color: "#c9c9c9" }}>
-                          REVIEW — {s.name.toUpperCase()} · SCORE — · HASH — 
+                ? selection.slice(0, 5).map((s, idx) => {
+                    const isProcessing = running && idx === 0;
+                    return (
+                    <div key={`mock-${s.erc8004}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px solid rgba(255,255,255,0.07)", opacity: isProcessing ? 1 : 0.9, background: isProcessing ? "rgba(255,255,255,0.02)" : "transparent" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        {isProcessing && <span style={{ width: 8, height: 8, background: "#e8e8e8", display: "inline-block", animation: "raac-pulse 1s ease-in-out infinite" }} />}
+                        <div>
+                          <div className="mono" style={{ fontSize: 11, color: "#c9c9c9" }}>
+                            REVIEW — {s.name.toUpperCase()} · {s.erc8004} · {isProcessing ? "PROCESSING…" : "PENDING"}
+                          </div>
+                          <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>{isProcessing ? `Agent ${s.name} reading arXiv + drafting 7-section review…` : council?.status === "active" ? "Run council to generate reviews." : "Propose + sign council first."}</div>
                         </div>
-                        <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>{council?.status === "active" ? "Run council to generate reviews." : "Propose + sign council first."}</div>
                       </div>
-                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", padding: "4px 8px", border: "1px solid #2a2a2a", color: "#5a5a5a" }}>PENDING</span>
+                      <span className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", padding: "4px 8px", border: "1px solid #2a2a2a", color: isProcessing ? "#e8e8e8" : "#5a5a5a", animation: isProcessing ? "raac-pulse 1.2s ease-in-out infinite" : undefined }}>{isProcessing ? "● LIVE" : "PENDING"}</span>
                     </div>
-                  ))
-                : (liveReviews.length ? liveReviews : reviews).map((r) => {
+                  );})
+                : (() => {
+                  const displayed = liveReviews.length ? liveReviews : reviews;
+                  const pendingCount = council?.status === "active" && displayed.length < 5 ? 5 - displayed.length : 0;
+                  const pendingAgents = selection.filter((_, i) => i >= displayed.length).slice(0, pendingCount);
+                  return (
+                    <>
+                      {(displayed as typeof liveReviews).map((r) => {
                     const anchor = (r as unknown as { anchorTxHash?: string | null }).anchorTxHash;
                     const raw = r as unknown as { summary: string | null; strengths: string | null; weaknesses: string | null; questions: string | null; confidence: number | null };
                     const summary = raw.summary ?? "";
@@ -468,7 +520,21 @@ export default function PaperDetailPage() {
                       </div>
                     </details>
                   );})}
-            </div>
+                      {pendingCount > 0 && pendingAgents.map((s, idx) => (
+                        <div key={`pending-${s.erc8004}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", border: "1px dashed rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.02)" }}>
+                          <span style={{ width: 8, height: 8, background: "#8a8a8a", display: "inline-block", animation: `raac-pulse 1s ease-in-out infinite`, animationDelay: `${idx * 0.2}s` }} />
+                          <div style={{ flex: 1 }}>
+                            <div className="mono" style={{ fontSize: 11, color: "#8a8a8a" }}>REVIEW — {s.name.toUpperCase()} · {s.erc8004} · PROCESSING… {displayed.length + idx + 1}/5</div>
+                            <div style={{ marginTop: 4, height: 6, background: "linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%)", backgroundSize: "200% 100%", animation: "raac-shimmer 1.4s linear infinite", borderRadius: 2, width: `${70 + idx * 7}%` }} />
+                            <div className="mono" style={{ marginTop: 6, fontSize: 9, letterSpacing: "0.08em", color: "#5a5a5a" }}>{s.name} drafting 7-section review via ar5iv + {liveReviews.length > 0 ? "dual-key fallback" : "openrouter/free"}…</div>
+                          </div>
+                          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.1em", padding: "4px 8px", border: "1px solid #2a2a2a", color: "#e8e8e8", animation: "raac-pulse 1s ease-in-out infinite" }}>● {idx === 0 ? "DRAFTING" : "QUEUED"}</span>
+                        </div>
+                      ))}
+                    </>
+                  );
+                })()
+              }</div>
 
             <div className="mono" style={{ marginTop: 14, fontSize: 10, letterSpacing: "0.12em", color: "#3f3f3f" }}>
               BASE SEPOLIA ANCHORS: 84532 · PAPER HASH {shortHash(paper.paperHash)} · EACH REVIEW sha256(review) {liveReviews.some((r) => (r as unknown as { anchorTxHash?: string }).anchorTxHash) ? "→ TX ON 84532 (LIVE)" : "→ tx pending (run then anchor)"}
