@@ -229,16 +229,28 @@ export function verifyTaskAnchors(taskId: string): Promise<AnchorVerification> {
 }
 
 export function getAuditEvents(
-  opts: { limit?: number; taskId?: string; eventType?: string; beforeId?: number } = {},
+  opts: { limit?: number; taskId?: string; eventType?: string; beforeId?: number; page?: number } = {},
 ): Promise<AuditEvent[]> {
   const params = new URLSearchParams();
   params.set("limit", String(opts.limit ?? 100));
   if (opts.taskId) params.set("task_id", opts.taskId);
   if (opts.eventType) params.set("event_type", opts.eventType);
   if (opts.beforeId != null) params.set("before_id", String(opts.beforeId));
+  if (opts.page != null) params.set("page", String(opts.page));
   return request<{ events: AuditEvent[] }>(`/api/audit/events?${params}`).then(
     (data) => data.events,
   );
+}
+
+export function getAuditEventsPage(
+  opts: { limit?: number; page?: number; taskId?: string; eventType?: string } = {},
+): Promise<{ events: AuditEvent[]; pagination: { page: number; limit: number; total: number; totalPages: number; hasMore: boolean } }> {
+  const params = new URLSearchParams();
+  params.set("limit", String(opts.limit ?? 20));
+  params.set("page", String(opts.page ?? 1));
+  if (opts.taskId) params.set("task_id", opts.taskId);
+  if (opts.eventType) params.set("event_type", opts.eventType);
+  return request<{ events: AuditEvent[]; pagination: { page: number; limit: number; total: number; totalPages: number; hasMore: boolean } }>(`/api/audit/events?${params}`);
 }
 
 export function getTrace(taskId: string): Promise<Trace> {
