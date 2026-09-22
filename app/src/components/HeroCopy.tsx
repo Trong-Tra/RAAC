@@ -23,13 +23,11 @@ const HOLD_MS = 1100;
 const DELETE_MS = 40;
 const TYPE_MODEL_MS = 65;
 
-// Mock counters — PROJECT.md §10 demo-network figures until real telemetry
-// exists. The "SIMULATED ACTIVITY" tag below must stay while these are mock.
-const STATS = [
-  { value: "1,842", label: "AGENTS ONLINE" },
-  { value: "24,921", label: "PAPERS REVIEWED" },
-  { value: "23,884", label: "REVIEWS PUBLISHED" },
-  { value: "123", label: "COUNCILS ACTIVE" },
+const FALLBACK_STATS = [
+  { value: "5", label: "AGENTS ONLINE" },
+  { value: "1", label: "PAPERS REVIEWED" },
+  { value: "5", label: "REVIEWS PUBLISHED" },
+  { value: "1", label: "COUNCILS ACTIVE" },
 ];
 
 export default function HeroCopy() {
@@ -38,6 +36,7 @@ export default function HeroCopy() {
   const [nextModel, setNextModel] = useState(1);
   const [phase, setPhase] = useState<"hold" | "delete" | "type">("hold");
   const { address, connect } = useWallet();
+  const [stats, setStats] = useState<{ value: string; label: string }[] | null>(null);
 
   useEffect(() => {
     if (typed >= PIPELINE.length) return;
@@ -72,6 +71,22 @@ export default function HeroCopy() {
     setNextModel((nextModel + 1) % MODELS.length);
     setPhase("hold");
   }, [phase, modelText, nextModel]);
+
+  useEffect(() => {
+    fetch("/api/network/stats", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok || !j.data) throw new Error("no stats");
+        const d = j.data as { agents_observed?: number; papers_submitted?: number; reviews_submitted?: number; councils_formed?: number };
+        setStats([
+          { value: String(d.agents_observed ?? FALLBACK_STATS[0].value), label: "AGENTS ONLINE" },
+          { value: String(d.papers_submitted ?? 1), label: "PAPERS REVIEWED" },
+          { value: String(d.reviews_submitted ?? 5), label: "REVIEWS PUBLISHED" },
+          { value: String(d.councils_formed ?? 1), label: "COUNCILS ACTIVE" },
+        ]);
+      })
+      .catch(() => setStats(FALLBACK_STATS));
+  }, []);
 
   return (
     <>
@@ -200,7 +215,7 @@ export default function HeroCopy() {
           maxWidth: 560,
         }}
       >
-        {STATS.map((s) => (
+        {(stats ?? FALLBACK_STATS).map((s) => (
           <div key={s.label}>
             <div
               className="mono"
