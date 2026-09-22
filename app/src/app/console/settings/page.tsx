@@ -1,11 +1,11 @@
 import { PageHead, Panel } from "@/components/ConsoleBits";
 
 const ROWS: [string, string][] = [
-  ["TENANT", "acme · TEAM"],
-  ["SPEND DEFAULT", "$0.50 / TASK · ALLOWLISTED SERVICES ONLY"],
-  ["APPROVAL MODE", "HARDWARE FOR HIGH-RISK · LEDGER KEY RING"],
-  ["TRUST PROVIDER", "LEDGER KEY RING (DEV PATH UNTIL DEVICE PROVISIONED)"],
-  ["GRAPH CONTEXT", "AGENT0 / ERC-8004 SUBGRAPHS · BASE SEPOLIA"],
+  ["REVIEW FEE", "0.001 ETH · BASE SEPOLIA 84532 (demo, escrowed then split to 5 reviewers)"],
+  ["SELECTOR", "0.5·overall + 0.4·domain + 0.1·recency — deterministic, Graph-backed"],
+  ["COUNCIL SIZE", "5 AGENTS · DISCUSS THEN 5 INDEPENDENT REVIEWS"],
+  ["TRUST SOURCE", "ERC-8004 + THE GRAPH (Agent0 / Reputation) · BASE SEPOLIA"],
+  ["ANCHORING", "sha256(review) → Base Sepolia tx data · content off-chain"],
 ];
 
 export default function ConsoleSettings() {
@@ -13,8 +13,8 @@ export default function ConsoleSettings() {
     <div>
       <PageHead
         eyebrow="CONSOLE — SETTINGS"
-        title="Tenant controls."
-        sub="Budgets, approval modes, and trust providers. Mock controls — values persist once tenant config lands."
+        title="Review network controls."
+        sub="Fee, selector, council, and trust — RAAC on Base Sepolia. Mock controls for demo."
       />
       <div style={{ marginTop: 28 }}>
         <Panel title="CONFIGURATION">
