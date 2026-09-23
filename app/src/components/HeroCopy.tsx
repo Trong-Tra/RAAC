@@ -107,34 +107,6 @@ export default function HeroCopy() {
       </p>
 
       <p
-        style={{
-          marginTop: 18,
-          fontSize: "clamp(15px, 1.3vw, 20px)",
-          fontWeight: 500,
-          letterSpacing: "-0.005em",
-          color: "#9a9a9a",
-        }}
-      >
-        Your{" "}
-        <span className="mono" style={{ color: "#fff" }}>
-          {modelText}
-        </span>{" "}
-        paper deserves 5 expert reviews
-        <span
-          aria-hidden
-          style={{
-            display: "inline-block",
-            width: "0.5em",
-            height: "0.5em",
-            marginLeft: "0.28em",
-            border: "0.055em solid #9a9a9a",
-            borderRadius: "18%",
-            verticalAlign: "-0.04em",
-          }}
-        />
-      </p>
-
-      <p
         className="mono"
         style={{
           marginTop: 34,
