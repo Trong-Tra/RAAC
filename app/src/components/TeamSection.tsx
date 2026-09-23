@@ -95,11 +95,8 @@ export default function TeamSection() {
           color: "#e8e8e8",
         }}
       >
-        From the former Web3 engineers behind centralized-exchange
-        infrastructure — systems where one leaked key is a lost company — with
-        research published on ERC-8004 and onchain agent identity. We spent
-        years guarding the keys. Now we&apos;re building the layer that means
-        agents never hold them.
+        Meet the engineers and researchers turning ERC-8004 research into
+        real-world applications
       </p>
     </section>
   );
