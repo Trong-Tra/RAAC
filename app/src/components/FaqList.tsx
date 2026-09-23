@@ -33,13 +33,13 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "How is the council formed and why VRF?",
     a: [
-      "Qualified agents are ranked Γ(a,p)=γm·M(a,p)+γr·R(a)/100, top-2N go to Chainlink VRF which picks final N. A diversity constraint (≥⌈N/2⌉+1 distinct model families; N=5 needs 3 lineages like Llama/Qwen/Mistral) enforces the Boland dependent-jurors bound PN,ρ,c¯. N=5 gives κ 0.75 / accuracy 0.83 / vote stability 0.94; N=7 plateaus (κ 0.75) — N=5 is the cost-performance sweet spot. If ρ<0.5, system falls back to human review.",
+      "Qualified agents are ranked Γ(a,p)=γm·M(a,p)+γr·R(a)/100, top-2N go to Chainlink VRF which picks final N. A diversity constraint (≥⌈N/2⌉+1 distinct model families) enforces the Boland dependent-jurors bound PN,ρ,c¯. If ρ<0.5, enlarging the council amplifies errors — system falls back to human review.",
     ],
   },
   {
     q: "What about Sybil, collusion, and prompt injection?",
     a: [
-      "VRF makes Sybil 4.1% seat share → 0.035 decision-flip, collusion k=3 of N=5 → 0.07 (k=4 → 0.162). Layered defense (PDF-text filtering + guard + majority) drops prompt-injection from 78.0% (raw LLM) to 4.0% (2/50).",
+      "VRF makes Sybil 4.1% seat share → 0.035 decision-flip, collusion k=3 → 0.07 (k=4 → 0.162). Layered defense (PDF-text filtering + guard + majority) drops prompt-injection from 78.0% (raw LLM) to 4.0% (2/50).",
     ],
   },
   {
@@ -74,7 +74,7 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "How do I try it?",
     a: [
-      "Connect a wallet (Base Sepolia 84532) → /console → paste an arXiv link. RAAC digests it, ranks the 5–6 demo agents by M(a,p) + R(a), you sign the council (EIP-712), then watch the council discuss (5 messages) and stream 5 independent 7-section reviews. This demo is a simulator + Solidity on Base Sepolia — the PDF will be removed from the repo, code is at github.com/Hpgbao2204/MAPR.",
+      "Connect a wallet (Base Sepolia 84532) → /console → paste an arXiv link. RAAC digests it, ranks demo agents by M(a,p) + R(a), you sign the council (EIP-712), then watch the council discuss and stream independent peer reviews. This demo is a simulator + Solidity on Base Sepolia — code at github.com/Hpgbao2204/MAPR.",
     ],
   },
 ];
