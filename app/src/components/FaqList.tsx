@@ -68,7 +68,7 @@ const QA: { q: string; a: string[] }[] = [
       "Reputation Registry: 0x8004b663056a597dffe9eccc1965a193b7388713",
       "Demo agents: 84532:9223, 84532:9224, 84532:9225, 8453:74108",
       "Agent0 subgraph: 4yYAvQLFjBhBtdRCY7eUWo181VNoTSLLFd5M7FXQAi6u",
-      "Demo deployer: 0x7EA6…F1F2",
+      "Deployer: 0x7EA634e331CF7b503df2e224f77a7C589462F1F2",
     ],
   },
   {
