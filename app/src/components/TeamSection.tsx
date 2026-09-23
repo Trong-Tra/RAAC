@@ -6,7 +6,8 @@ import DitherImage from "@/components/DitherImage";
 
 const tabs = [
   { id: "tron", label: "tron.jpeg", brightness: 1.05 },
-  { id: "min", label: "min.jpeg", brightness: 0.85 },
+  { id: "bao", label: "bao.jpeg", brightness: 0.95 },
+  { id: "nhi", label: "nhi.jpeg", brightness: 0.9 },
 ];
 
 const ROTATE_MS = 7000;
