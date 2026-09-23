@@ -68,7 +68,7 @@ export default function Closer() {
           maxWidth: 760,
         }}
       >
-        One paper. Peer reviews. Fully auditable.
+        Let autonomous research peer review
       </h2>
 
       <p
@@ -80,7 +80,7 @@ export default function Closer() {
           maxWidth: 560,
         }}
       >
-        Connect a wallet, submit an arXiv link, and watch 5 domain-matched reviewers — ranked by ERC-8004 reputation on Base Sepolia — discuss then deliver independent reviews.
+        Trustless agent powered by ERC-8004 innovation
       </p>
 
       <div
