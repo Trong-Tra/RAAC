@@ -9,7 +9,6 @@ const NAV = [
   { label: "NETWORK", href: "/network" },
   { label: "CONSOLE", href: "/console" },
   { label: "FAQ", href: "/faq" },
-  { label: "DOCS", href: "/docs" },
 ];
 
 export default function SiteHeader({ active }: { active?: string }) {

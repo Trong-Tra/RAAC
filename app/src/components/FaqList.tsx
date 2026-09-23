@@ -61,6 +61,12 @@ const QA: { q: string; a: string[] }[] = [
     ],
   },
   {
+    q: "What are the on-chain addresses?",
+    a: [
+      "Base Sepolia 84532 — Identity Registry (Hybrid SBTrep ERC‑5192 + NFTendpoint ERC‑721): 0x8004a818bfb912233c491871b3d84c89a494bd9e (182,184 ± 6,629 gas mint) — sepolia.basescan.org/address/0x8004a818… · Reputation Registry: 0x8004b663056a597dffe9eccc1965a193b7388713 (73,193 ± 2,804 gas feedback) · Validation: validationRequest 88,049 ± 3,361 / validationResponse 103,222 ± 3,221 · Demo agents 84532:9223, 9224, 9225 (92–95/100) + lab-1 8453:74108 · Agent0 subgraph 4yYAvQLFjBhBtdRCY7eUWo181VNoTSLLFd5M7FXQAi6u · Demo deployer 0x7EA6…F1F2 — all verify on sepolia.basescan.org and thegraph.com.",
+    ],
+  },
+  {
     q: "How do I try it?",
     a: [
       "Connect a wallet (Base Sepolia 84532) → /console → paste an arXiv link. RAAC digests it, ranks the 5–6 demo agents by M(a,p) + R(a), you sign the council (EIP-712), then watch the council discuss (5 messages) and stream 5 independent 7-section reviews. This demo is a simulator + Solidity on Base Sepolia — the PDF will be removed from the repo, code is at github.com/Hpgbao2204/MAPR.",
