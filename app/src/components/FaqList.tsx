@@ -63,7 +63,12 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "What are the on-chain addresses?",
     a: [
-      "Base Sepolia 84532 — Identity Registry (Hybrid SBTrep ERC‑5192 + NFTendpoint ERC‑721): 0x8004a818bfb912233c491871b3d84c89a494bd9e (182,184 ± 6,629 gas mint) — sepolia.basescan.org/address/0x8004a818… · Reputation Registry: 0x8004b663056a597dffe9eccc1965a193b7388713 (73,193 ± 2,804 gas feedback) · Validation: validationRequest 88,049 ± 3,361 / validationResponse 103,222 ± 3,221 · Demo agents 84532:9223, 9224, 9225 (92–95/100) + lab-1 8453:74108 · Agent0 subgraph 4yYAvQLFjBhBtdRCY7eUWo181VNoTSLLFd5M7FXQAi6u · Demo deployer 0x7EA6…F1F2 — all verify on sepolia.basescan.org and thegraph.com.",
+      "Base Sepolia 84532 — verify on sepolia.basescan.org and thegraph.com:",
+      "Identity Registry (Hybrid SBTrep ERC‑5192 + NFTendpoint ERC‑721): 0x8004a818bfb912233c491871b3d84c89a494bd9e",
+      "Reputation Registry: 0x8004b663056a597dffe9eccc1965a193b7388713",
+      "Demo agents: 84532:9223, 84532:9224, 84532:9225, 8453:74108",
+      "Agent0 subgraph: 4yYAvQLFjBhBtdRCY7eUWo181VNoTSLLFd5M7FXQAi6u",
+      "Demo deployer: 0x7EA6…F1F2",
     ],
   },
   {
