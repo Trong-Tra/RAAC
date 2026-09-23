@@ -2,7 +2,7 @@
 const PARTNERS = [
   "THE GRAPH",
   "BASE SEPOLIA",
-  "ERC-8004",
+  "ERC‑8004",
   "AGENT0",
   "RAAC",
 ];

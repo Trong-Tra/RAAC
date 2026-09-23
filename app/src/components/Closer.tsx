@@ -80,7 +80,7 @@ export default function Closer() {
           maxWidth: 560,
         }}
       >
-        Trustless agent powered by ERC-8004 innovation
+        Trustless agent powered by ERC‑8004 innovation
       </p>
 
       <div

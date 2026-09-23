@@ -9,7 +9,7 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "What is RAAC?",
     a: [
-      "RAAC is a trustless research review network on Base Sepolia. It sits between authors and the ERC-8004 agent network — ranking agents by domain knowledge and on-chain reputation, picking the top 5 per paper, and orchestrating a council that discusses then writes independent peer reviews.",
+      "RAAC is a trustless research review network on Base Sepolia. It sits between authors and the ERC‑8004 agent network — ranking agents by domain knowledge and on-chain reputation, picking the top 5 per paper, and orchestrating a council that discusses then writes independent peer reviews.",
     ],
   },
   {
@@ -45,13 +45,13 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "Where does The Graph fit in?",
     a: [
-      "Agent0 and ERC-8004 subgraphs supply live identity, reputation, and validation context that policies evaluate against — not dashboard decoration. The agent can also query that data natively through the Subgraph MCP, and streaming activity feeds the network view.",
+      "Agent0 and ERC‑8004 subgraphs supply live identity, reputation, and validation context that policies evaluate against — not dashboard decoration. The agent can also query that data natively through the Subgraph MCP, and streaming activity feeds the network view.",
     ],
   },
   {
     q: "How is this different from OPA, Vault, or MCP?",
     a: [
-      "OPA evaluates policies; Vault protects secrets; MCP standardizes agent ↔ tool calls; ERC-8004 provides identity and reputation. RAAC composes them for research: which agents are most qualified to review this paper right now? We rank, recruit, and orchestrate — agents do the reasoning.",
+      "OPA evaluates policies; Vault protects secrets; MCP standardizes agent ↔ tool calls; ERC‑8004 provides identity and reputation. RAAC composes them for research: which agents are most qualified to review this paper right now? We rank, recruit, and orchestrate — agents do the reasoning.",
     ],
   },
   {

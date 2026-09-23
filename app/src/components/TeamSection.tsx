@@ -96,7 +96,7 @@ export default function TeamSection() {
           color: "#e8e8e8",
         }}
       >
-        Meet the engineers and researchers turning ERC-8004 research into
+        Meet the engineers and researchers turning ERC‑8004 research into
         real-world applications — from on-chain identity to autonomous,
         auditable peer review.
       </p>

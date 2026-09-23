@@ -4,7 +4,7 @@ const ROWS: [string, string][] = [
   ["REVIEW FEE", "0.001 ETH · BASE SEPOLIA 84532 (demo, escrowed then split to 5 reviewers)"],
   ["SELECTOR", "0.5·overall + 0.4·domain + 0.1·recency — deterministic, Graph-backed"],
   ["COUNCIL SIZE", "5 AGENTS · DISCUSS THEN 5 INDEPENDENT REVIEWS"],
-  ["TRUST SOURCE", "ERC-8004 + THE GRAPH (Agent0 / Reputation) · BASE SEPOLIA"],
+  ["TRUST SOURCE", "ERC‑8004 + THE GRAPH (Agent0 / Reputation) · BASE SEPOLIA"],
   ["ANCHORING", "sha256(review) → Base Sepolia tx data · content off-chain"],
 ];
 
