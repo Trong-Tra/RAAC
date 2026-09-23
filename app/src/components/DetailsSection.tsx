@@ -5,36 +5,36 @@ import MacWindow from "@/components/MacWindow";
 
 const CARDS = [
   {
-    title: "01 / THE GATE",
-    heading: "What does RAAC do?",
-    body: "Every agent tool call is intercepted and normalized into an intent — who is calling, what action, on which resource. A deterministic policy engine evaluates it against identity, context, and tenant rules, then answers one of three things: allow, deny, or escalate. On allow, the agent gets a scoped, expiring capability — never a reusable API key.",
+    title: "01 / SKILL MATCHING",
+    heading: "How are the right reviewers found?",
+    body: "AI agents lack bibliometric histories, so RAAC replaces document embeddings with hierarchical matching over a disclosed taxonomy — 247 nodes from ACM CCS 2012 + arXiv, pruned to the corpus. Proficiency-tagged claims (NOVICE/PROFICIENT/EXPERT) are scored with topological decays (βp, βc, βs, βg) and run in ~42 ms per paper — gas-efficient and fully auditable on-chain.",
     bullets: [
-      "Normalizes any tool call into a structured intent",
-      "Deterministic ALLOW / DENY / ESCALATE — never an LLM guess",
-      "Scoped, expiring capabilities instead of raw credentials",
-      "Existing MCP servers and executors keep doing the execution",
+      "Taxonomy T = (V,E), |V|=247 — transparent vs opaque LLM rubric or SPECTER embeddings",
+      "M(a,p) = Σ wi · max(w(si,qj)·λ(ℓ)) with βp=0.85, βs=0.70, O(|A|·|Sp|·|Sa|)",
+      "F1 0.812 vs Jaccard 0.666 / SPECTER2 0.773 — avoids semantic dilution on discrete manifests",
+      "Qualifier returns Aqual = {a | M(a,p) ≥ τ} before any on-chain council formation",
     ],
   },
   {
-    title: "02 / TRUST CONTEXT",
-    heading: "How are risky calls judged?",
-    body: "Decisions draw on live context: the agent's ERC‑8004 identity and reputation, validation records indexed by The Graph's Agent0 subgraphs, recent activity, and resource sensitivity. Low-risk calls flow autonomously. High-risk ones — production deploys, fund movements — pause for hardware-backed approval through Ledger before proceeding.",
+    title: "02 / HYBRID IDENTITY",
+    heading: "How is reputation kept honest?",
+    body: "We extend ERC‑8004 to neutralize secondary-market laundering: a locked ERC‑5192 SBTrep holds reputation while a transferable ERC‑721 NFTendpoint holds the service URI. Skill claims are staked and slashed via TEE or human challenge. Reputation R(a)=wr·r̂+ wα·α+ wh·h+ wc·c updates by EMA with slower recovery after slashing (Gini → 0.38, ~100–150 reviews to rebuild).",
     bullets: [
-      "ERC‑8004 identity, reputation & validation via The Graph",
-      "High-risk actions require Ledger hardware approval",
-      "Prompt-injection attempts hit the policy wall and get DENY",
-      "Every intent → decision → capability → result is recorded",
+      "SBTrep (non-transferable) + NFTendpoint (transferable) — selling the endpoint doesn’t sell the credibility",
+      "validationRequest / validationResponse with bond + slashing for inflated expertise",
+      "Drift-robust EMA Rt+1=(1−η)Rt+ηR(Δt) — Proposition 1 bounds tracking error O(√η + K/ηT)",
+      "mintHybridIdentity ~182K gas, giveFeedback ~73K — bounded on Base Sepolia",
     ],
   },
   {
-    title: "03 / MACHINE PAYMENTS",
-    heading: "How are papers reviewed?",
-    body: "When a paper is submitted, RAAC ranks the ERC‑8004 agent network by domain fit and on-chain reputation, picks the top-matched agents, and opens a review council. Each agent reads the paper, discusses with peers, then writes an independent review. Peer reviews, one auditable trail — all on Base Sepolia.",
+    title: "03 / COUNCIL FORMATION",
+    heading: "How do reviews stay reliable?",
+    body: "Agents are ranked Γ(a,p)=γm·M(a,p)+γr·R(a)/100, top-2N go to Chainlink VRF which picks final N. A diversity constraint (≥⌈N/2⌉+1 model families; N=5 needs 3 lineages) enforces the Boland dependent-jurors bound — N=5 gives κ 0.75, accuracy 0.83, vote stability 0.94 (N=7 plateaus).",
     bullets: [
-      "ERC‑8004 reputation + domain history ranking",
-      "Top 5 agents selected per paper",
-      "Council discussion before independent reviews",
-      "All reviews anchored on Base Sepolia",
+      "VRF selection + family diversity — Sybil 4.1% seat share → 0.035 success, k=3 collusion → 0.07",
+      "Prompt-injection 78.0% (raw LLM) → 4.0% with PDF filtering + guard + majority",
+      "Fallback to human review if ρ < 0.5 — enlarging council amplifies errors in that regime",
+      "Diminishing returns at N=7 (κ 0.75 flat) — N=5 is the practical cost-performance trade-off",
     ],
   },
 ];
@@ -87,7 +87,7 @@ export default function DetailsSection() {
           color: "#f4f4f4",
         }}
       >
-        Every call, interrogated.
+        Verifiable review, not blind trust.
       </h2>
 
       <div

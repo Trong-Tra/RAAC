@@ -94,9 +94,8 @@ export default function DocsPage() {
       <SiteHeader active="DOCS" />
 
       <div className="section-pad" style={{ flex: 1, maxWidth: 1080, margin: "0 auto", width: "100%" }}>
-        {/* Title block */}
         <p className="mono" style={monoLabel}>
-          CUBIC □ WHITEPAPER — V1.0 · SEPTEMBER 2026
+          VERIFIABLE AI REVIEWERS □ WHITEPAPER — V1.0 · SEPTEMBER 2026 · BASE SEPOLIA
         </p>
         <h1
           style={{
@@ -108,35 +107,30 @@ export default function DocsPage() {
             color: "#f4f4f4",
           }}
         >
-          The Agent Authorization Network.
+          Verifiable AI Reviewers.
         </h1>
-        <p style={{ ...body, fontSize: 17, color: "#8a8a8a", maxWidth: 760 }}>
-          Cloudflare for agent actions. Agents never hold credentials — every tool call is
-          interrogated against identity, intent, policy, and trust, then allowed, denied,
-          or escalated. Allowed actions receive scoped five-minute capabilities, not keys.
+        <p style={{ ...body, fontSize: 17, color: "#8a8a8a", maxWidth: 780 }}>
+          Decentralized skill matching and soulbound reputation for multi-agent peer review — a hybrid identity (ERC‑5192 SBT + ERC‑721 endpoint) extending ERC‑8004, deterministic hierarchical routing (F1 0.812, ~42 ms/paper), and a Boland-bound council with VRF + diversity. Prompt-injection 78% → 4.0%, gas-bounded on Base Sepolia.
         </p>
         <p className="mono" style={{ marginTop: 18, fontSize: 11, letterSpacing: "0.14em", color: "#5a5a5a" }}>
-          ABSTRACT · INTENT → POLICY → CAPABILITY → EXECUTION → AUDIT · LIVE ON BASE SEPOLIA + HEDERA TESTNET
+          ABSTRACT · HIERARCHICAL TAXONOMY → HYBRID IDENTITY → VRF COUNCIL → BASE SEPOLIA · PAPER + SIMULATOR SOON AT github.com/Hpgbao2204/MAPR
         </p>
 
-        {/* TOC */}
         <MacWindow title="CONTENTS — READ IN ORDER">
           <div className="mono" style={{ padding: "18px 20px", fontSize: 12.5, lineHeight: 2.1, color: "#9a9a9a" }}>
             {[
-              ["01", "The problem: credential possession is not authority"],
-              ["02", "What Cubic is — and is not"],
-              ["03", "Architecture: the authorization gateway"],
-              ["04", "Core flow + data model"],
-              ["05", "Deterministic policy engine"],
-              ["06", "Trust context: ERC-8004 × The Graph"],
-              ["07", "Machine payments: x402 on Hedera"],
-              ["08", "Human approvals: wallets + Ledger + HCS anchoring"],
-              ["09", "Onchain registry — every contract, account & topic"],
-              ["10", "Demo tenant: Acme (fiction boundary)"],
-              ["11", "Integration surface: MCP + API + events"],
-              ["12", "Security properties & honesty guarantees"],
-              ["13", "Run it yourself"],
-              ["14", "Sources"],
+              ["01", "The problem: reviewer mismatch, opaque encoders, launderable reputation"],
+              ["02", "What RAAC is — and is not"],
+              ["03", "Architecture: off-chain engine + on-chain trust layer"],
+              ["04", "Hierarchical skill matching (T, M(a,p), F1 0.812)"],
+              ["05", "On-chain registries: hybrid identity + validation + reputation"],
+              ["06", "Council formation: Γ, VRF, Boland, diversity, N=5"],
+              ["07", "Evaluation: routing, reputation dynamics, robustness, gas"],
+              ["08", "Demo tenant: Blockchainist Lab (fiction boundary)"],
+              ["09", "Integration surface: console + API + audit + network"],
+              ["10", "Run it yourself (live demo)"],
+              ["11", "On-chain registry — contracts & gas"],
+              ["12", "Sources"],
             ].map(([n, t]) => (
               <div key={n}>
                 <a href={`#s${n}`} className="link" style={{ color: "#c9c9c9" }}>
@@ -149,229 +143,157 @@ export default function DocsPage() {
 
         <SectionNum n="01" title="The problem" />
         <p style={body}>
-          Modern agents hold long-lived credentials for GitHub, Slack, wallets, and DeFi.
-          Once the credential reaches the agent process, prompt injection, malicious tool
-          output, or a compromised MCP server turns one intended action into general access.
-          The fix is to change the unit of authorization from{" "}
-          <span style={{ color: "#f4f4f4" }}>credential possession</span> to{" "}
-          <span style={{ color: "#f4f4f4" }}>action capability</span>: instead of “here is a
-          GitHub token, you can use GitHub,” the agent receives “agent 8472 may merge PR #421
-          in acme/backend, under policy X, until timestamp T” — and nothing else.
+          Peer review is strained: the STM Report estimates 5.5–7.5% annual growth in articles while reviewer pools grow at &lt;½ that rate — more workload, slower evaluation, up to a third of assignments with topic drift. LLMs can critique at paragraph level and partially overlap human feedback, and multi-agent ensembles can combine heterogeneous judgments. But three gaps block them: (1) no qualification gates (sycophancy, positional bias), (2) SOTA encoders (LLM rubric, citation graphs, SPECTER/SciNCL) are opaque and costly on-chain, (3) platform-bound, central, Sybil-exposed reputation with secondary-market laundering. RAAC separates review generation from the trust layer that decides <span style={{ color: "#f4f4f4" }}>who is qualified and accountable</span>.
         </p>
 
-        <SectionNum n="02" title="What Cubic is — and is not" />
+        <SectionNum n="02" title="What RAAC is — and is not" />
         <div style={{ ...body, maxWidth: 820 }}>
-          <p><span style={{ color: "#f4f4f4" }}>It is:</span> an agent-facing authorization gateway ·
-          a capability broker · a deterministic policy layer · an intent-to-action audit system ·
-          an identity/reputation consumer · a secret-protection seam · a multi-tenant control
-          plane · a network observability surface.</p>
+          <p><span style={{ color: "#f4f4f4" }}>It is:</span> a decentralized qualification framework for multi-agent peer review · a hybrid identity broker (SBTrep + NFTendpoint) extending ERC‑8004 · a deterministic taxonomy router · a VRF council fabric with diversity constraints · an EMA reputation registry · a Base Sepolia-anchored audit trail.</p>
           <p style={{ marginTop: 10 }}>
-          <span style={{ color: "#f4f4f4" }}>It is not:</span> a replacement for Composio or API
-          integrations · a secrets manager · a blockchain that executes tool calls · an LLM that
-          decides ALLOW/DENY · a decentralized agent OS. Rule:{" "}
-          <span style={{ color: "#f4f4f4" }}>we authorize agent actions; existing systems execute them.</span></p>
+          <span style={{ color: "#f4f4f4" }}>It is not:</span> a better LLM reviewer, a journal, a secrets manager, or a system that stores papers on-chain. Rule:{" "}
+          <span style={{ color: "#f4f4f4" }}>we recruit and orchestrate; registered agents do the reasoning — papers stay on arXiv, hashes on-chain.</span></p>
         </div>
 
         <SectionNum n="03" title="Architecture" />
         <p style={body}>
-          The gateway sits between the agent and its tools. It identifies the agent, normalizes
-          the tool call into a structured intent, gathers context (reputation, validation, task,
-          budget), evaluates deterministic policy, issues a scoped capability or escalates, and
-          records the full chain. Downstream executors — MCP servers, Composio, native adapters —
-          perform the concrete API calls.
+          Bifurcated: <span style={{ color: "#f4f4f4" }}>off-chain engine</span> for heavy NLP ingestion, Sp extraction, M(a,p) ranking, and council LLM inference; <span style={{ color: "#f4f4f4" }}>on-chain EVM trust layer</span> for identity, reputation anchoring, and consensus (Fig. 1 in paper). Flow: ingestion → qualifier (hierarchical matching) → VRF council → discussion → 5 independent reviews → decision (Accept/Reject/Abstain) + review hash/CID anchoring. Off-chain qualifier ~42 ms/paper.
         </p>
-        <div style={codeBlock}>{`agent → MCP tool call → gateway [identify → normalize → context → policy]
-  → ALLOW → capability (5 min, single action+resource) → executor → tool API
-  → DENY (no capability, no execution)
-  → ESCALATE → human wallet approval → capability → executor
-  every step → audit event → HCS fingerprint anchor`}</div>
+        <div style={codeBlock}>{`off-chain: manuscript -> NLP Sp={(si,wi)} -> M(a,p) -> Aqual={a|M>=τ} -> top-2N -> VRF -> N council
+on-chain: mintHybridIdentity() -> <SBTrep, NFTendpoint> | validationRequest/Response (staked) | giveFeedback() -> R(a) EMA
+council -> reviews (+/0/-) -> majority -> review hash/CID -> Base Sepolia`}</div>
 
-        <SectionNum n="04" title="Core flow + data model" />
+        <SectionNum n="04" title="Hierarchical skill matching" />
         <p style={body}>
-          Agent → Intent → Policy/Context evaluation → Allow | Deny | Escalate → Capability →
-          Tool execution → Result → Audit event. Intents carry task, agent, normalized action,
-          resource, and risk class. Decisions record the matched rule, reasons, and risk score.
-          Capabilities are narrowly scoped, 5-minute, policy-hash-bound artifacts — replayed or
-          expired consumes are rejected with explicit reason codes (replay, expired, not_found,
-          revoked). The audit chain connects intent → decision → capability → execution → result
-          per task and is queryable via trace APIs.
+          Agents lack bibliometrics, so document encoders are misaligned. We use a disclosed taxonomy <span style={addr}>T=(V,E), |V|=247</span> (ACM CCS 2012 + arXiv, pruned). For manuscript p, <span style={addr}>{"Sp={(si,wi)}"}</span>, agent <span style={addr}>{"Sa={(qj,ℓ)}, ℓ∈{NOVICE,PROFICIENT,EXPERT}"}</span>. Relevance w(si,qj) is 1.0 if si=qj, βp if parent, βc if child, βs if sibling, βg^(d−1) if d∈[3,5], else 0. With λ(ℓ), <span style={addr}>{"M(a,p)=Σ wi·max w(si,qj)λ(ℓ)"}</span>, routing cost O(|A|·|Sp|·|Sa|). β’s grid-searched on 20-paper split.
         </p>
+        <div style={{ ...tableWrap }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead><tr><th style={th}>METHOD</th><th style={th}>F1</th><th style={th}>NOTE</th></tr></thead>
+            <tbody>
+              <tr><td style={td} className="mono">Jaccard</td><td style={td}>0.666</td><td style={td}>naive discrete baseline</td></tr>
+              <tr><td style={td} className="mono">Flat exact</td><td style={td}>0.692</td><td style={td}>no hierarchy</td></tr>
+              <tr><td style={td} className="mono">TPMS</td><td style={td}>0.728</td><td style={td}>topic model on skill profiles</td></tr>
+              <tr><td style={td} className="mono">SciNCL</td><td style={td}>0.750</td><td style={td}>citation-informed embed on proxy abstracts</td></tr>
+              <tr><td style={td} className="mono">SPECTER2</td><td style={td}>0.773</td><td style={td}>proxy abstract Aa (150 words) vs Ap</td></tr>
+              <tr><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }} className="mono">Ours</td><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }}>0.812 [0.799,0.825]</td><td style={td}>βg, βs, λ each ablated (Panel B) — hierarchy matters</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mono" style={{ marginTop: 10, fontSize: 11, color: "#5a5a5a" }}>100 arXiv manuscripts, silver labels via Llama-3-70B, agents Qwen2.5-7B; proxy abstracts via Qwen2.5-7B for SPECTER/SciNCL baseline alignment.</p>
 
-        <SectionNum n="05" title="Deterministic policy engine" />
+        <SectionNum n="05" title="On-chain registries: hybrid identity + validation + reputation" />
         <p style={body}>
-          LLMs draft and summarize intent; they never authorize. A pure rule engine decides
-          ALLOW / DENY / ESCALATE with first-match-wins semantics over versioned policy documents
-          (default-v1 for general tools, payment-v1 for spend: service allowlist · task budget ·
-          reputation floor 0.80). Risk classes: reads are low, merges/deploys and money movement
-          are high and always escalate. Reason codes are verbatim and stable: tool_not_allowed,
-          secret_resource, resource_outside_task, budget_exceeded, reputation_below_threshold,
-          risk_requires_approval.
+          To stop selling an endpoint with its credibility, the trust layer extends ERC‑8004 with three registries: (1) <span style={{ color: "#f4f4f4" }}>Identity Registry (hybrid)</span>: mints ⟨SBTrep, NFTendpoint⟩ — SBTrep (ERC‑5192) locked to operator, NFTendpoint (ERC‑721) holds service URI; (2) <span style={{ color: "#f4f4f4" }}>Validation Registry (staked)</span>: ℓ(qj) claims via validationRequest/Response with bond slashed by TEE/human challenge; (3) <span style={{ color: "#f4f4f4" }}>Reputation Registry</span>: <span style={addr}>R(a)=wr·r̂+wα·α+wh·h+wc·c</span>, α vs held-out editor gold panel oE (α=1−|oa−oE|/Smax), EMA <span style={addr}>Rt+1=(1−η)Rt+ηR(Δt)</span> with ηrecovery &lt; ηnormal after slash — Proposition 1 bounds drift.
         </p>
+        <p style={{ ...body, color: "#8a8a8a" }}>Gini → ~0.38 (meritocratic, no monopoly), slashed Premium (≈85→45) needs ~100–150 honest reviews to return to Standard — rate-limits laundering.</p>
 
-        <SectionNum n="06" title="Trust context: ERC-8004 × The Graph" />
+        <SectionNum n="06" title="Council formation: Γ, VRF, Boland, diversity, N=5" />
         <p style={body}>
-          Demo agents hold real ERC-8004 onchain identities. Reputation is read live from The
-          Graph&apos;s Agent0 subgraph and changes real outcomes: the contractor agent lab-1
-          carries genuine negative feedback onchain, so the gateway escalates everything it does.
-          The console shows the exact GraphQL query and The Graph&apos;s verbatim response per
-          agent — the trust signal comes from the indexer, never our database. Hedera hosts no
-          ERC-8004 contracts: read-on-Base, enforce-on-Hedera.
+          Rank <span style={addr}>Γ(a,p)=γm·M(a,p)+γr·R(a)/100</span>, top-2N → Chainlink VRF → final N. Correlation is hard to estimate for overlapping corpora, so we enforce <span style={{ color: "#f4f4f4" }}>family diversity: N must contain ≥⌈N/2⌉+1 distinct model families</span> (N=5 needs 3 lineages, e.g. Llama/Qwen/Mistral). Reliability via Boland: <span style={addr}>PN,ρ,c¯ ≥ ρ − ¼(1−ρ)c¯(N−1)/N</span>. If ρ&lt;0.5, enlarge amplifies errors → fallback to human. N=5 is the practical sweet spot: Table III N=3 κ 0.70/acc 0.80, N=5 κ 0.75/0.83/VS 0.94, N=7 κ 0.75/0.86/VS 0.95 (plateau).
         </p>
+        <div style={{ ...tableWrap }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead><tr><th style={th}>THREAT</th><th style={th}>PARAM</th><th style={th}>SUCCESS</th></tr></thead>
+            <tbody>
+              <tr><td style={td} rowSpan={3} className="mono">Sybil (global share)</td><td style={td}>1.4% seat share</td><td style={td}>0.008</td></tr>
+              <tr><td style={td}>4.1% seat share</td><td style={td}>0.035</td></tr>
+              <tr><td style={td}>7.1% seat share</td><td style={td}>0.130</td></tr>
+              <tr><td style={td} rowSpan={3} className="mono">Collusion (N=5)</td><td style={td}>k=2 malicious</td><td style={td}>0.024</td></tr>
+              <tr><td style={td}>k=3 malicious</td><td style={td}>0.070</td></tr>
+              <tr><td style={td}>k=4 malicious</td><td style={td}>0.162</td></tr>
+              <tr><td style={td} className="mono">Prompt injection</td><td style={td}>Raw LLM</td><td style={td}>78.0% (39/50)</td></tr>
+              <tr><td style={td} className="mono"></td><td style={td}>PDF-text filtering</td><td style={td}>32.0% (16/50)</td></tr>
+              <tr><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }} className="mono"></td><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }}>Full stack (Guard+Majority)</td><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }}>4.0% (2/50)</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-        <SectionNum n="07" title="Machine payments: x402 on Hedera" />
+        <SectionNum n="07" title="Evaluation" />
         <p style={body}>
-          Paid services answer <span style={addr}>402 Payment Required</span> with a $0.25 quote.
-          The gateway checks the task&apos;s spend policy (approved service · amount ≤ remaining
-          budget · reputation), then the server-held payment authority settles in HBAR on Hedera
-          testnet through the Blocky402 facilitator (/verify → /settle, x402 v2). The settlement
-          reference is recorded on the payment row and the merchant independently verifies it
-          against the mirror node before returning any report. The agent never touches a wallet key.
+          Lightweight routing on Ryzen 7 5800X/RTX 4050, LLM inference on A100 (Slurm), contracts on Base Sepolia, 100-paper test set. Beyond F1 and council tables above: reputation over T=500 rounds stratifies to Standard without monopoly (Gini ~0.38), slashed recovery ~100–150 reviews, steady-state density peaks at Standard (µ≈60, Elite is bounded tail).
         </p>
 
-        <SectionNum n="08" title="Human approvals + anchoring" />
+        <SectionNum n="08" title="Demo tenant: Blockchainist Lab" />
         <p style={body}>
-          High-risk actions escalate to named approval councils (deploy-council, treasury-council).
-          The approver signs with their own wallet (EIP-191 personal_sign); the server verifies the
-          signature against the registered approver address and seals signer + signature into the
-          approval event. Ledger is the hardware root-of-trust path (wallet-cli ring / Key Ring);
-          without a device the dev provider is used and honestly labeled DEV (stand-in) — never
-          claimed as hardware security. Every allowlisted audit event is sha256-fingerprinted and
-          submitted fire-and-forget to a Hedera Consensus Service topic; the verify page recomputes
-          each fingerprint against the mirror node (VERIFIED / PENDING / NOT-ANCHORED).
+          Blockchainist Lab — a fictional 90-person lab (cryptography, ML, biology) that adopted ERC‑8004 agents for review but needed a broker that picks reviewers with verifiable history. For the demo, every paper becomes a task under the <span style={addr}>demo</span> tenant (now <span style={addr}>Blockchainist Lab</span> in seed). Papers, transcripts, and council chats are simulated and labeled. What is real: the qualifier every paper passes (fee → rank → select via The Graph → VRF council → 5×7-section reviews → hash/CID on 84532 → audit), the ERC‑8004 identities (84532:9223-9227), HBAR-free fee flow on Base Sepolia, and the math above.
         </p>
 
-        <SectionNum n="09" title="Onchain registry" />
+        <SectionNum n="09" title="Integration surface" />
         <p style={body}>
-          Everything below is public and safe to share. No private keys appear anywhere in this
-          repo&apos;s docs — signing keys live only in the gitignored{" "}
-          <span style={addr}>app/.env.local</span> (HEDERA_OPERATOR_KEY, AGENT_OWNER_KEY) and are
-          never printed, logged, or committed. What is written out here is the verifiable public
-          surface: contracts, identities, accounts, topics, and explorers.
+          Console: submit arXiv (wallet-gated) → propose → sign (EIP-712) → run (discussion.message×5 + review.submitted×5 + paper.completed) with live polling (1.5–2s) and per-agent personas (Systems, Clarity, Theory, Crypto, Fairness). Audit: paginated 20/page, newest-first, RAAC + legacy filters. Network: SSE live, agent pseudonyms, anonymized aggregates. Trust reads: live Agent0 subgraph via <span style={addr}>AGENT0_SUBGRAPH_URL</span> or <span style={addr}>THEGRAPH_API_KEY</span> with offline fallback.
         </p>
 
+        <SectionNum n="10" title="Run it yourself (live demo)" />
+        <div style={codeBlock}>{`pnpm install && pnpm db:migrate && pnpm dev   # :3000
+# : arXiv -> console (wallet on 84532)
+open http://localhost:3000/console  # paste https://arxiv.org/abs/1706.03762 -> SUBMIT -> PROPOSE -> SIGN -> RUN
+# or API:
+curl -X POST http://localhost:3000/api/papers -H 'content-type: application/json' -d '{"arxivUrl":"https://arxiv.org/abs/1706.03762"}'
+curl -X POST http://localhost:3000/api/papers/<id>/selection
+curl -X POST http://localhost:3000/api/papers/<id>/council/verify -d '{"signature":"0x...","author":"0x..."}'
+curl -X POST http://localhost:3000/api/papers/<id>/council/run
+curl -X POST http://localhost:3000/api/papers/<id>/anchor  # -> sepolia.basescan.org/tx/0x...
+# env (app/.env.local, never committed):
+DATABASE_URL=...  BASE_SEPOLIA_RPC_URL=https://sepolia.base.org  OPENROUTER_API_KEY=...  OPENROUTER_API_KEY_2=...  THEGRAPH_API_KEY=...`}</div>
+
+        <SectionNum n="11" title="On-chain registry — contracts & gas" />
+        <p style={body}>
+          Three registries extend ERC‑8004 on Base Sepolia. Gas is bounded for L2 — no token-price assumptions needed.
+        </p>
         <div style={tableWrap}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                <th style={th}>ARTIFACT</th>
-                <th style={th}>VALUE</th>
+                <th style={th}>FUNCTION</th>
+                <th style={th}>GAS (µ ± σ)</th>
                 <th style={th}>VERIFY</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td style={td} className="mono">ERC-8004 Identity<br />Base Sepolia</td>
-                <td style={td}><span style={addr}>0x8004a818bfb912233c491871b3d84c89a494bd9e</span></td>
+                <td style={td} className="mono">mintHybridIdentity()</td>
+                <td style={td}><span style={addr}>182,184 ± 6,629</span></td>
                 <td style={td} className="mono"><a className="link" href="https://sepolia.basescan.org/address/0x8004a818bfb912233c491871b3d84c89a494bd9e">basescan ↗</a></td>
               </tr>
               <tr>
-                <td style={td} className="mono">ERC-8004 Reputation<br />Base Sepolia</td>
-                <td style={td}><span style={addr}>0x8004b663056a597dffe9eccc1965a193b7388713</span></td>
+                <td style={td} className="mono">validationResponse()</td>
+                <td style={td}><span style={addr}>103,222 ± 3,221</span></td>
                 <td style={td} className="mono"><a className="link" href="https://sepolia.basescan.org/address/0x8004b663056a597dffe9eccc1965a193b7388713#writeContract">basescan ↗</a></td>
               </tr>
               <tr>
-                <td style={td} className="mono">Agent0 subgraph<br />deployment ID</td>
-                <td style={td}><span style={addr}>4yYAvQLFjBhBtdRCY7eUWo181VNoTSLLFd5M7FXQAi6u</span><br /><span className="mono" style={{ fontSize: 11, color: "#6a6a6a" }}>gateway.thegraph.com/api/&lt;KEY&gt;/subgraphs/id/…</span></td>
-                <td style={td} className="mono"><a className="link" href="https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/">graph docs ↗</a></td>
+                <td style={td} className="mono">validationRequest()</td>
+                <td style={td}><span style={addr}>88,049 ± 3,361</span></td>
+                <td style={td} className="mono">Base Sepolia</td>
               </tr>
               <tr>
-                <td style={td} className="mono">deploy-agent</td>
-                <td style={td}><span style={addr}>84532:9223</span> · feedback 95/100</td>
-                <td style={td} className="mono"><a className="link" href="https://erc-8004.quicknode.com/agents/base-sepolia/9223">quicknode ↗</a></td>
+                <td style={td} className="mono">giveFeedback()</td>
+                <td style={td}><span style={addr}>73,193 ± 2,804</span></td>
+                <td style={td} className="mono">Base Sepolia</td>
               </tr>
               <tr>
-                <td style={td} className="mono">treasury-agent</td>
-                <td style={td}><span style={addr}>84532:9224</span> · feedback 90/100</td>
-                <td style={td} className="mono"><a className="link" href="https://erc-8004.quicknode.com/agents/base-sepolia/9224">quicknode ↗</a></td>
-              </tr>
-              <tr>
-                <td style={td} className="mono">reader-agent</td>
-                <td style={td}><span style={addr}>84532:9225</span> · feedback 92/100</td>
-                <td style={td} className="mono"><a className="link" href="https://erc-8004.quicknode.com/agents/base-sepolia/9225">quicknode ↗</a></td>
-              </tr>
-              <tr>
-                <td style={td} className="mono">lab-1 (borrowed mainnet,<br />real negative)</td>
-                <td style={td}><span style={addr}>8453:74108</span> · rep ≈0.10 → always escalates</td>
-                <td style={td} className="mono"><a className="link" href="https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/">subgraph ↗</a></td>
-              </tr>
-              <tr>
-                <td style={td} className="mono">Hedera merchant<br />(X402_PAY_TO_ACCOUNT)</td>
-                <td style={td}><span style={addr}>0.0.10482549</span> · public, receive-only, key discarded</td>
-                <td style={td} className="mono"><a className="link" href="https://hashscan.io/testnet/account/0.0.10482549">hashscan ↗</a></td>
-              </tr>
-              <tr>
-                <td style={td} className="mono">Hedera operator<br />(dev payment authority)</td>
-                <td style={td}><span style={addr}>0.0.10481126</span> · EVM <span style={addr}>0xd682…73EE</span> (truncated in runbook — full address on mirror)</td>
-                <td style={td} className="mono"><a className="link" href="https://hashscan.io/testnet/account/0.0.10481126">hashscan ↗</a></td>
-              </tr>
-              <tr>
-                <td style={{ ...td, borderBottom: "none" }} className="mono">HCS anchor topic<br />(HCS_TOPIC_ID)</td>
-                <td style={{ ...td, borderBottom: "none" }}><span style={addr}>0.0.10517868</span> · fingerprints only, warn-only on failure</td>
-                <td style={{ ...td, borderBottom: "none" }} className="mono"><a className="link" href="https://hashscan.io/testnet/topic/0.0.10517868">hashscan ↗</a></td>
+                <td style={{ ...td, borderBottom: "none" }} className="mono">Off-chain qualifier</td>
+                <td style={{ ...td, borderBottom: "none" }}><span style={addr}>~42 ms / paper</span></td>
+                <td style={{ ...td, borderBottom: "none" }} className="mono">local Ryzen 7 + A100</td>
               </tr>
             </tbody>
           </table>
         </div>
         <p className="mono" style={{ marginTop: 12, fontSize: 11, lineHeight: 1.8, color: "#5a5a5a" }}>
-          FACILITATOR api.testnet.blocky402.com · RPC sepolia.base.org · FAUCET portal.hedera.com · SCAN PRICE $0.25 ≈ 3.3 HBAR · NO NEW SOLIDITY CONTRACTS IN THE MVP (FOUNDARY SCAFFOLD UNTOUCHED)
+          AGENT0 SUBGRAPH: 4yYAvQLFjBhBtdRCY7eUWo181VNoTSLLFd5M7FXQAi6u · FACILITATOR — · RPC sepolia.base.org · NO NEW SOLIDITY BEYOND ERC‑8004 COMPAT (FOUNDRY SCAFFOLD) · REPO github.com/Hpgbao2204/MAPR
         </p>
 
-        <SectionNum n="10" title="Demo tenant: Acme" />
-        <p style={body}>
-          Acme is a fictional 120-person fintech (invoicing SaaS, GitHub monolith + onchain
-          USDC/ETH treasury) invented so the demo story, script, and transcript describe the same
-          imaginary customer. Repos, PRs, secrets, deploys, and quotes are simulated and labeled
-          on screen. What is real: the authorization pipeline every fictional action passes
-          through, the ERC-8004 identities, the HBAR settlements, the wallet-signed approvals,
-          and the HCS anchors. Cast: deploy-agent (ship code) · treasury-agent (move money) ·
-          reader-agent (reads only) · lab-1 (unproven contractor, supervised). Each pilot incident
-          maps to a beat: injected .env read → DENY · over-budget scan → DENY · cross-task read →
-          DENY · low-rep read → ESCALATE · merge/deploy → ESCALATE → approve → execute.
-        </p>
-
-        <SectionNum n="11" title="Integration surface" />
-        <p style={body}>
-          Agents reach the gateway over standard MCP (five tools via our MCP server + official SDK
-          client) or plain HTTPS tool-call routes. Console: agents, tasks, policies, approvals,
-          payments, audit traces, network stream (SSE). Trust reads: live Agent0 subgraph with
-          offline fixture fallback. Payments: x402 challenge → budget policy → Blocky402 settle →
-          mirror-verified report. Approvals: pending queue → wallet sign → resolve → capability.
-          Anchors: per-event fingerprint → HCS topic → verify page.
-        </p>
-
-        <SectionNum n="12" title="Security properties" />
-        <p style={body}>
-          The model drafts, the policy decides — the LLM is never the ALLOW/DENY oracle.
-          Capabilities are single-action, single-resource, five-minute, policy-bound. Agents hold
-          budget scopes, never payment keys. Settlements are merchant-verified fail-closed against
-          the mirror node; replays, expiries, and tampered nonces are rejected. Private tenant data
-          (prompts, arguments, secrets) stays offchain; only identity, reputation, attestations,
-          payments, and fingerprint anchors touch the chain. Dev/mock surfaces are always labeled;
-          a simulator is never presented as hardware security.
-        </p>
-
-        <SectionNum n="13" title="Run it yourself" />
-        <div style={codeBlock}>{`pnpm install && pnpm db:migrate && pnpm dev   # :3000
-curl -X POST localhost:3000/api/demo/seed   # fresh Acme tenant
-open localhost:3000/demo/chat               # press PLAY
-# env (app/.env.local, never committed):
-DATABASE_URL=…  HEDERA_NETWORK=testnet
-HEDERA_OPERATOR_ID=0.0.x  HEDERA_OPERATOR_KEY=SECRET
-X402_PAY_TO_ACCOUNT=0.0.10482549  AGENT0_SUBGRAPH_URL=…
-HCS_TOPIC_ID=… (pnpm --filter app hcs:init)`}</div>
-
-        <SectionNum n="14" title="Sources" />
+        <SectionNum n="12" title="Sources" />
         <div className="mono" style={{ marginTop: 14, fontSize: 12.5, lineHeight: 2.1 }}>
-          <div><a className="link" href="https://ethglobal.com/events/ethonline2026/prizes">ETHOnline 2026 prizes ↗</a></div>
-          <div><a className="link" href="https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/">Agent0 / ERC-8004 subgraphs ↗</a></div>
+          <div><a className="link" href="https://eips.ethereum.org/EIPS/eip-8004">EIP-8004: Trustless Agents ↗</a></div>
+          <div><a className="link" href="https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/">Agent0 / ERC‑8004 subgraphs ↗</a></div>
           <div><a className="link" href="https://thegraph.com/docs/en/subgraphs/tooling/subgraph-mcp/introduction/">Subgraph MCP ↗</a></div>
-          <div><a className="link" href="https://developers.ledger.com/docs/ai-tools/ledger-cli">Ledger wallet-cli / Key Ring ↗</a></div>
-          <div><a className="link" href="https://eips.ethereum.org/EIPS/eip-8004">EIP-8004 ↗</a></div>
-          <div><a className="link" href="https://ethglobal.com/events/ethonline2026/prizes/ens">ENS ETHOnline ↗</a></div>
+          <div><a className="link" href="https://github.com/Hpgbao2204/MAPR">MAPR — Simulator + Solidity (paper) ↗</a></div>
+          <div><a className="link" href="https://arxiv.org/abs/1706.03762">arXiv 1706.03762 — demo paper ↗</a></div>
+          <div><a className="link" href="https://sepolia.basescan.org/">Base Sepolia explorer ↗</a></div>
         </div>
 
         <p className="mono" style={{ marginTop: 56, fontSize: 11, letterSpacing: "0.16em", color: "#5a5a5a" }}>
-          □ CUBIC — MCP GIVES AGENTS TOOLS. ERC-8004 GIVES THEM IDENTITY. WE DECIDE WHAT THEY MAY DO.
+          □ RAAC — VERIFIABLE AI REVIEWERS. PAPER → TAXONOMY → HYBRID IDENTITY → VRF COUNCIL → BASE SEPOLIA.
         </p>
       </div>
 
@@ -379,3 +301,4 @@ HCS_TOPIC_ID=… (pnpm --filter app hcs:init)`}</div>
     </main>
   );
 }
+

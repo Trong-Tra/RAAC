@@ -9,61 +9,61 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "What is RAAC?",
     a: [
-      "RAAC is a trustless research review network on Base Sepolia. It sits between authors and the ERC‑8004 agent network — ranking agents by domain knowledge and on-chain reputation, picking the top 5 per paper, and orchestrating a council that discusses then writes independent peer reviews.",
+      "RAAC is the implementation of Verifiable AI Reviewers — a decentralized multi-agent qualification framework for peer review on Base Sepolia. It extends ERC‑8004 with a hybrid identity (ERC‑5192 soulbound reputation badge + ERC‑721 endpoint NFT), deterministic hierarchical skill matching, and a VRF-selected review council — built for on-chain efficiency and immutable trust.",
     ],
   },
   {
-    q: "How does one authorization work?",
+    q: "How does skill matching work without LLM embeddings?",
     a: [
-      "Agent → Intent → Policy/Context Evaluation → Allow | Deny | Escalate → Capability → Tool Execution → Result → Audit Event. The agent's tool call is normalized into a structured intent, a deterministic policy engine decides, and on allow the agent gets a capability naming exactly one action on exactly one resource with an expiry — never a raw API key.",
+      "Agents declare Sa={(qj,ℓ)} with ℓ∈{NOVICE,PROFICIENT,EXPERT} over a disclosed taxonomy T=(V,E), |V|=247 (ACM CCS + arXiv). For a paper’s Sp={(si,wi)}, relevance w(si,qj) uses exact/parent/child/sibling/graph-distance decays (βp,βc,βs,βg) and proficiency λ(ℓ): M(a,p)=Σ wi·max w(si,qj)λ(ℓ). Cost O(|A|·|Sp|·|Sa|), ~42 ms/paper — F1 0.812 vs SPECTER2 0.773 and Jaccard 0.666 on 100 arXiv papers.",
     ],
   },
   {
-    q: "Why 5 reviewers per paper?",
+    q: "How does hybrid identity stop reputation laundering?",
     a: [
-      "Redundancy and diversity. Five agents with high reputation in the paper's domain discuss together then write independently — reducing single-agent bias while keeping the review set auditable and comparable. The council transcript and each review are recorded.",
+      "On registration the Identity Registry mints ⟨SBTrep, NFTendpoint⟩. The ERC‑5192 SBTrep is locked to the operator wallet and accumulates R(a)=wr·r̂+wα·α+wh·h+wc·c; the ERC‑721 NFTendpoint holds the service URI. Transferring the endpoint migrates routing only — credibility stays with the original operator. Skill claims ℓ(qj) are staked via validationRequest/validationResponse and slashed by TEE or human challenge if inflated.",
     ],
   },
   {
-    q: "Does an LLM decide what is allowed?",
+    q: "How does reputation recover after a failure?",
     a: [
-      "No. AI may classify or summarize intent — turning “review PR 421 and deploy it if safe” into structured fields — but the deterministic policy engine is the final ALLOW / DENY / ESCALATE authority. An LLM never gets the last word on a dangerous action.",
+      "Updates use EMA Rt+1=(1−η)Rt+ηR(Δt) with ηrecovery < ηnormal after slashing. A Premium agent (≈85) slashed to Entry (≈45) needs ~100–150 sustained honest reviews to return to Standard. Gini converges to ~0.38 — meritocratic without monopoly. Proposition 1 bounds drift tracking as O(√η + K/ηT).",
     ],
   },
   {
-    q: "What happens to high-risk actions?",
+    q: "How is the council formed and why VRF?",
     a: [
-      "They escalate. Production deploys, fund movements, and anything over a spend cap pause in the approvals queue until a human approves — wired for Ledger Key Ring approval on provisioned hosts; this demo runs the in-app dev stand-in. Low-risk reads keep flowing autonomously.",
+      "Qualified agents are ranked Γ(a,p)=γm·M(a,p)+γr·R(a)/100, top-2N go to Chainlink VRF which picks final N. A diversity constraint (≥⌈N/2⌉+1 distinct model families; N=5 needs 3 lineages like Llama/Qwen/Mistral) enforces the Boland dependent-jurors bound PN,ρ,c¯. N=5 gives κ 0.75 / accuracy 0.83 / vote stability 0.94; N=7 plateaus (κ 0.75) — N=5 is the cost-performance sweet spot. If ρ<0.5, system falls back to human review.",
     ],
   },
   {
-    q: "How does the review fee work?",
+    q: "What about Sybil, collusion, and prompt injection?",
     a: [
-      "Authors pay a small fee on Base Sepolia when submitting. RAAC verifies the signature, escrows the fee, and releases it to reviewers after the council completes. One network, one currency — no cross-chain settlement.",
+      "VRF makes Sybil 4.1% seat share → 0.035 decision-flip, collusion k=3 of N=5 → 0.07 (k=4 → 0.162). Layered defense (PDF-text filtering + guard + majority) drops prompt-injection from 78.0% (raw LLM) to 4.0% (2/50).",
     ],
   },
   {
-    q: "Where does The Graph fit in?",
+    q: "What does it cost on-chain?",
     a: [
-      "Agent0 and ERC‑8004 subgraphs supply live identity, reputation, and validation context that policies evaluate against — not dashboard decoration. The agent can also query that data natively through the Subgraph MCP, and streaming activity feeds the network view.",
+      "Base Sepolia: mintHybridIdentity ~182K gas (±6.6K), validationResponse ~103K, validationRequest ~88K, giveFeedback ~73K. Off-chain qualifier ~42 ms/paper. No new Solidity beyond the ERC‑8004-compatible registries; contracts were benchmarked on Base Sepolia.",
     ],
   },
   {
-    q: "How is this different from OPA, Vault, or MCP?",
+    q: "Where do The Graph and Base Sepolia fit?",
     a: [
-      "OPA evaluates policies; Vault protects secrets; MCP standardizes agent ↔ tool calls; ERC‑8004 provides identity and reputation. RAAC composes them for research: which agents are most qualified to review this paper right now? We rank, recruit, and orchestrate — agents do the reasoning.",
+      "Off-chain engine does NLP ingestion, skill extraction, and LLM review generation; the on-chain EVM trust layer anchors identity, reputation, validation, and CID storage governance (IPFS/Arweave). The Graph Agent0/ERC‑8004 subgraphs are the live source for R(a) and validation — not decoration.",
     ],
   },
   {
-    q: "What data goes onchain?",
+    q: "What data is on-chain vs off-chain?",
     a: [
-      "Only what belongs there: identity, reputation, validation, attestations, payments, and anchors. Detailed tenant audit data — prompts, arguments, secrets, runbooks — stays offchain and private. The public network view only ever shows anonymized aggregates.",
+      "On-chain: hybrid identities, staked skill validations, reputation R(a), review hashes/CIDs, and governance. Off-chain: manuscript ingestion, Sp extraction, M(a,p) ranking, and council LLM inference. Paper PDFs stay on arXiv; DB only stores URL + hash + abstract for the demo.",
     ],
   },
   {
-    q: "How do I get access?",
+    q: "How do I try it?",
     a: [
-      "Connect a wallet in the header to open your tenant console: register agents, write policies, clear approvals, and inspect the full audit chain. Everything is mock data today — live gateway telemetry plugs in as it lands.",
+      "Connect a wallet (Base Sepolia 84532) → /console → paste an arXiv link. RAAC digests it, ranks the 5–6 demo agents by M(a,p) + R(a), you sign the council (EIP-712), then watch the council discuss (5 messages) and stream 5 independent 7-section reviews. This demo is a simulator + Solidity on Base Sepolia — the PDF will be removed from the repo, code is at github.com/Hpgbao2204/MAPR.",
     ],
   },
 ];
