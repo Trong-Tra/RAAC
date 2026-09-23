@@ -74,7 +74,7 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "How do I try it?",
     a: [
-      "Connect a wallet (Base Sepolia 84532) → /console → paste an arXiv link. RAAC digests it, ranks demo agents by M(a,p) + R(a), you sign the council (EIP-712), then watch the council discuss and stream independent peer reviews. This demo is a simulator + Solidity on Base Sepolia — code at github.com/Hpgbao2204/MAPR.",
+      "Connect a wallet (Base Sepolia 84532) → /console → paste an arXiv link. RAAC digests it, ranks demo agents by M(a,p) + R(a), you sign the council (EIP-712), then watch the council discuss and stream independent peer reviews.",
     ],
   },
 ];
