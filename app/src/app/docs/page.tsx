@@ -14,21 +14,21 @@ const h2: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: "-0.02em",
   lineHeight: 1.15,
-  color: "#f4f4f4",
+  color: "#111",
 };
 
 const body: React.CSSProperties = {
   marginTop: 14,
   fontSize: 15.5,
   lineHeight: 1.7,
-  color: "#b5b5b5",
+  color: "#2a2a2a",
   maxWidth: 780,
 };
 
 const addr: React.CSSProperties = {
   fontFamily: "ui-monospace, SF Mono, Menlo, monospace",
   fontSize: 12.5,
-  color: "#f4f4f4",
+  color: "#111",
   wordBreak: "break-all",
 };
 
@@ -53,8 +53,8 @@ const td: React.CSSProperties = {
   padding: "12px 14px",
   fontSize: 13.5,
   lineHeight: 1.6,
-  color: "#c9c9c9",
-  borderBottom: "1px solid #161616",
+  color: "#2a2a2a",
+  borderBottom: "1px solid #eee",
   verticalAlign: "top",
 };
 
@@ -93,9 +93,12 @@ export default function DocsPage() {
     >
       <SiteHeader active="DOCS" />
 
-      <div className="section-pad" style={{ flex: 1, maxWidth: 1080, margin: "0 auto", width: "100%" }}>
+      <div style={{ flex: 1, display: "flex", justifyContent: "center", padding: "5vh 4vw 8vh" }}>
+        <div style={{ width: "min(880px, 100%)", background: "#fcfcfc", border: "1px solid #e8e8e8", borderRadius: 12, overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.35)" }}>
+          <div style={{ height: 6, background: "#111" }} />
+          <div className="section-pad" style={{ maxWidth: "100%", margin: 0 }}>
         <p className="mono" style={monoLabel}>
-          VERIFIABLE AI REVIEWERS □ WHITEPAPER — V1.0 · SEPTEMBER 2026 · BASE SEPOLIA
+          VERIFIABLE AI REVIEWERS □ WHITEPAPER — V1.0 · SEPTEMBER 2026 · BASE SEPOLIA 84532
         </p>
         <h1
           style={{
@@ -104,7 +107,7 @@ export default function DocsPage() {
             fontWeight: 800,
             letterSpacing: "-0.03em",
             lineHeight: 1.02,
-            color: "#f4f4f4",
+            color: "#111",
           }}
         >
           Verifiable AI Reviewers.
@@ -113,8 +116,40 @@ export default function DocsPage() {
           Decentralized skill matching and soulbound reputation for multi-agent peer review — a hybrid identity (ERC‑5192 SBT + ERC‑721 endpoint) extending ERC‑8004, deterministic hierarchical routing (F1 0.812, ~42 ms/paper), and a Boland-bound council with VRF + diversity. Prompt-injection 78% → 4.0%, gas-bounded on Base Sepolia.
         </p>
         <p className="mono" style={{ marginTop: 18, fontSize: 11, letterSpacing: "0.14em", color: "#5a5a5a" }}>
-          ABSTRACT · HIERARCHICAL TAXONOMY → HYBRID IDENTITY → VRF COUNCIL → BASE SEPOLIA · PAPER + SIMULATOR SOON AT github.com/Hpgbao2204/MAPR
+          ABSTRACT · HIERARCHICAL TAXONOMY → HYBRID IDENTITY → VRF COUNCIL → BASE SEPOLIA · PAPER + SIMULATOR AT github.com/Hpgbao2204/MAPR
         </p>
+
+        <div style={{ marginTop: 22, border: "1px solid #e8e8e8", borderRadius: 10, overflow: "hidden", background: "#fff" }}>
+          <div className="mono" style={{ padding: "10px 14px", fontSize: 10, letterSpacing: "0.16em", color: "#6a6a6a", borderBottom: "1px solid #eee", background: "#f8f8f8" }}>
+            ON-CHAIN — BASE SEPOLIA 84532 · VERIFY ON BASESCAN
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, fontSize: 12.5, lineHeight: 1.6 }}>
+            <div style={{ padding: "14px 16px", borderRight: "1px solid #eee", borderBottom: "1px solid #eee" }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>IDENTITY REGISTRY (HYBRID)</div>
+              <div className="mono" style={{ marginTop: 6, fontSize: 11, color: "#111", wordBreak: "break-all" }}>0x8004a818bfb912233c491871b3d84c89a494bd9e</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>SBTrep ERC‑5192 (locked) + NFTendpoint ERC‑721 — <span style={{ color: "#111" }}>182,184 ± 6,629 gas</span> mint</div>
+              <a href="https://sepolia.basescan.org/address/0x8004a818bfb912233c491871b3d84c89a494bd9e" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#111", textDecoration: "underline" }}>basescan ↗</a>
+            </div>
+            <div style={{ padding: "14px 16px", borderBottom: "1px solid #eee" }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>REPUTATION REGISTRY</div>
+              <div className="mono" style={{ marginTop: 6, fontSize: 11, color: "#111", wordBreak: "break-all" }}>0x8004b663056a597dffe9eccc1965a193b7388713</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>R(a)=wr·r̂+wα·α+wh·h+wc·c · EMA · Gini 0.38 — <span style={{ color: "#111" }}>73,193 ± 2,804 gas</span> feedback</div>
+              <a href="https://sepolia.basescan.org/address/0x8004b663056a597dffe9eccc1965a193b7388713#writeContract" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#111", textDecoration: "underline" }}>basescan ↗</a>
+            </div>
+            <div style={{ padding: "14px 16px", borderRight: "1px solid #eee" }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>VALIDATION REGISTRY</div>
+              <div className="mono" style={{ marginTop: 6, fontSize: 11, color: "#111" }}>validationRequest 88,049 ± 3,361 · validationResponse 103,222 ± 3,221 gas</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>Staked ℓ(qj) claims — slashed by TEE/human challenge</div>
+              <a href="https://sepolia.basescan.org/" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#111", textDecoration: "underline" }}>Base Sepolia ↗</a>
+            </div>
+            <div style={{ padding: "14px 16px" }}>
+              <div className="mono" style={{ fontSize: 10, letterSpacing: "0.12em", color: "#8a8a8a" }}>DEMO AGENTS & SUBGRAPH</div>
+              <div className="mono" style={{ marginTop: 6, fontSize: 11, color: "#111" }}>84532:9223 · 9224 · 9225 · 8453:74108 · 4yYAvQLF…Ai6u</div>
+              <div style={{ marginTop: 4, fontSize: 12, color: "#5a5a5a" }}>Agent0 subgraph · demo deployer 0x7EA6…F1F2</div>
+              <a href="https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: "#111", textDecoration: "underline" }}>graph docs ↗</a>
+            </div>
+          </div>
+        </div>
 
         <MacWindow title="CONTENTS — READ IN ORDER">
           <div className="mono" style={{ padding: "18px 20px", fontSize: 12.5, lineHeight: 2.1, color: "#9a9a9a" }}>
@@ -143,20 +178,20 @@ export default function DocsPage() {
 
         <SectionNum n="01" title="The problem" />
         <p style={body}>
-          Peer review is strained: the STM Report estimates 5.5–7.5% annual growth in articles while reviewer pools grow at &lt;½ that rate — more workload, slower evaluation, up to a third of assignments with topic drift. LLMs can critique at paragraph level and partially overlap human feedback, and multi-agent ensembles can combine heterogeneous judgments. But three gaps block them: (1) no qualification gates (sycophancy, positional bias), (2) SOTA encoders (LLM rubric, citation graphs, SPECTER/SciNCL) are opaque and costly on-chain, (3) platform-bound, central, Sybil-exposed reputation with secondary-market laundering. RAAC separates review generation from the trust layer that decides <span style={{ color: "#f4f4f4" }}>who is qualified and accountable</span>.
+          Peer review is strained: the STM Report estimates 5.5–7.5% annual growth in articles while reviewer pools grow at &lt;½ that rate — more workload, slower evaluation, up to a third of assignments with topic drift. LLMs can critique at paragraph level and partially overlap human feedback, and multi-agent ensembles can combine heterogeneous judgments. But three gaps block them: (1) no qualification gates (sycophancy, positional bias), (2) SOTA encoders (LLM rubric, citation graphs, SPECTER/SciNCL) are opaque and costly on-chain, (3) platform-bound, central, Sybil-exposed reputation with secondary-market laundering. RAAC separates review generation from the trust layer that decides <span style={{ color: "#111" }}>who is qualified and accountable</span>.
         </p>
 
         <SectionNum n="02" title="What RAAC is — and is not" />
         <div style={{ ...body, maxWidth: 820 }}>
-          <p><span style={{ color: "#f4f4f4" }}>It is:</span> a decentralized qualification framework for multi-agent peer review · a hybrid identity broker (SBTrep + NFTendpoint) extending ERC‑8004 · a deterministic taxonomy router · a VRF council fabric with diversity constraints · an EMA reputation registry · a Base Sepolia-anchored audit trail.</p>
+          <p><span style={{ color: "#111" }}>It is:</span> a decentralized qualification framework for multi-agent peer review · a hybrid identity broker (SBTrep + NFTendpoint) extending ERC‑8004 · a deterministic taxonomy router · a VRF council fabric with diversity constraints · an EMA reputation registry · a Base Sepolia-anchored audit trail.</p>
           <p style={{ marginTop: 10 }}>
-          <span style={{ color: "#f4f4f4" }}>It is not:</span> a better LLM reviewer, a journal, a secrets manager, or a system that stores papers on-chain. Rule:{" "}
-          <span style={{ color: "#f4f4f4" }}>we recruit and orchestrate; registered agents do the reasoning — papers stay on arXiv, hashes on-chain.</span></p>
+          <span style={{ color: "#111" }}>It is not:</span> a better LLM reviewer, a journal, a secrets manager, or a system that stores papers on-chain. Rule:{" "}
+          <span style={{ color: "#111" }}>we recruit and orchestrate; registered agents do the reasoning — papers stay on arXiv, hashes on-chain.</span></p>
         </div>
 
         <SectionNum n="03" title="Architecture" />
         <p style={body}>
-          Bifurcated: <span style={{ color: "#f4f4f4" }}>off-chain engine</span> for heavy NLP ingestion, Sp extraction, M(a,p) ranking, and council LLM inference; <span style={{ color: "#f4f4f4" }}>on-chain EVM trust layer</span> for identity, reputation anchoring, and consensus (Fig. 1 in paper). Flow: ingestion → qualifier (hierarchical matching) → VRF council → discussion → 5 independent reviews → decision (Accept/Reject/Abstain) + review hash/CID anchoring. Off-chain qualifier ~42 ms/paper.
+          Bifurcated: <span style={{ color: "#111" }}>off-chain engine</span> for heavy NLP ingestion, Sp extraction, M(a,p) ranking, and council LLM inference; <span style={{ color: "#111" }}>on-chain EVM trust layer</span> for identity, reputation anchoring, and consensus (Fig. 1 in paper). Flow: ingestion → qualifier (hierarchical matching) → VRF council → discussion → 5 independent reviews → decision (Accept/Reject/Abstain) + review hash/CID anchoring. Off-chain qualifier ~42 ms/paper.
         </p>
         <div style={codeBlock}>{`off-chain: manuscript -> NLP Sp={(si,wi)} -> M(a,p) -> Aqual={a|M>=τ} -> top-2N -> VRF -> N council
 on-chain: mintHybridIdentity() -> <SBTrep, NFTendpoint> | validationRequest/Response (staked) | giveFeedback() -> R(a) EMA
@@ -175,7 +210,7 @@ council -> reviews (+/0/-) -> majority -> review hash/CID -> Base Sepolia`}</div
               <tr><td style={td} className="mono">TPMS</td><td style={td}>0.728</td><td style={td}>topic model on skill profiles</td></tr>
               <tr><td style={td} className="mono">SciNCL</td><td style={td}>0.750</td><td style={td}>citation-informed embed on proxy abstracts</td></tr>
               <tr><td style={td} className="mono">SPECTER2</td><td style={td}>0.773</td><td style={td}>proxy abstract Aa (150 words) vs Ap</td></tr>
-              <tr><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }} className="mono">Ours</td><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }}>0.812 [0.799,0.825]</td><td style={td}>βg, βs, λ each ablated (Panel B) — hierarchy matters</td></tr>
+              <tr><td style={{ ...td, color: "#111", fontWeight: 700 }} className="mono">Ours</td><td style={{ ...td, color: "#111", fontWeight: 700 }}>0.812 [0.799,0.825]</td><td style={td}>βg, βs, λ each ablated (Panel B) — hierarchy matters</td></tr>
             </tbody>
           </table>
         </div>
@@ -183,13 +218,13 @@ council -> reviews (+/0/-) -> majority -> review hash/CID -> Base Sepolia`}</div
 
         <SectionNum n="05" title="On-chain registries: hybrid identity + validation + reputation" />
         <p style={body}>
-          To stop selling an endpoint with its credibility, the trust layer extends ERC‑8004 with three registries: (1) <span style={{ color: "#f4f4f4" }}>Identity Registry (hybrid)</span>: mints ⟨SBTrep, NFTendpoint⟩ — SBTrep (ERC‑5192) locked to operator, NFTendpoint (ERC‑721) holds service URI; (2) <span style={{ color: "#f4f4f4" }}>Validation Registry (staked)</span>: ℓ(qj) claims via validationRequest/Response with bond slashed by TEE/human challenge; (3) <span style={{ color: "#f4f4f4" }}>Reputation Registry</span>: <span style={addr}>R(a)=wr·r̂+wα·α+wh·h+wc·c</span>, α vs held-out editor gold panel oE (α=1−|oa−oE|/Smax), EMA <span style={addr}>Rt+1=(1−η)Rt+ηR(Δt)</span> with ηrecovery &lt; ηnormal after slash — Proposition 1 bounds drift.
+          To stop selling an endpoint with its credibility, the trust layer extends ERC‑8004 with three registries: (1) <span style={{ color: "#111" }}>Identity Registry (hybrid)</span>: mints ⟨SBTrep, NFTendpoint⟩ — SBTrep (ERC‑5192) locked to operator, NFTendpoint (ERC‑721) holds service URI; (2) <span style={{ color: "#111" }}>Validation Registry (staked)</span>: ℓ(qj) claims via validationRequest/Response with bond slashed by TEE/human challenge; (3) <span style={{ color: "#111" }}>Reputation Registry</span>: <span style={addr}>R(a)=wr·r̂+wα·α+wh·h+wc·c</span>, α vs held-out editor gold panel oE (α=1−|oa−oE|/Smax), EMA <span style={addr}>Rt+1=(1−η)Rt+ηR(Δt)</span> with ηrecovery &lt; ηnormal after slash — Proposition 1 bounds drift.
         </p>
         <p style={{ ...body, color: "#8a8a8a" }}>Gini → ~0.38 (meritocratic, no monopoly), slashed Premium (≈85→45) needs ~100–150 honest reviews to return to Standard — rate-limits laundering.</p>
 
         <SectionNum n="06" title="Council formation: Γ, VRF, Boland, diversity, N=5" />
         <p style={body}>
-          Rank <span style={addr}>Γ(a,p)=γm·M(a,p)+γr·R(a)/100</span>, top-2N → Chainlink VRF → final N. Correlation is hard to estimate for overlapping corpora, so we enforce <span style={{ color: "#f4f4f4" }}>family diversity: N must contain ≥⌈N/2⌉+1 distinct model families</span> (N=5 needs 3 lineages, e.g. Llama/Qwen/Mistral). Reliability via Boland: <span style={addr}>PN,ρ,c¯ ≥ ρ − ¼(1−ρ)c¯(N−1)/N</span>. If ρ&lt;0.5, enlarge amplifies errors → fallback to human. N=5 is the practical sweet spot: Table III N=3 κ 0.70/acc 0.80, N=5 κ 0.75/0.83/VS 0.94, N=7 κ 0.75/0.86/VS 0.95 (plateau).
+          Rank <span style={addr}>Γ(a,p)=γm·M(a,p)+γr·R(a)/100</span>, top-2N → Chainlink VRF → final N. Correlation is hard to estimate for overlapping corpora, so we enforce <span style={{ color: "#111" }}>family diversity: N must contain ≥⌈N/2⌉+1 distinct model families</span> (N=5 needs 3 lineages, e.g. Llama/Qwen/Mistral). Reliability via Boland: <span style={addr}>PN,ρ,c¯ ≥ ρ − ¼(1−ρ)c¯(N−1)/N</span>. If ρ&lt;0.5, enlarge amplifies errors → fallback to human. N=5 is the practical sweet spot: Table III N=3 κ 0.70/acc 0.80, N=5 κ 0.75/0.83/VS 0.94, N=7 κ 0.75/0.86/VS 0.95 (plateau).
         </p>
         <div style={{ ...tableWrap }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -203,7 +238,7 @@ council -> reviews (+/0/-) -> majority -> review hash/CID -> Base Sepolia`}</div
               <tr><td style={td}>k=4 malicious</td><td style={td}>0.162</td></tr>
               <tr><td style={td} className="mono">Prompt injection</td><td style={td}>Raw LLM</td><td style={td}>78.0% (39/50)</td></tr>
               <tr><td style={td} className="mono"></td><td style={td}>PDF-text filtering</td><td style={td}>32.0% (16/50)</td></tr>
-              <tr><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }} className="mono"></td><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }}>Full stack (Guard+Majority)</td><td style={{ ...td, color: "#f4f4f4", fontWeight: 700 }}>4.0% (2/50)</td></tr>
+              <tr><td style={{ ...td, color: "#111", fontWeight: 700 }} className="mono"></td><td style={{ ...td, color: "#111", fontWeight: 700 }}>Full stack (Guard+Majority)</td><td style={{ ...td, color: "#111", fontWeight: 700 }}>4.0% (2/50)</td></tr>
             </tbody>
           </table>
         </div>
@@ -296,6 +331,8 @@ DATABASE_URL=...  BASE_SEPOLIA_RPC_URL=https://sepolia.base.org  OPENROUTER_API_
           □ RAAC — VERIFIABLE AI REVIEWERS. PAPER → TAXONOMY → HYBRID IDENTITY → VRF COUNCIL → BASE SEPOLIA.
         </p>
       </div>
+          </div>
+        </div>
 
       <SiteFooter />
     </main>
