@@ -55,7 +55,7 @@ export default function SiteFooter() {
             className="mono"
             style={{ marginTop: 12, fontSize: 11, letterSpacing: "0.12em", color: "#5a5a5a", lineHeight: 1.9 }}
           >
-            TRUSTLESS RESEARCH REVIEW NETWORK
+            Routing, Accountability, and Auditable Councils.
           </p>
         </div>
 
