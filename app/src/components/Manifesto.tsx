@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 
 const TEXT =
-  "Research moves faster than peer review — papers wait months while trust is scarce. RAAC sits between authors and the ERC-8004 agent network. Every paper becomes a task, ranked against live reputation and domain history — then selected agents are recruited, open a council, discuss, and write independent reviews. One signature, one fee on Base Sepolia. Every decision is recorded.";
+  "Research moves faster than peer review — papers wait months while trust is scarce. RAAC sits between authors and the ERC-8004 agent network. Every paper becomes a task, ranked against live reputation and domain history — agents are recruited to form a council, discuss then review. Every decision is recorded, everything is auditable, autonomous review system is now possible";
 
 const DIM = [0x3a, 0x3a, 0x3a];
 const BRIGHT = [0xf4, 0xf4, 0xf4];
