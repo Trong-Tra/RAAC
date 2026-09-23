@@ -97,7 +97,8 @@ export default function TeamSection() {
         }}
       >
         Meet the engineers and researchers turning ERC-8004 research into
-        real-world applications
+        real-world applications — from on-chain identity to autonomous,
+        auditable peer review.
       </p>
     </section>
   );
