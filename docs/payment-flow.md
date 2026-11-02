@@ -1,7 +1,6 @@
 # Fee flow — paper submission on Base Sepolia (RAAC)
 
-> **Cubic/Hedera docs are archived.** RAAC uses one network only: Base Sepolia (84532).
-> The 25¢ Hedera scanner + Blocky402 path described in older commits is deprecated and ignored.
+> RAAC uses one network only: Base Sepolia (84532).
 
 ## Architecture
 
@@ -70,4 +69,4 @@ No `HEDERA_*`, no `X402_*`, no Blocky402.
 
 ## Notes
 
-Hedera docs were deleted — do not extend `app/src/server/payments/x402.ts` or `HEDERA_OPERATOR_*`. Fee logic will land in `app/src/server/papers/` + `app/src/server/council/` when new `PROJECT.md` is implemented.
+Fee escrow is currently a DB row + verified tx ref; the escrow contract lands in `contracts/` when specced. Review anchoring lives in `app/src/server/anchors/base.ts`.

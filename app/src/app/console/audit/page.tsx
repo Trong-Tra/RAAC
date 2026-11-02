@@ -18,7 +18,6 @@ import type { AuditEvent } from "@/lib/api";
 const PAGE_SIZE = 20;
 
 const EVENT_TYPES = [
-  // RAAC (current)
   "paper.submitted",
   "agents.ranked",
   "council.proposed",
@@ -28,25 +27,6 @@ const EVENT_TYPES = [
   "review.submitted",
   "paper.completed",
   "paper.failed",
-  // Cubic legacy (kept for filter, but DB now mostly RAAC)
-  "intent.created",
-  "policy.evaluated",
-  "capability.issued",
-  "capability.denied",
-  "capability.escalated",
-  "capability.consumed",
-  "capability.rejected",
-  "capability.revoked",
-  "ledger.approval.requested",
-  "ledger.approval.completed",
-  "payment.requested",
-  "payment.completed",
-  "payment.failed",
-  "service.discovered",
-  "tool.execution.started",
-  "tool.execution.completed",
-  "tool.execution.failed",
-  "task.completed",
 ];
 
 export default function ConsoleAudit() {
@@ -208,7 +188,7 @@ export default function ConsoleAudit() {
                         {event.event_type}
                       </td>
                       <td style={{ ...td, fontSize: 11 }}>
-                        {event.task_id ? shortId(event.task_id, 8) : event.payload && typeof (event.payload as Record<string, unknown>).paper_id === "string" ? shortId((event.payload as Record<string, unknown>).paper_id as string, 8) : "—"}
+                        {event.payload && typeof (event.payload as Record<string, unknown>).paper_id === "string" ? shortId((event.payload as Record<string, unknown>).paper_id as string, 8) : "—"}
                       </td>
                       <td style={{ ...td, fontSize: 11 }}>
                         {event.agent_id ? shortId(event.agent_id, 8) : "—"}

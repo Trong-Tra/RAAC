@@ -331,7 +331,6 @@ export async function runCouncil(paperId: string, tenantId: string) {
         {
           event_type: "discussion.message",
           tenant_id: tenantId,
-          task_id: null,
           agent_id: t?.id ?? null,
           payload: { council_id: council.id, message_id: msg.id, agent_id: key, content },
         },
@@ -381,7 +380,6 @@ export async function runCouncil(paperId: string, tenantId: string) {
       {
         event_type: "review.submitted",
         tenant_id: tenantId,
-        task_id: null,
         agent_id: t?.id ?? null,
         payload: { paper_id: paper.id, council_id: council.id, review_id: rev.id, agent_id: key, score: tmpl.score, review_hash: hash },
       },
@@ -402,7 +400,6 @@ export async function runCouncil(paperId: string, tenantId: string) {
     {
       event_type: "paper.completed",
       tenant_id: tenantId,
-      task_id: null,
       agent_id: firstAgent?.id ?? null,
       payload: { paper_id: paper.id, council_id: council.id, review_ids: created.map((r) => r.id), status: "completed" },
     },

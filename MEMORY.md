@@ -2,148 +2,81 @@
 
 ## Purpose
 
-This is the project's hot-memory layer: the actively maintained working fact store for agents. It records implementation state, decisions, current tasks, constraints, discoveries, unresolved questions, and project nuances that should survive across agent sessions.
+Hot working memory: implementation state, decisions, tasks, constraints, discoveries, unresolved questions. Read at the start of every substantive task; update when state changes. Concise facts over prose. Mark stale facts rather than silently deleting history.
 
-## Agent Instructions
-
-- **MUST read MEMORY.md at the start of every substantive task.**
-- **MUST update MEMORY.md when implementation state, architecture, decisions, tasks, constraints, or important technical facts change.**
-- Prefer concise, factual entries over prose.
-- Record decisions with enough context to prevent later agents from accidentally reversing them.
-- Mark stale or superseded facts clearly rather than silently deleting useful history.
-- Do not use MEMORY.md as a dump for transient chatter. Keep it useful as working memory.
-- When uncertain whether a fact is current, verify it before treating it as authoritative.
-
-## Current State
+## Current State (2026-11-02, post-purge)
 
 ### Project Identity
 
-- **Name: RAAC — Routing, Accountability, and Auditable Councils** (was Cubic — ripped 2026-09-21, fresh git `main`, no upstream, dir still `cubic` by request).
-- **Scope: ERC-8004 trustless agent network for research paper peer review** on **Base Sepolia only** (84532). No Hedera, no cross-chain.
-- **Flow:** `user submits paper + fee → system ranks network agents by knowledge/history/reputation/domain fit via ERC-8004+The Graph → picks top 5 → user signs → council of 5 opens (agents discuss) → each writes a review → output 5 reviews (all post-discussion)`.
-- **Positioning:** RAAC is the broker/recruiter + orchestrator. Agents are registered on ERC-8004; The Graph is the trust/data layer; Base Sepolia is the settlement/anchor layer.
+- **RAAC — Routing, Accountability, and Auditable Councils.** ERC-8004 trustless agent network for research paper peer review on **Base Sepolia only (84532)**.
+- **Flow:** submit paper + fee → rank agents via ERC-8004 + The Graph → top 5 → author signs EIP-712 → council discusses → 5 independent reviews → hashes anchored on 84532.
+- **Positioning:** broker/recruiter + orchestrator. The Graph = trust/data layer; Base Sepolia = settlement/anchor layer.
+- Repo root dir is `RAAC` (the old `cubic` dir name is gone). Packages: root `raac-network`, app `@raac/app`.
 
-### What Was Ripped (Cubic Base)
+### 2026-11-02 Cubic Purge (commit after `8af2d8b`)
 
-- Monorepo `pnpm workspaces` with `app/` (Next.js 15, React 19, TS 5, drizzle-orm+postgres.js, viem, zod) + `contracts/` (Foundry 1.5.1, solc 0.8.24) — kept as-is.
-- 13-table schema, 17-type event bus, capability model (5m TTL, nonce, policy_hash), ingest→normalize→policy→capability→execution→audit chain, MCP facade, Agent0/The Graph client, Ledger Key Ring abstraction, x402 Hedera payments, console + network viz, demo chat — all present but **Cubic-scoped** (tool-call allow/deny). Reused as infra, not product logic.
-- Landing reassembled for RAAC: `Logo.tsx` RAAC wordmark, `layout.tsx` metadata RAAC, `SiteFooter.tsx` RAAC/TRUSTLESS RESEARCH, `HeroCopy.tsx` pipeline `paper → rank → council → 5 reviews`, `Manifesto.tsx` new thesis, `DetailsSection.tsx` card 3 → peer-review, `FaqList.tsx` RAAC Qs, `PartnerMarquee.tsx` `[THE GRAPH, BASE SEPOLIA, ERC-8004, AGENT0, RAAC]`, `DESIGN.md` wordmark RAAC, `compose.yaml` `raac-pg`/`raac-pgdata`, `package.json` `raac-network`, `app/.env.example` stripped Hedera → `BASE_SEPOLIA_RPC_URL`/`RAAC_NETWORK=base-sepolia`/`RAAC_CHAIN_ID=84532`.
+Everything Cubic-flavored was deleted, not deprecated:
 
-### Active Work (2026-09-21)
+- **Server modules gone:** `gateway/`, `capability/`, `ledger/`, `payments/` (x402), `executors/`, `mcp/`, `reasoning/` (LangSmith), `anchors/hcs.ts`, `anchors/init-topic.ts`, `domain.ts`, `demo/parse.ts`, `demo/identity.ts`, `instrumentation.ts`.
+- **API routes gone:** `/api/approvals`, `/api/gateway/*`, `/api/console/{agents,councils,policies}`, `/api/mcp`, `/api/services/scanner`, `/api/anchors/verify`, `/api/audit/trace`, `/api/demo/seed`.
+- **UI gone:** `DecisionFeed` (landing), console `AgentDetail`/`DecisionDetail`/`TraceView`, `NetworkGraph`/`topology.ts`, console audit Cubic event filters.
+- **DB:** migration `0003_purge_cubic.sql` **applied to shared Neon** (user-approved 2026-11-02) — dropped `approvals, capabilities, councils, decisions, executions, intents, payments, policies, tasks, tools` + `audit_events.task_id` (now indexed `tenant_id, created_at`). Remaining tables: `tenants, agents, audit_events, network_events, papers, paper_councils, council_messages, reviews, paper_fees`.
+- **Schema note:** `audit_events` has no `task_id`; `emit()` input no longer takes `task_id`. Event bus is 9 RAAC types only (`paper.*`, `agents.ranked`, `council.*`, `signature.verified`, `discussion.message`, `review.submitted`). Pseudonym salt now `raac-network-v1` (was `cubic-network-v1` — old network_events rows keep old pseudonyms).
+- **Deps removed:** `@x402/hedera`, `@hiero-ledger/sdk`, `@modelcontextprotocol/sdk`. `app/package.json` renamed `@raac/app` — run filters as `pnpm --filter @raac/app …`.
+- **Tests:** 21 Cubic suites deleted. Remaining: `seed.test` (6 agents, 0 papers), `config.test`, `raac-adversarial.test` (low-rep exclusion via live reputation < 0.3, unsigned-council block, tampered EIP-712), `src/server/logging.test`. **9/9 green.** Adversarial test inserts its own paper fixture (`makePaper`) because seed no longer seeds papers.
+- **Landing `MarketSection`** rewired from Cubic agent-security narrative to RAAC peer-review thesis (TAM 5M papers/yr STM, SAM 120k ICLR/Decoder, SOM 55k RAAC estimate + 5 sourced overload signals).
+- **Docs purged:** `docs/ledger.md`, `docs/demo-script/`. GitNexus block removed from AGENTS.md (index dir no longer exists). CLAUDE.md/GEMINI.md are copies of AGENTS.md.
+- Build green: **24 routes**, all RAAC.
 
-- [x] Rebrand shell + single-network lock done (build green, `pnpm --filter app build` 14 routes).
-- [x] The Graph retained — confirmed load-bearing for selector (Identity+Reputation+Validation on Base Sepolia). Not decoration.
-- [x] Docs purge completed (2026-09-21): `PROJECT.md` rewritten to RAAC spec (paper→rank→council→5 reviews, §5 selector formula, Base Sepolia only), `AGENTS.md` product boundary + architectural rules flipped to recruiter/orchestrator, `DESIGN.md` wordmark RAAC, `docs/payment-flow.md` → Base Sepolia fee flow, `docs/acme-tenant.md` → Astra Lab research tenant, `docs/demo.md` → RAAC 6-beat runbook, `docs/ledger.md` → deprecated to EIP-712 note, `docs/submission-answers.md` → RAAC QAs, `docs/demo-script/README.md` → archived.
-- [x] **Phase 1 — Domain schema (2026-09-21):** `papers`/`paper_councils`/`council_messages`/`reviews`/`paper_fees` in `schema.ts:190`, migration `0002_flaky_blizzard.sql` applied live, events `paper.submitted`…`paper.failed` in `types.ts:13`/`projection.ts:23`, seed now inserts Astra Lab paper `zl-421` (cryptography, hash `72bdf5…`, 0.001 ETH demo fee) — `seed()` returns `{papers:1}`, build 14 routes, 2 seed tests pass. Commit `080042b`.
-- [x] **Phase 2 — UI shell (2026-09-21, UI-first per user):** `/papers` list + `/papers/[id]` detail shipped with mock Routing/Accountability/Auditable Councils (top-5 scores 0.94→0.85, transcript placeholder, 5 review cards), `/api/papers` + `/api/papers/[id]` (mock selection, reads demo tenant), `SiteHeader` adds `PAPERS`, build now 16 routes. Commit `080042b` (single RAAC genesis commit: schema + UI shell).
-- [x] **Phase 3 — Selector (2026-09-21):** `app/src/server/selector/index.ts` live ranking `score=0.5*overall+0.4*domain+0.1*recency - penalty` via `HttpAgent0Client` (Base Sepolia Graph, fallback to `FALLBACK_SCORES` if unconfigured), `domainFit` proxy via capabilities, `agents.ranked → council.proposed` events + `paper_councils` row via `POST /api/papers/[id]/selection`, `/api/papers/[id]` now live (crypto-rev 0.855 > fairness 0.65 > 8472 0.555… lab-1 0.23 excluded), 2 new demo agents `crypto-rev:9226`/`fairness:9227` added (6 total, seed test updated). Commit `4d9bd4b`. Build 16 routes.
-- [x] **Phase 4 — Signature gate on Base Sepolia 84532 (2026-09-21):** EIP-712 `RAAC CouncilFormation(paperId, paperHash, selectionHash, author)` via `viem verifyTypedData` in `app/src/server/council/signature.ts:1` + shared `app/src/lib/council-message.ts:1`, `RAAC_DOMAIN` chainId 84532 verifyingContract 0x0; `POST /api/papers/[id]/council/verify` verifies signature + optional feeTx on `BASE_SEPOLIA_RPC_URL` (`viem/baseSepolia` + `http(rpc)`) then flips `paper_councils` to `active` + `papers` to `reviewing`, emits `signature.verified → council.opened`; `/papers/[id]` Accountability now live SIGN via `window.ethereum eth_signTypedData_v4` using connected wallet (84532). Commit `3a8fc27`.
-- [x] **Phase 5 — Council orchestration (2026-09-21):** `app/src/server/council/orchestrator.ts:1` deterministic `runCouncil(paperId)` — when council `active`, creates 5 `council_messages` + 5 `reviews` (hash `sha256(paperHash|agent|score|summary)`), emits `discussion.message`×5 + `review.submitted`×5 + `paper.completed`, flips to `completed`; `POST /api/papers/[id]/council/run` + `GET`, `/papers/[id]` Auditable Councils now live (RUN → 5 REVIEWS, live transcript + review cards). Verified on `zl-421`: 5 messages + 5 reviews (8,6,7,8,6). Commit `46d66ba`.
-- [x] **Phase 5b — Console demo hub (2026-09-21):** `/console` OVERVIEW now RAAC demo hub (papers + PROPOSE/SIGN(84532)/RUN buttons + RESET), layout nav retitled to PAPERS/COUNCILS on 84532. Commit `e5873b6`.
-- [x] **Phase 5c — Free tier guard (2026-09-21):** `parse.ts:40` `chatModel()` enforces `openrouter/free` / `:free` suffix — $50 OpenRouter credit never bills. Commit `7eb0fc6`.
-- [x] **Phase 5d — Env simplification (2026-09-21):** `app/.env.example:1` 6 lines no values/comments, mirrors `app/.env.local` structure (now 6 keys: DATABASE_URL local raac-pg, Base Sepolia 84532, THEGRAPH e48b2ae…, openrouter/free). Commit `aa64962`.
-- [x] **Phase 6 — Anchoring on Base Sepolia 84532 (2026-09-21, DEPLOYED):** `BASE_SEPOLIA_PRIVATE_KEY` in `config.ts:13`, `app/src/server/anchors/base.ts:1` `anchorReviewsForPaper` via `viem/baseSepolia` wallet (self-tx `data=0x<reviewHash>` on 84532, `waitForTransactionReceipt`, update `reviews.anchorTxHash` + `status=anchored`), `POST /api/papers/[id]/anchor` (+ `GET`), `/papers/[id]` Auditable Councils shows ANCHOR button + Basescan links. **Deployed 2026-09-21 on 84532 with 0.5 ETH wallet `0x7EA6…F1F2` (deployer):** paper `95a258ef…` (`zl-421` cryptography) → council `145d9993…` (5 selected crypto-rev 0.855…) → 5 msgs + 5 reviews (8,6,7,8,6) → 5 anchor txs on 84532: `0xa87338…`, `0x07eea5…`, `0x48c77b…`, `0x45d04e…`, `0x4d1435…` (sepolia.basescan.org/tx/0x…), spent 0.00000069 ETH (balance 0.596 → 0.596). Commit `204656d`, now verified via `council/run` + `anchor` GET.
-- [x] **Phase 7 — Network + submit polish (2026-09-21):** `/network` re-pivoted from intents to `papers/councils/reviews` counters + domain clusters on 84532 (`app/src/app/network/page.tsx:1`), `/papers/new` submit flow with wallet prefill + hash derivation (`app/src/app/papers/new/page.tsx:1`), seed expanded to 4 papers (zl-421 + 3 arXiv: 1706.03762 Attention, 2407 VisionTrap, 2305 Positional Encoding) with `pdfUrl` field. Commits `1e03e1d`, `e84501f`, `fa84569`, `7706328`. Build 19 routes.
-- [x] **Phase 8 — Live reviews + wallet + arXiv (2026-09-21):** `orchestrator.ts:69` `generateReviewViaOpenRouter()` live OpenRouter `:free` (never bills) with 7-section academic template + `fetchArxivFullText()` via `ar5iv.org/html/{id}` (DB only stores `pdfUrl` + 800-char abstract, council reads full paper on their own), `WalletProvider` real `window.ethereum` (no mock) in `app/src/components/WalletProvider.tsx:1`, EIP-712 now uses connected `address` not `DEAD`. Commits `0d76b2e`, `a9309c9`, `50cacd4`, `18314b0`. Review quality verified via `app/rerun-fixed.ts` (now removed — was breaking build). Stagger 1.2s + retry×3 + 45s timeout + 2500 max_tokens + academic template normalization to DB columns committed `4154914`.
-- [x] **Phase 9a — Full review UI (2026-09-22):** `/papers/[id]` now renders full 7-section academic review (`app/src/app/papers/[id]/page.tsx:375` `details` per review: manuscript/assessment/major{claim/evidence/gap/action}/minor/strengths/questions/recommendation+justification, parsed from `FULL_JSON:` in `summary`), mock flagged with `⚠ MOCK` banner. Root cause confirmed 2026-09-22: OpenRouter `429 free-models-per-day` `X-RateLimit-Remaining:0` until `1790121600000` (2026-09-23 00:00 UTC) — all 5 reviews on `fa38ddaf` fell back to `REVIEW_TEMPLATES` 2-liners. Commit `38824d2` fixes display.
-- [x] **Phase 9b — Rate-limit resilience + adversarial + demo runbook (2026-09-22):** `orchestrator.ts:69` now `429` short-circuits (no 3× waste), `academicMockFor()` generates 7-section `FULL_JSON` mock so UI shows same structure even when rate-limited (vs 2-line), `docs/demo.md:41` rewritten with live `curl` flow + tomorrow rerun steps (wait for 00:00 UTC or +$10 credits → 1000/day) + `tests/raac-adversarial.test.ts:1` (low-rep `lab-1` excluded, unsigned `must be active` blocked, tampered EIP-712 rejected, deterministic selector). Anchoring verified: `fa38ddaf` 5× `anchored` `0x3f1eef…` on 84532.
-- [ ] **Phase 9c — NEXT (2026-09-23 after reset):** wipe mocks and live rerun 4-paper cohort via `POST /api/demo/seed` → `selection` → `verify` → `run` (5× live `openrouter/free` with ar5iv) → `anchor` → verify `FULL_JSON:` + 5× Basescan txs, then final polish.
-- [x] **Phase 9d — Council quality + console live-demo (2026-09-22/23, post-reset work):** multi-key OpenRouter fallback on 429 (`b15f96d`, `OPENROUTER_API_KEY_2`/`OPENROUTER_API_KEYS` in `.env.example`), per-agent persona for diverse councils (`57e814a`), live-demo console + incremental council streaming (`620db19`), chain badge + button UI fixes. `/papers/new` removed — global surface is read-only (`17d166c`); hero stats live from `/api/network/stats` (`29bd6ff`); audit trace paginated 20/page (`456c11e`); Cubic legacy demo purged (console tabs, swarm, chat — `ff20111`); Settings → System read-only (`4a5514a`).
-- [x] **Phase 9e — Landing recode (2026-09-23):** landing reassembled around Verifiable AI Reviewers whitepaper (3 tabs + FAQs, `8d28f10`), GitBook-style `/docs` with on-chain registry then removed (`e5e1120`→`29c0c17`, registry moved into FAQ `605fa2e`), team copy finalized (bao/nhi placeholders, `8df73cf`), deliberate de-emphasis of "5 reviews" as marketing theme (`ff1cfb7`, `90fb836`), footer = Routing, Accountability, and Auditable Councils (`9185058`). HEAD `9185058`, 55 commits, tree clean.
-- [x] **Seed wipe + quota lock (2026-09-23):** all 5 demo-tenant papers deleted via new `app/scripts/wipe-seed.ts` (0 councils/reviews existed — zero quota burned), `POST /api/demo/seed` now 410 Gone, `docs/demo.md` runbook switched to live-submit only. **6-agent roster kept** (`8472/treasury/reader/crypto-rev/fairness/lab-1`) — selector reads the `agents` table, so deleting them would break selection/run; they cost zero quota. Pre-existing typecheck breakage in legacy tests (`demo/swarm`, `api/demo/chat` purged earlier) — untouched, not demo-blocking.
-- [x] **Linear console + resumable RUN + network selection visual (2026-09-23):** `/console` rewritten as 5-step stepper (submit→council→sign→run→anchor, auto-propose on submit, single 2s poll, RESUME copy on partial runs); `runCouncil` now resumable (skips existing messages/reviews, completes only at 5/5 — killed server no longer bricks a paper); `/papers/[id]` duplicate poll loop removed; new `GET /api/network/selection` + staggered ranked-bars panel with component breakdown + council cutoff on `/network`. Live-verified submit→propose→selection-endpoint on 1706.03762 (top-5 correct, lab-1 excluded last), test paper wiped after — slate clean (0 papers, 6 agents), zero OpenRouter calls burned.
-- [x] **Network empty-state crash fixed (2026-09-23):** `/api/network/selection` returned short `{paper:null}` → client `.map` on undefined killed the page. Endpoint now always full-shape + client `?? []` guard. Verified with live paper (6 scored/5 selected, 200, no errors), test paper wiped.
-- [x] **World map on /network (2026-09-24):** `react-simple-maps@5.0.5` added to app deps; world topology bundled locally at `app/public/geography/countries-110m.json` (no runtime CDN). New `app/src/components/network/AgentWorldMap.tsx` — monochrome `geoEqualEarth` map (per DESIGN.md: no color accents, outlined-square node motif, dashed hub arcs for flow) with 15 static operator locations (6 hubs w/ pulse animation, node counts, `NODES`/`HUB_ARCS` arrays at top of file for easy editing). Panel `AGENT OPERATIONS — GLOBAL NODE FOOTPRINT` inserted on `/network` between SELECTION and COUNCIL FABRIC. **Labels removed same day per user** (city text overlapped, ruined aesthetics) — node SIZE now encodes agent count (≥250 = hub: large filled square + pulse; ≥150 = mid; else small), native `<title>` hover tooltip is the only place names appear. **SELECTION panel removed same day per user** (bad UI) — page now: hero → AGENT OPERATIONS map → COUNCIL FABRIC + PIPELINE → EVENT STREAM + LEGEND; hero copy + legend de-referenced; `/api/network/selection` endpoint still exists but no page calls it. Map follow-ups same day: TEL AVIV → DUBAI per user; native `<title>` tooltip replaced with cursor-following hover tooltip (native SVG tooltips were unreliable). **Counts now real (same day):** locations stay static but per-node counts scale to the actual `agents` table total via largest-remainder (`scaleCounts` in AgentWorldMap; zero-count nodes hidden; size tiers relative to max node) — new `agents_registered` field on `GET /api/network/stats`, passed as `totalAgents` prop from `/network`. Live-verified: registry returns 13 agents (roster grew beyond the 6 noted earlier; user confirmed on-chain registry has 13 and resets DB periodically — registry count is the source of truth). **Same-day follow-ups:** landing `HeroCopy` AGENTS ONLINE + `/network` hero stat now read `agents_registered` (was event-derived `agents_observed`, which broke on DB resets); HO CHI MINH CITY node added with weight 1000 → renders exactly 3 agents at total=13 (verified via scaleCounts math), arc from Singapore. Also fixed pre-existing type error in uncommitted `orchestrator.ts:396` (redundant `council.status !== "completed"` after active-narrow). Build green, 19 routes, `/network` 38.7 kB, smoke-tested via dev server (HTTP 200, geo JSON served, SSR labels render).
-- **OpenRouter health (2026-09-23, probed):** `openrouter/free` responds in ~1.4s, key1 free-tier 44/50 left, key2 49/50 — slow council runs are free-model latency (2500-token reviews), not quota/model failure. Scratch dev servers killed to avoid :3000 clash — user server owns the port.
-- [x] **Network legacy animation replaced (2026-09-23):** cubes→gateway→services visual removed (Cubic allow/deny/x402/regions language). New `GET /api/network/fabric` + COUNCIL FABRIC panel (paper → 5 council squares fill as reviews land → score chips + ANC) + PIPELINE explainer + rewritten legend/intro/stream copy. Verified live; test paper removed after. NOTE: user's 3 papers completed mid-session (5/5 reviews each) — runs are healthy, just slow. Old seed rows reappeared in DB (cause undetermined — no auto-seed on boot; possibly user-ran populate/seed) — left untouched, user's call.
-- [x] **Console paper tabs (2026-09-23):** paper chips replaced with MY PAPERS (wallet-scoped, auto-selected on connect) / ALL PAPERS tabs + management rows (title/domain/status/step). `/papers` cards made clickable → detail (reviews + system trace) per user request — global list now links through to full abstracts, so posture assumes public-arXiv demo papers.
-- [x] **Console PAPERS nav tab (2026-09-23):** layout nav now OVERVIEW / PAPERS (wallet-count badge) / AUDIT / SYSTEM; new `/console/papers` wallet-only management page (LOAD IN PIPELINE via `/console?paper=` deep link with Suspense, OPEN → detail); overview reads the param on mount.
+### Working Pipeline (all live-verified historically)
+
+1. **Intake** — `POST /api/papers`: arXiv URL/ID (fetches title/abstract, category→domain, `paperHash=sha256(arxiv:id|title)`) or manual title+abstract+domain.
+2. **Selector** — `app/src/server/selector/index.ts`: `0.5·overall + 0.4·domain + 0.1·recency`, validation-fail ×0.2, deterministic tie-break. Trust from `app/src/server/graph/agent0.ts` (Agent0/ERC-8004 subgraph, zod-validated, 60s cache, endpoint fallback). Static `FALLBACK_SCORES` when no Graph key.
+3. **Signature gate** — `app/src/server/council/signature.ts`: EIP-712 `CouncilFormation(paperId, paperHash, selectionHash, author)` chainId 84532, `viem verifyTypedData`; UI signs via `eth_signTypedData_v4`.
+4. **Council** — `app/src/server/council/orchestrator.ts` `runCouncil()`: resumable; discussion messages are deterministic templates; reviews are live OpenRouter `:free` calls with per-agent personas, 7-section academic JSON, ar5iv full-text fetch, multi-key 429 fallback, `academicMockFor` when rate-limited. Full JSON rides in `reviews.summary` after `FULL_JSON:`.
+5. **Anchoring** — `app/src/server/anchors/base.ts`: per-review 0-value self-tx `data=0x<reviewHash>` on 84532, `anchorTxHash` + Basescan links. Deployer wallet `0x7EA6…F1F2` (key in `.env.local`).
+
+### Surfaces
+
+- `/` landing (HeroCopy live stats, Manifesto, Team, Marquee, Details, MarketSection, Closer — NetworkCanvas/CloserCanvas are abstract visuals, kept).
+- `/papers` + `/papers/[id]` — global list → detail: routing scores, SIGN, RUN, transcript, 7-section reviews, ANCHOR + Basescan.
+- `/network` — stats, AgentWorldMap (react-simple-maps, node size ∝ `agents_registered`, local `public/geography/countries-110m.json`), COUNCIL FABRIC, PIPELINE, SSE event stream.
+- `/console` — 5-step stepper (submit→council→sign→run→anchor), MY PAPERS / ALL PAPERS, `/console/papers`, `/console/audit` (paginated RAAC events), `/console/settings` (read-only).
+- `/api/graph/verify` kept — live ERC-8004 subgraph verification endpoint.
 
 ### Decisions
 
-- Monorepo stays `pnpm workspaces` (`app/` Next.js, `contracts/` Foundry). `app/src/server/` is gateway/orchestrator runtime (route handlers thin). `pnpm dev/build/typecheck` from root filter app; forge from root.
-- Storage: Postgres via `DATABASE_URL` in `app/.env.local` (gitignored, currently Neon), drizzle + postgres.js + drizzle-kit, zod validation. Seed touches demo-tenant rows only.
-- Single network: Base Sepolia `84532` only. All Hedera/x402/Blocky402 code is deprecated but still present — do not delete until new payment/fee contract path is specced in PROJECT.md.
-- DB split: partner Neon (`DATABASE_URL` with `sslmode=require`) is remote/shared; **this device needs local DB for RAAC dev** (`DATABASE_URL=postgresql://postgres:raac@localhost:5433/raac?sslmode=disable` via `compose.yaml` `raac-pg` on 5433). Device has `postgresql@16` installed via brew (keg) and Docker 28.5.1 via orbstack (currently stopped) — either `orb start && docker compose up -d` or `brew services start postgresql@16 && createdb raac` works. Seed via `POST /api/demo/seed` or `seed()` direct. Keep tenant isolation (demo tenant only).
-- `app/.env.local` currently holds Neon URL + `THEGRAPH_API_KEY` + Hedera leftovers — user will cross-check against new clean `app/.env.example:1` (required: `DATABASE_URL` + one of `THEGRAPH_API_KEY`/`AGENT0_SUBGRAPH_URL`; optional `BASE_SEPOLIA_RPC_URL` default, `BASE_SEPOLIA_PRIVATE_KEY` only at Phase 6 deployment ping). Chain constants in `app/src/server/config.ts` (`RAAC_NETWORK`, `RAAC_CHAIN_ID`).
-- Contracts: no new Solidity yet; ERC-8004 identity/reputation via Agent0 subgraph on Base Sepolia. Future RAAC subgraph for `PaperSubmitted/CouncilFormed/ReviewSubmitted` events after new spec.
-- Build green requires `app/.env.local` present at `next build` (DATABASE_URL required). Dir rename deferred per user — keep `cubic` path to avoid breaking tool access.
-- Previous Cubic wave history (W1–W7, plan-01…plan-16, 1927 symbols, Hedera wallet `0.0.10481126`, HCS topic `0.0.10517868`) is **archived, not authoritative** — ripped base reference only.
+- Storage: Postgres via `DATABASE_URL` in `app/.env.local` — **currently the shared partner Neon** (`ep-soft-sea-…neon.tech/neondb`). drizzle + postgres.js + drizzle-kit. Local fallback: `compose.yaml` `raac-pg` on 5433.
+- Seed (`app/src/server/demo/seed.ts`) = demo tenant + **6 agents only, 0 papers** (slate clean; papers come from live submits). Agents: `84532:9223–9227` owned + `8453:74108` (lab-1, real negative feedback adversarial fixture). `app/scripts/wipe-seed.ts` wipes demo papers; `list-papers.ts`/`check-paper.ts` inspect; `register-agent-8004.ts` registers identities (descriptions now RAAC reviewer personas).
+- Contracts: `contracts/` still Foundry boilerplate (Counter). Fee escrow contract NOT built — `paper_fees` table is a row + tx ref; no release tx. Anchoring uses raw self-txs, no contract.
+- Free-tier guard: `chatModel()` forces `openrouter/free`/`:free` — never bills. Multi-key via `OPENROUTER_API_KEY`, `_2`, `_KEYS` (comma-separated), rotates on 429.
+- MVP honesty: council discussion is templated and reviews are server-side OpenRouter calls keyed to agent personas — UI presents them as ERC-8004 agent output. Deliberate per user (2026-11-02): fine for MVP, addressed verbally in pitches, **never flagged on the site**.
 
 ### Important Constraints
 
-- The Graph via Agent0/ERC-8004 is mandatory for selection — not mockable if trustless claim is to hold.
-- Selection ranking must be deterministic and explainable (reputation + domain history), not LLM oracle final word per original principle.
-- Detailed paper content stays off-chain private; only hashes/attestations/fee events on-chain.
-- Ledger/Key Ring abstraction kept but unused for RAAC MVP unless human-in-loop approval is reintroduced for fee release.
+- The Graph via Agent0/ERC-8004 is mandatory for selection — not mockable if the trustless claim is to hold.
+- Selection deterministic + explainable; LLM never the final ranker.
+- Paper content off-chain; only hashes/attestations on-chain.
+- Never reintroduce Hedera/x402/Blocky402 or the deleted Cubic modules.
 
 ### Known Issues / Open Questions
 
-- Hedera code not yet pruned: `app/src/server/payments/x402.ts`, `app/src/server/config.ts` HEDERA_* defaults — keep until fee contract replaces it (other docs already purged).
-- Phase 2 selector needs `THEGRAPH_API_KEY` live; mock fallback already planned for unset env.
-- `MEMORY.md` history truncated intentionally — full Cubic history lives in git history pre-rip (now gone) and prior MEMORY.md backup if needed.
+- Fee escrow contract + reviewer payout split: not specced. `contracts/` untouched.
+- Real A2A/MCP agent execution (agents reasoning on their own infra) is post-MVP.
+- `paper_fees.releaseTxHash` unused until escrow exists.
+- Old `network_events` rows (pre-purge) carry `cubic-network-v1` pseudonyms — cosmetic only.
 
-### RAAC Market Thesis (TAM-SAM-SOM) — Research Manuscript Submission
+### RAAC Market Thesis (TAM-SAM-SOM)
 
-- **Signal (2026-09-20 live, verified):** ICLR 2027 reportedly **>60,000 abstracts registered** by abstract deadline (Digg 2026-09-20, citing submitter; prior ICLR 2026 blog: 19,525 valid submissions, 13,763 decided after 76,139 reviews from 18,054 reviewers, 5,355 accepted at 27.4% — https://blog.iclr.cc/2026/03/31/a-retrospective-on-the-iclr-2026-review-process/). The Decoder reports ~50,000 abstracts pre-deadline for ICLR 2027 vs 19,500 valid ICLR 2026 (https://the-decoder.com/ai-conference-iclr-is-drowning-in-abstracts...). If 42,300 survive to review (est. in Digg piece), reviewer pool unchanged → system breaks. ICLR 2026 also had 21% of reviews flagged fully AI-generated (Pangram Labs, 75,800 reviews), 50%+ AI-involved, plus Nov 2025 OpenReview breach exposing 45% of submissions — structural overload, not a blip.
-- **TAM — Global research manuscripts:** ~3–5M peer-reviewed papers/year across all fields (STM report). Every submission needs 2–3 reviews; every review is unpaid volunteer labor. Market is the cost of review itself + downstream journals/conferences.
-- **SAM — AI/ML conferences + arXiv cs.*:** ~80–120k submissions/year and spiking 60–70% YoY (ICLR 7,262→11,672→19,797 2024→2026; ICLR 2027 on track for 3×). NeurIPS 15k, ICML similar. Concentrated, measurable, on OpenReview infra.
-- **SOM — A* AI venues in crisis (ICLR/NeurIPS/ICML):** ~50–60k papers/year at top-3, where reviewer disagreement SoD rose 28% (1.186→1.523 within-paper, 2025→2026) and acceptance feels like a coin flip (corr ~0.41). ICLR already caps authors at 1 paper if no qualifying publication (2026-09-02 policy) and 20-paper max — desperate throttling. First wedge: pre-screen + triage reviews for these venues + adjacent journals (TMLR). Land 2 venues, handle 10k papers at 5 reviews = 50k reviews/year where value is time saved and trust score.
-- **Opportunity for RAAC:** Routing (which 5 reviewers, not random volunteers), Accountability (reputation on-chain, not anonymous one-offs), Auditable Councils (transcript + 5 independent scores + hash anchored). ICLR's own caps prove demand for infrastructure, not more volunteers.
+- **Signal:** ICLR 2027 ~50–60k abstracts vs 19,525 valid submissions ICLR 2026 (ICLR blog 2026-03-31: 76,139 reviews from 18,054 reviewers, 5,355 accepted). 21% of ICLR 2026 reviews fully AI-generated (Pangram, arXiv 2607.27183). Nov 2025 OpenReview breach exposed ~45% of submissions. ICLR caps new authors at 1 paper.
+- **TAM:** ~3–5M peer-reviewed papers/yr (STM). Every submission needs 2–3 unpaid reviews.
+- **SAM:** ~80–120k AI/ML conference + arXiv cs.* submissions/yr, 60–70% YoY growth.
+- **SOM:** ~50–60k papers/yr at ICLR/NeurIPS/ICML — first wedge: pre-screen + triage councils. Value = time saved + trust score.
+- **Pitch:** Routing (which 5 reviewers), Accountability (on-chain reputation), Auditable Councils (transcript + independent scores + anchored hashes).
 
-### MVP Plan (Long-Term, Crash-Resilient) — This IS the Legacy
+### Demo Runbook (short)
 
-Goal: shippable RAAC peer-review MVP on this repo, 80% reuse of Cubic base (see § What Was Ripped). Single network, no new chain.
-
-#### Reuse vs New (80/20 split)
-
-- **Reuse 80% (no redesign, copy contract):** monorepo/pnpm/Next.js/drizzle-orm/postgres/zod/viem/The Graph client/ERC-8004 registry lookup/Agent0 subgraph/MCP facade/event bus (17 types) → extend to paper events/capability (council mandate)/SSE network viz/`MacWindow` + monochrome design/seed + health + audit/trace routes.
-- **New 20% (must build):** paper domain model + selector ranking (§5) + EIP-712 signature gate + council orchestration (A2A discussion then 5 parallel `review.paper` calls) + review rubric + Base Sepolia fee escrow + hash anchoring + Global Review Network re-pivoted from intents-evaluated to papers-reviewed. Deprecate but do not yet delete Hedera/x402/Ledger scanner code — keep until fee contract replaces it.
-
-#### Phases — UI-FIRST REORDER (2026-09-21 per user, old plan archived below) — Phase 1 DONE
-
-- **Phase 0 — Spec lock (DONE):** PROJECT.md/AGENTS.md/DESIGN.md/MEMORY.md/docs all RAAC-canonical. Build green. This file is the handoff.
-- **Phase 1 — Domain schema (DONE 2026-09-21):** `papers`/`paper_councils`/`council_messages`/`reviews`/`paper_fees` in `schema.ts:190`, migration `0002_flaky_blizzard.sql`, events `paper.*` + `council.*` + `review.submitted`, seed paper `zl-421`. Build 14 routes, 2 seed tests pass.
-- **Phase 2 — UI shell (NEXT, 1–2 days, mock data):** `/papers` (submit placeholder → `papers` table), `/papers/[id]` (paper + mock top-5 selection + council transcript placeholder + 5 review cards), `/network` re-pivoted to `papers reviewed / councils active / reviews` counters, `/console` → paper admin. Monochrome + `MacWindow` per `DESIGN.md`. First committable RAAC surface — no selector logic yet (fixture scores 0.94→0.85).
-- **Phase 3 — Selector (ranking):** `app/src/server/selector/` Graph query Base Sepolia, `0.5*overall+0.4*domain+0.1*recency`, top-5 + explainability, `POST /api/papers/:id/selection` — UI swaps mock for live.
-- **Phase 4 — Fee + signature gate:** `BASE_SEPOLIA_RPC_URL` fee verify, escrow row, EIP-712 `CouncilFormation`, `verifyTypedData`.
-- **Phase 5 — Council orchestration:** `council/orchestrator.ts` bounded discussion (20 msgs) → 5× `review.paper` (mock LLM then MCP/A2A), SSE to `/network`.
-- **Phase 6 — Anchoring + audit:** `keccak256` review hashes + Base Sepolia tx placeholder + `GET /api/audit/trace/:paperId` full chain.
-- **Phase 7 — Demo + adversarial:** `pnpm demo:raac` + adversarial fixtures (low-rep excluded, unsigned blocked).
-- **Phase 8 — Polish + TAM proof:** ICLR band `19,525→60k→42k` in market section, Graph live verify page, then prune Hedera code.
-
-#### Old plan (archived, replaced by UI-first above)
-
-
-
-- **Phase 0 — Spec lock (DONE):** PROJECT.md/AGENTS.md/DESIGN.md/MEMORY.md/docs all RAAC-canonical. Build green. This file is the handoff.
-- **Phase 1 — Domain schema (foundation, 1–2 days):** extend `app/src/server/db/schema.ts` (new tables `papers`, `paper_embeddings`, `councils`, `council_messages`, `reviews`, `paper_fees`; or repurpose `tasks→papers`, `councils` already exists, `capabilities` → council mandate). Migration + seed Astra Lab demo paper + 5 agents (84532:*). Add event types `paper.submitted`, `agents.ranked`, `council.proposed`, `signature.verified`, `council.opened`, `discussion.message`, `review.submitted` (extend `events/types.ts` beyond 17, keep old events for compat). No UI yet.
-- **Phase 2 — Selector (ranking, 2–3 days):** implement `app/src/server/selector/` — The Graph query (Agent0 Base Sepolia, same `THEGRAPH_API_KEY`/`AGENT0_SUBGRAPH_URL`), scoring `0.5*overall +0.4*domain +0.1*recency - penalty`, validation gate, deterministic top-5 + explainability payload. Keep mock fallback if env unset. Unit-test with fixture agents (0.94/0.91/… + negative lab-1). Route: `POST /api/papers/:id/selection`.
-- **Phase 3 — Fee + signature gate (1–2 days):** `BASE_SEPOLIA_RPC_URL` verify fee tx (viem `getTransaction`), escrow row, `POST /api/councils/propose`, EIP-712 `CouncilFormation` schema, `viem verifyTypedData` against author address, `POST /api/councils/:id/open`. No fee movement yet — escrow is row + tx ref; on-chain contract later if funding exists.
-- **Phase 4 — Council orchestration (3–4 days, core):** orchestrator in `app/src/server/council/orchestrator.ts` — given 5 agents, send paper context, collect bounded discussion (N=20 messages or timeout), store transcript, then parallel `review.paper` (existing executor pattern, new `review.ts` executor, mock LLM in MVP, real agent via MCP/A2A later). Store 5 reviews with rubric `score 1-10 + strengths/weaknesses/questions + hash`. Events + SSE to `/network`. Route: `GET /api/councils/:id` + transcript stream.
-- **Phase 5 — Anchoring + audit (1 day):** hash each review (`keccak256`), batch tx on Base Sepolia (or single tx with 5 hashes if contract ready else store tx_hash placeholder + show Basescan link shape). `GET /api/audit/trace/:paperId` returns full chain paper→selection→signature→council→reviews. HCS/ledger anchoring code stays deprecated.
-- **Phase 6 — Author + Network surfaces (2–3 days):** `/papers` (submit, pay help, sign, track council) + `/papers/:id` (paper + selection + council + 5 reviews) + rebuild `/network` from `intents` to `papers/councils/reviews` counters (1,842 agents → same, but 24,921 papers reviewed, 23,884 reviews, 123 councils active per `HeroCopy.tsx` already flipped). Keep monochrome/MacWindow per `DESIGN.md`. Existing console (`/console`) becomes paper admin.
-- **Phase 7 — Demo + adversarial (1 day):** script `pnpm --filter app demo:raac` — submits Astra Lab paper `zl-421`, prints selection scores, signature, transcript snippet, 5 review scores, Busescan links. Adversarial fixtures: low-rep agent excluded, out-of-domain agent not picked, unsigned council blocked, fee mismatch rejected. Docs `docs/demo.md` updated from spec to runbook.
-- **Phase 8 — Polish + TAM proof (1 day):** wire real ICLR stat band (19,525 → 60k → 42k through review) into landing's market section, add Graph live verification page (same pattern as old `agents-profile.test.ts` pseudonym salt). Delete Hedera code only after fee contract is specced/tested. Full suite green.
-
-#### Invariants for any new agent resuming after crash
-
-- Read order: `PROJECT.md` → `DESIGN.md` → this file (this section is the plan).
-- Never reintroduce Hedera/x402/Blocky402; never make LLM the final ranker; keep papers off-chain, hashes on-chain.
-- `app/src/server/config.ts` single network: `RAAC_NETWORK=base-sepolia`, `RAAC_CHAIN_ID=84532`, `BASE_SEPOLIA_RPC_URL`. `THEGRAPH_API_KEY` or `AGENT0_SUBGRAPH_URL` engages live ranking.
-- Schema is frozen after Phase 1 — no second migration without explicit user sign-off.
-- After each phase, update this file's Active Work checkboxes and Recent Changes, and verify `pnpm --filter app build`.
-
-#### Estimated effort
-
-7–12 days solo, or 4 parallel tracks (selector, signature, council, UI) in 3–4 days with subagents. Base Infra 80% already green — value is in selector + council, not framework.
-
-### Recent Changes
-
-- **2026-09-21 rebrand+network lock (no dir rename):** reinit git (no upstream), Logo/hero/manifesto/details/FAQ/marquee/footer/DESIGN.md/compose/package.json/env.example/config all flipped to RAAC/Base Sepolia. Build verified green (14 routes). The Graph confirmed retained for RAAC selector.
-- **2026-09-21 docs purge + ICLR signal ingest:** PROJECT.md/AGENTS.md/docs all rewritten to RAAC (see Recent Changes above). Web search completed: ICLR 2027 >60k abstracts (Digg 2026-09-20), ICLR 2026 19,525 valid (ICLR blog 2026-03-31), 21% AI-generated reviews (Pangram Labs), new submission caps (ICLR caps new authors at 1 paper — Quasa 2026-09-06). TAM-SAM-SOM synthesized from that signal in this file.
-- **2026-09-21 RAAC expansion locked:** Routing, Accountability, Auditable Councils. MVP plan written here as crash-resilient legacy.
-
-### Recent Changes (Archived Cubic — pre-rip, for reference only)
-
-- Cubic waves W1–W7 + plan-11…16 merged, Hedera HBAR settlements verified, LangSmith live leg green, etc. — see git pre-rip or ask user for backup. Not authoritative for RAAC.
+1. `pnpm --filter @raac/app dev` (needs `.env.local`: DATABASE_URL, THEGRAPH_API_KEY or AGENT0_SUBGRAPH_URL, OPENROUTER_API_KEY(+fallbacks), BASE_SEPOLIA_PRIVATE_KEY for anchoring).
+2. `/console` → submit arXiv URL → auto-propose → SIGN (wallet, 84532) → RUN (5 live reviews, ~1–2 min on free tier) → ANCHOR (5 txs).
+3. `/papers/[id]` shows selection math, transcript, full 7-section reviews, Basescan links. `/network` shows counters + fabric + world map.
+4. Full detail: `docs/demo.md`. Verify: `pnpm --filter @raac/app build && pnpm --filter @raac/app test` (9/9).

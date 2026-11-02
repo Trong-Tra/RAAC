@@ -75,7 +75,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       {
         event_type: "signature.verified",
         tenant_id: tenant.id,
-        task_id: null,
         agent_id: firstAgent?.id ?? null,
         payload: { paper_id: paper.id, council_id: council.id, author_address: author },
       },
@@ -85,7 +84,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       {
         event_type: "council.opened",
         tenant_id: tenant.id,
-        task_id: null,
         agent_id: firstAgent?.id ?? null,
         payload: { paper_id: paper.id, council_id: council.id, members: council.selectedAgentIds },
       },

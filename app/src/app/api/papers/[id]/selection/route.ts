@@ -62,7 +62,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         {
           event_type: "agents.ranked",
           tenant_id: tenant.id,
-          task_id: null,
           agent_id: firstAgent?.id ?? null,
           payload: {
             paper_id: paper.id,
@@ -78,7 +77,6 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
         {
           event_type: "council.proposed",
           tenant_id: tenant.id,
-          task_id: null,
           agent_id: firstAgent?.id ?? null,
           payload: {
             paper_id: paper.id,

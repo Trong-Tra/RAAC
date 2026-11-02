@@ -1,6 +1,5 @@
 import Closer from "@/components/Closer";
 import DetailsSection from "@/components/DetailsSection";
-import DecisionFeed from "@/components/DecisionFeed";
 import HeroCopy from "@/components/HeroCopy";
 import Manifesto from "@/components/Manifesto";
 import MarketSection from "@/components/MarketSection";
@@ -49,8 +48,6 @@ export default function Home() {
       <PartnerMarquee />
 
       <DetailsSection />
-
-      <DecisionFeed />
 
       <MarketSection />
 

@@ -126,7 +126,6 @@ export async function POST(req: Request) {
       {
         event_type: "paper.submitted",
         tenant_id: tenant.id,
-        task_id: null,
         agent_id: null,
         payload: { paper_id: paper.id, tenant_id: tenant.id, author_address: authorAddress, paper_hash: paperHash, domain, fee_tx_hash: paper.feeTxHash ?? null },
       },

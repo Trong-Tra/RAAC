@@ -19,9 +19,9 @@ const cache = new Map<string, { value: AgentTrust; expires: number }>();
 
 const GRAPHQL_TIMEOUT_MS = 5_000;
 
-// Default: Agent0 Base Mainnet deployment (agent0lab/subgraph). Hedera has no
-// ERC-8004 contracts deployed, so reputation is read where it lives (Base)
-// and enforced where we operate (Hedera testnet) — cross-chain trust context.
+// Default: Agent0 Base Mainnet deployment (agent0lab/subgraph). Our fleet
+// spans Base mainnet (lab-1) and Base Sepolia (owned reviewers), so the
+// trust context is cross-deployment — same ERC-8004 schema everywhere.
 const DEFAULT_SUBGRAPH_ID = "43s9hQRurMGjuYnC1r2ZwS6xSQktbFyXMPMqGKUFJojb";
 
 export function endpoint(): string | null {

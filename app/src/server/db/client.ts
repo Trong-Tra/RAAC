@@ -5,7 +5,7 @@ import * as schema from "./schema";
 
 declare global {
   // eslint-disable-next-line no-var
-  var __cubicDb: ReturnType<typeof makeDb> | undefined;
+  var __raacDb: ReturnType<typeof makeDb> | undefined;
 }
 
 function makeDb() {
@@ -14,6 +14,6 @@ function makeDb() {
 }
 
 export function db() {
-  if (!globalThis.__cubicDb) globalThis.__cubicDb = makeDb();
-  return globalThis.__cubicDb;
+  if (!globalThis.__raacDb) globalThis.__raacDb = makeDb();
+  return globalThis.__raacDb;
 }

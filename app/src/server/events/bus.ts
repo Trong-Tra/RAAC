@@ -1,11 +1,10 @@
 import { randomUUID as uuid } from "node:crypto";
 import { db } from "../db/client";
 import { auditEvents } from "../db/schema";
-import { emitInput, payloadSchemas, type EmitInput, type EventEnvelope } from "./types";
+import { emitInput, payloadSchemas, type EmitInput, type EventEnvelope, type RiskClass } from "./types";
 import { projectEvent } from "./projection";
-import type { RiskClass } from "../domain";
 
-// Meta is best-effort context for the plan-08 projection. Audit row is unaffected.
+// Meta is best-effort context for the network projection. Audit row is unaffected.
 export interface ProjectionMeta {
   agent_key?: string;
   category?: string;
@@ -24,13 +23,12 @@ export async function emit(input: EmitInput, meta: ProjectionMeta = {}): Promise
   };
   await db().insert(auditEvents).values({
     tenantId: envelope.tenant_id,
-    taskId: envelope.task_id,
     agentId: envelope.agent_id,
     eventType: envelope.event_type,
     payload: envelope.payload,
   });
-  // plan-08: privacy-minimized public projection. Best-effort — the audit
-  // insert above already succeeded, so a projection failure must never fail emit.
+  // Privacy-minimized public projection. Best-effort — the audit insert above
+  // already succeeded, so a projection failure must never fail emit.
   try {
     await projectEvent(envelope, meta);
   } catch (err) {

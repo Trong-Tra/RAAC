@@ -81,23 +81,23 @@ const registrationFileFor = (name: string, description: string) => ({
 const ROSTER: Array<{ key: string; name: string; description: string; feedback: number; existingId?: bigint }> = [
   {
     key: "agent:8472",
-    name: "Cubic deploy-agent",
+    name: "RAAC systems-reviewer",
     description:
-      "Demo agent for Cubic, the agent authorization gateway. Reads PRs, runs paid security scans, and escalates merges and deploys to a human approver. Used live on camera for the hackathon demo.",
+      "Systems and deployment reviewer for RAAC. Reproducibility, artifact completeness, cost/scale, ablation coverage under heterogeneity.",
     feedback: 95,
   },
   {
     key: "agent:treasury",
-    name: "Cubic treasury-agent",
+    name: "RAAC theory-reviewer",
     description:
-      "Capital-management demo agent for Cubic. Rebalances the treasury (swaps), pays payroll (transfers), and stakes — every high-risk move escalated to a human approver first.",
+      "Theory and soundness reviewer for RAAC. Formal proofs, threat models, hidden assumptions in theorems.",
     feedback: 90,
   },
   {
     key: "agent:reader",
-    name: "Cubic reader-agent",
+    name: "RAAC reader-agent",
     description:
-      "Least-privilege demo agent for Cubic. Granted pull-request and file reads only — the standing example that capabilities are granted, not assumed.",
+      "Clarity and evaluation-breadth reviewer for RAAC. Writing precision, figure legibility, benchmark breadth.",
     feedback: 92,
   },
 ];

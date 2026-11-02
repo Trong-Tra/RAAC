@@ -1,78 +1,80 @@
 "use client";
 
-// Market / "why now" section — concentric outlined squares (the Cubic
+// Market / "why now" section — concentric outlined squares (the RAAC
 // motif, not circles) for TAM → SAM → SOM, plus a ledger of real,
-// sourced agent-money incidents. TAM/SAM figures are analyst-anchored
-// (links below); SOM is our estimate and labeled as such.
+// sourced peer-review-collapse signals. TAM is analyst-anchored (link
+// below); SAM/SOM are our estimates from public venue data and labeled
+// as such.
 //
 // Selection is click/tap-to-lock on purpose: hover only previews a ring
 // so the readout (and its source link) never changes under your cursor
 // while you move toward it.
 import { useEffect, useRef, useState } from "react";
 
+// Values are millions of manuscripts per year.
 const RINGS = [
   {
     tag: "TAM",
-    value: 52.6,
+    value: 5.0,
     size: 380,
     base: "#2e2e2e",
     hot: "#8a8a8a",
-    desc: "Global AI agents market by 2030 — $7.84B (2025) at 46.3% CAGR.",
-    src: "MarketsandMarkets",
-    href: "https://www.marketsandmarkets.com/PressReleases/ai-agents.asp",
+    desc: "Peer-reviewed manuscripts published each year worldwide (~3–5M). Every one demands 2–3 unpaid expert reviews.",
+    src: "STM Report",
+    href: "https://www.stm-assoc.org/2018_10_04_STM_Report_2018.pdf",
   },
   {
     tag: "SAM",
-    value: 13.5,
+    value: 0.12,
     size: 250,
     base: "#5a5a5a",
     hot: "#c9c9c9",
-    desc: "Agentic AI security market by 2032 — $1.65B (2026) at 42.0% CAGR.",
-    src: "MarketsandMarkets",
-    href: "https://www.marketsandmarkets.com/PressReleases/agentic-ai-security.asp",
+    desc: "AI/ML conference + arXiv cs.* submissions per year, spiking 60–70% YoY — ICLR alone went 19,525 valid submissions (2026) to ~50,000 abstracts (2027).",
+    src: "The Decoder",
+    href: "https://the-decoder.com/ai-conference-iclr-is-drowning-in-abstracts-with-roughly-50000-submissions-before-the-deadline/",
   },
   {
     tag: "SOM",
-    value: 1.5,
+    value: 0.055,
     size: 130,
     base: "#8a8a8a",
     hot: "#f4f4f4",
-    desc: "Policy-enforced authorization for teams shipping agents to production.",
-    src: "Cubic estimate",
+    desc: "Top-tier AI venues in crisis (ICLR / NeurIPS / ICML): ~50–60k papers a year where reviewer disagreement rose 28% in one cycle. First wedge: pre-screen + triage councils.",
+    src: "RAAC estimate",
     href: "#market",
   },
 ];
 
 const LOSSES: { amount: string; what: string; href: string; src: string }[] = [
   {
-    amount: "$441,000",
-    what: "Trading bot misread a reply and donated its entire holdings.",
-    href: "https://oecd.ai/en/incidents/2026-02-23-5c52",
-    src: "OECD",
+    amount: "50,000",
+    what: "Abstracts registered for ICLR 2027 before the deadline — nearly 3× ICLR 2026, reviewer pool unchanged.",
+    href: "https://the-decoder.com/ai-conference-iclr-is-drowning-in-abstracts-with-roughly-50000-submissions-before-the-deadline/",
+    src: "The Decoder",
   },
   {
-    amount: "$104,000",
-    what: "AIXBT agent queued two malicious replies, tipped 55.5 ETH to an attacker.",
-    href: "https://www.theblock.co/post/346911/ai-crypto-bot-aixbt-lost-eth-hack-unauthorized-dashboard-access",
-    src: "The Block",
+    amount: "76,139",
+    what: "Reviews produced by 18,054 volunteers for ICLR 2026's 19,525 submissions — 5,355 accepted.",
+    href: "https://blog.iclr.cc/2026/03/31/a-retrospective-on-the-iclr-2026-review-process/",
+    src: "ICLR",
   },
   {
-    amount: "$47,000",
-    what: "Freysa prize pool drained when a transfer was reframed as allowed.",
-    href: "https://www.aiaaic.org/aiaaic-repository/ai-algorithmic-and-automation-incidents/freysa-crypto-ai-agent-manipulated-to-reduce-prize-money-pool",
-    src: "AIAAIC",
+    amount: "21%",
+    what: "Of 75,800 ICLR 2026 reviews flagged fully AI-generated — over half showed some AI involvement.",
+    href: "https://arxiv.org/html/2607.27183v1",
+    src: "Pangram",
   },
   {
-    amount: "$14,000",
-    what: "One day of Bedrock spend after static agent keys were extracted.",
-    href: "https://www.infoq.com/news/2026/07/ai-agents-billing-guardrails",
-    src: "InfoQ",
+    amount: "45%",
+    what: "Of submissions exposed in the November 2025 OpenReview breach — the anonymous-review illusion broken at scale.",
+    href: "https://casrai.org/news/iclr-2026-openreview-breach-reviewer-bribery",
+    src: "CASRAI",
   },
   {
-    amount: "$6,531",
-    what: "AWS bill in under a week from an agent handed full credentials.",
-    href: "https://byteiota.com/ai-agent-racked-up-6531-in-aws-charges-overnight",
-    src: "byteiota",
+    amount: "1 paper",
+    what: "Max submission for authors without a qualifying publication — ICLR now throttles demand because review capacity broke.",
+    href: "https://blog.iclr.cc/2026/03/31/a-retrospective-on-the-iclr-2026-review-process/",
+    src: "ICLR",
   },
 ];
 
@@ -118,6 +120,8 @@ export default function MarketSection() {
 
   const ring = RINGS.find((r) => r.tag === active)!;
   const counted = useCountUp(ring.value, visible, active);
+  const countedLabel =
+    counted >= 1 ? `${counted.toFixed(1)}M` : `${Math.round(counted * 1000)}K`;
 
   return (
     <section
@@ -144,7 +148,7 @@ export default function MarketSection() {
           maxWidth: 800,
         }}
       >
-        The bill for trusting agents is already due.
+        Peer review is drowning in its own success.
       </h2>
 
       <div className="market-grid">
@@ -152,7 +156,7 @@ export default function MarketSection() {
           <svg
             viewBox="0 0 400 400"
             role="group"
-            aria-label="TAM 52.6 billion, SAM 13.5 billion, SOM 1.5 billion dollars. Select a square for detail."
+            aria-label="TAM 5 million, SAM 120 thousand, SOM 55 thousand manuscripts per year. Select a square for detail."
             style={{ display: "block", width: "100%", height: "auto" }}
           >
             {RINGS.map((r, i) => {
@@ -242,7 +246,7 @@ export default function MarketSection() {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              ${counted.toFixed(1)}B
+              {countedLabel}
             </div>
             <p style={{ marginTop: 8, fontSize: 14.5, lineHeight: 1.6, color: "#8a8a8a" }}>
               {ring.desc}
@@ -264,7 +268,7 @@ export default function MarketSection() {
             className="mono"
             style={{ fontSize: 11, letterSpacing: "0.2em", color: "#5a5a5a" }}
           >
-            LEDGER OF LOSSES — SOURCED
+            SIGNALS OF OVERLOAD — SOURCED
           </p>
           <div style={{ marginTop: 18, display: "grid" }}>
             {LOSSES.map((l, i) => (
@@ -328,8 +332,8 @@ export default function MarketSection() {
               color: "#3f3f3f",
             }}
           >
-            TAM/SAM: ANALYST ESTIMATES, LINKED. SOM: CUBIC ESTIMATE. LOSSES:
-            PUBLICLY REPORTED INCIDENTS, LINKED.
+            MANUSCRIPTS/YEAR. TAM: STM REPORT, LINKED. SAM/SOM: RAAC ESTIMATE
+            FROM PUBLIC VENUE DATA. SIGNALS: PUBLICLY REPORTED, LINKED.
           </p>
         </div>
       </div>

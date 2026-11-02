@@ -46,7 +46,6 @@ export async function anchorReviewsForPaper(paperId: string, tenantId: string) {
       {
         event_type: "review.submitted",
         tenant_id: tenantId,
-        task_id: null,
         agent_id: rev.agentId,
         payload: { paper_id: paperId, council_id: council.id, review_id: rev.id, agent_id: rev.agentId, score: rev.score, review_hash: rev.reviewHash, anchor_tx: hash },
       },

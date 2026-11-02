@@ -1,6 +1,6 @@
 # RAAC demo — runbook (paper → 5 reviews)
 
-> **Cubic demo below is archived.** This file now describes RAAC on Base Sepolia. Hedera/Blocky402 steps are deleted.
+This file describes RAAC on Base Sepolia (84532).
 
 The take is a two-surface window: **paper left** (`/papers/[id]` submit + council view) and **network right** (`/network` live RAAC viz). Author submits, signs, watches 5 agents discuss then publish reviews.
 
@@ -84,4 +84,4 @@ After reset, each `POST /council/run` will do `ar5iv.org/html/{arxiv}` fetch (80
 5. `POST /api/papers/:id/anchor` → self-tx `data=0x<reviewHash>` on 84532 per review, `reviews.anchorTxHash` `anchored`.
 6. Fee verified on `BASE_SEPOLIA_RPC_URL` (optional), all hashes on-chain, content off-chain.
 
-Adversarial fixtures (RAAC): `pnpm --filter app demo:adversarial` still covers Cubic gateway; RAAC-specific checks are in `tests/raac-adversarial.test.ts` (low-rep `agent:lab-1 8453:74108` excluded from top5, unsigned council `must be active` blocked, tampered signature rejected).
+Adversarial checks live in `app/tests/raac-adversarial.test.ts` (low-rep `agent:lab-1 8453:74108` excluded from top 5, unsigned council `must be active` blocked, tampered EIP-712 signature rejected). Run with `pnpm --filter @raac/app test`.

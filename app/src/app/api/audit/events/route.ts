@@ -1,5 +1,4 @@
 import { and, count, desc, eq, lt } from "drizzle-orm";
-import { z } from "zod";
 import { db } from "@/server/db/client";
 import { auditEvents } from "@/server/db/schema";
 import { eventTypes } from "@/server/events/types";
@@ -9,7 +8,6 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const taskId = url.searchParams.get("task_id");
     const eventType = url.searchParams.get("event_type");
     const limitRaw = url.searchParams.get("limit");
     const pageRaw = url.searchParams.get("page");
@@ -34,15 +32,6 @@ export async function GET(request: Request) {
     const offset = (page - 1) * limit;
 
     const filters = [];
-    if (taskId != null) {
-      if (!z.string().uuid().safeParse(taskId).success) {
-        return Response.json(
-          { ok: false, error: { code: "INVALID_REQUEST", message: "task_id must be a uuid" } },
-          { status: 400 },
-        );
-      }
-      filters.push(eq(auditEvents.taskId, taskId));
-    }
     if (eventType != null) {
       if (!(eventTypes as readonly string[]).includes(eventType)) {
         return Response.json(
@@ -103,7 +92,6 @@ export async function GET(request: Request) {
           id: row.id,
           event_type: row.eventType,
           tenant_id: row.tenantId,
-          task_id: row.taskId,
           agent_id: row.agentId,
           payload: row.payload,
           created_at: row.createdAt,

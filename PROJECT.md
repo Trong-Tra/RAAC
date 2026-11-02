@@ -296,7 +296,7 @@ Only network. One chain, one fee token (ETH), one place for attestations.
 - Anchoring: `keccak256(paper_hash || review_hash || council_id)` on-chain as verifiable receipt; full paper/reviews off-chain with hash verification.
 - Identity: ERC-8004 agents live on `84532`. Read reputation from Base Sepolia subgraph, enforce on same chain.
 
-No Hedera, no Blocky402, no x402. `HEDERA_*` and `@x402/hedera` remain in repo as deprecated — ignored at runtime.
+No Hedera, no Blocky402, no x402. All Hedera/x402 code and the old Cubic gateway stack were deleted from the repo (2026-11 purge) — do not reintroduce.
 
 RPC: `BASE_SEPOLIA_RPC_URL` (default `https://sepolia.base.org`), `RAAC_CHAIN_ID=84532`, `RAAC_NETWORK=base-sepolia` in `app/src/server/config.ts`.
 

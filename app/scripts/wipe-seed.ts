@@ -20,7 +20,7 @@ import {
 } from "../src/server/db/schema";
 
 const withPseudonym = (agentKey: string) =>
-  createHash("sha256").update(`${agentKey}|cubic-network-v1`).digest("hex").slice(0, 16);
+  createHash("sha256").update(`${agentKey}|raac-network-v1`).digest("hex").slice(0, 16);
 
 async function main(): Promise<void> {
   const [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));

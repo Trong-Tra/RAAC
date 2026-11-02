@@ -42,7 +42,7 @@ function renderPage(identity: string, queryText: string, result: unknown, fetche
 <pre style="background:#0b0b0b;border:1px solid #2e2e2e;border-radius:8px;padding:14px;font-size:11.5px;line-height:1.6;color:#e8e8e8;white-space:pre-wrap;word-break:break-word">${esc(resultJson)}</pre>
 
 <p style="font-size:10px;color:#5a5a5a;margin-top:24px">The response above is verbatim from The Graph's indexed Agent0 subgraph —
-the same values the gateway reads when deciding. Copy the query into the
+the same values the selector reads when ranking. Copy the query into the
 explorer to reproduce it.</p>
 </div></body></html>`;
 }

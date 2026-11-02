@@ -1,43 +1,38 @@
 import { eq, inArray } from "drizzle-orm";
 import { createHash } from "node:crypto";
-import { privateKeyToAccount } from "viem/accounts";
 import { config } from "../config";
 import { logger } from "../logging";
 import { db } from "../db/client";
 import {
-  tenants, agents, tools, policies, tasks, intents, decisions,
-  capabilities, approvals, executions, payments, auditEvents, networkEvents, councils,
+  tenants, agents, auditEvents, networkEvents,
   papers, paperCouncils, councilMessages, reviews, paperFees,
 } from "../db/schema";
 
 const withPseudonym = (agentKey: string) =>
-  createHash("sha256").update(`${agentKey}|cubic-network-v1`).digest("hex").slice(0, 16);
+  createHash("sha256").update(`${agentKey}|raac-network-v1`).digest("hex").slice(0, 16);
 
 const fixture = {
   tenant: { slug: config().DEMO_TENANT_SLUG, name: "Blockchainist Lab" },
   agents: [{
-    agent_key: "agent:8472", name: "deploy-agent", environment: "demo",
+    agent_key: "agent:8472", name: "systems-reviewer", environment: "demo",
     status: "active", erc8004_identity: "84532:9223",
-    declared_capabilities: ["github.get_pull_request", "github.read_file", "github.merge_pull_request", "deploy.production", "scanner.scan", "task.complete"],
+    declared_capabilities: ["systems", "ml", "reproducibility", "review.paper"],
   }, {
-    // plan-14: REAL low-reputation identity — Base Agent0 agent 8453:74108
-    // carries live negative feedback (reputation ~0.10) and drives a genuine
-    // reputation_below_threshold escalate on camera. The in-code
-    // "fixture:low-rep" map remains as the labeled offline fallback (no seed
-    // row references it).
+    // REAL low-reputation identity — Base Agent0 agent 8453:74108 carries live
+    // negative feedback (reputation ~0.10) and is excluded by the selector on
+    // camera. Static fallback mirrors it as validation "failed".
     agent_key: "agent:lab-1", name: "low-rep-research-agent", environment: "demo",
     status: "active", erc8004_identity: "8453:74108",
-    declared_capabilities: ["github.get_pull_request"],
+    declared_capabilities: ["ml"],
   }, {
-    // Owned Sepolia identities (registered live; feedback 90–95, above the
-    // 0.80 floor — same decisions as the old static defaults).
-    agent_key: "agent:treasury", name: "treasury-agent", environment: "demo",
+    // Owned Sepolia identities (registered live; feedback 90–95).
+    agent_key: "agent:treasury", name: "theory-reviewer", environment: "demo",
     status: "active", erc8004_identity: "84532:9224",
-    declared_capabilities: ["treasury.swap", "treasury.transfer", "treasury.stake", "task.complete"],
+    declared_capabilities: ["cryptography", "theory", "soundness", "review.paper"],
   }, {
     agent_key: "agent:reader", name: "reader-agent", environment: "demo",
     status: "active", erc8004_identity: "84532:9225",
-    declared_capabilities: ["github.get_pull_request", "github.read_file"],
+    declared_capabilities: ["ml", "clarity", "evaluation", "review.paper"],
   }, {
     agent_key: "agent:crypto-rev", name: "crypto-reviewer", environment: "demo",
     status: "active", erc8004_identity: "84532:9226",
@@ -47,139 +42,9 @@ const fixture = {
     status: "active", erc8004_identity: "84532:9227",
     declared_capabilities: ["cryptography", "fairness", "review.paper"],
   }],
-  tools: [
-    { name: "github.get_pull_request", category: "coding", default_risk_class: "low", executor: "github", executor_config: {} },
-    { name: "github.read_file", category: "coding", default_risk_class: "low", executor: "github", executor_config: {} },
-    { name: "github.merge_pull_request", category: "coding", default_risk_class: "high", executor: "github", executor_config: {} },
-    { name: "deploy.production", category: "deploy", default_risk_class: "critical", executor: "github", executor_config: {} },
-    { name: "scanner.scan", category: "security", default_risk_class: "medium", executor: "scanner", executor_config: { "endpoint": "http://localhost:3000/api/services/scanner/scan" } },
-    { name: "task.complete", category: "control", default_risk_class: "low", executor: "task", executor_config: {} },
-  ],
-  policies: [
-    {
-      name: "default-v1", version: 1, rules: [
-        { "id": "deny-secret-resources", "type": "resource_class", "match": ["secret"], "decision": "deny", "reason": "secret_resource" },
-        { "id": "deny-cross-task", "type": "resource_class", "match": ["cross_task"], "decision": "deny", "reason": "resource_outside_task" },
-        { "id": "tool-allowlist", "type": "tool_allowlist",
-          "tools": ["github.get_pull_request", "github.read_file", "github.merge_pull_request", "deploy.production", "scanner.scan", "task.complete"],
-          "decision": "deny", "reason": "tool_not_allowed" },
-        { "id": "reputation-floor", "type": "min_reputation", "min": 0.80, "decision": "escalate", "reason": "reputation_below_threshold" },
-        { "id": "risk-approval", "type": "risk_class", "match": ["high", "critical"], "decision": "escalate", "reason": "risk_requires_approval", "council": "treasury-council" },
-        { "id": "default-allow", "type": "default", "decision": "allow", "reason": "policy_default_allow" }
-      ],
-    },
-    {
-      name: "payment-v1", version: 1, rules: [
-        { "id": "service-allowlist", "type": "service_allowlist", "services": ["scanner"], "decision": "deny", "reason": "service_not_approved" },
-        { "id": "budget", "type": "budget", "decision": "deny", "reason": "budget_exceeded" },
-        { "id": "reputation-floor", "type": "min_reputation", "min": 0.80, "decision": "escalate", "reason": "reputation_below_threshold" },
-        { "id": "default-allow", "type": "default", "decision": "allow", "reason": "policy_default_allow" }
-      ],
-    },
-    {
-      name: "production-merge-v1", version: 1, rules: [
-        { "id": "merge-only", "type": "tool_allowlist", "tools": ["github.merge_pull_request"], "decision": "deny", "reason": "tool_not_allowed" },
-        { "id": "merge-reputation", "type": "min_reputation", "min": 0.90, "decision": "escalate", "reason": "reputation_below_threshold" },
-        { "id": "merge-risk", "type": "risk_class", "match": ["high"], "decision": "escalate", "reason": "risk_requires_approval", "council": "deploy-council" },
-        { "id": "default-deny", "type": "default", "decision": "deny", "reason": "policy_default_deny" }
-      ],
-    },
-  ],
-  tasks: [{
-    agent_key: "agent:8472",
-    title: "Review and deploy PR #421 in acme/backend; purchase a security scan if permitted (budget $0.50)",
-    budget_usd_cents: 50, status: "open",
-  }],
-  // RAAC demo papers — Astra Lab + 3 arXiv seeds (deterministic hashes)
-  papers: [{
-    author_address: "0x000000000000000000000000000000000000dEaD",
-    title: "Zero-knowledge proofs for federated inference",
-    abstract: "We present a zero-knowledge proof system for verifying federated inference over heterogeneous models. Our construction achieves sublinear verification and preserves model privacy while allowing public audit of inference correctness. Evaluated on CIFAR-10 and a language-model benchmark, verification is 12× faster than prior work.",
-    domain: "cryptography",
-    keywords: ["zero-knowledge", "federated learning", "verifiable inference"],
-    paper_hash: createHash("sha256").update("raac-demo-paper-zl-421|Zero-knowledge proofs for federated inference|v1").digest("hex"),
-    fee_tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    fee_amount_wei: "1000000000000000",
-    status: "submitted",
-  }, {
-    author_address: "0x000000000000000000000000000000000000dEaD",
-    title: "Attention Is All You Need",
-    abstract: "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and decoder through an attention mechanism. We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely. Experiments on two machine translation tasks show these models to be superior in quality while being more parallelizable and requiring significantly less time to train.",
-    domain: "ml",
-    keywords: ["transformer", "attention", "machine translation"],
-    paper_hash: createHash("sha256").update("arxiv:1706.03762|Attention Is All You Need|v7").digest("hex"),
-    pdfUrl: "https://arxiv.org/pdf/1706.03762v7",
-    fee_tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    fee_amount_wei: "1000000000000000",
-    status: "submitted",
-  }, {
-    author_address: "0x000000000000000000000000000000000000dEaD",
-    title: "VisionTrap: Vision-Augmented Trajectory Prediction Guided by Textual Descriptions",
-    abstract: "Predicting future trajectories for other road agents is an essential task for autonomous vehicles. We propose a novel method that also incorporates visual input from surround-view cameras, allowing the model to utilize visual cues such as human gazes and gestures, road conditions, vehicle turn signals, etc. We use textual descriptions generated by a Vision-Language Model and refined by a Large Language Model as supervision during training to guide the model.",
-    domain: "systems",
-    keywords: ["trajectory prediction", "autonomous driving", "vision-language"],
-    paper_hash: createHash("sha256").update("arxiv:2407.12345|VisionTrap|v1").digest("hex"),
-    pdfUrl: "https://arxiv.org/pdf/2407.12345v1",
-    fee_tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    fee_amount_wei: "1000000000000000",
-    status: "submitted",
-  }, {
-    author_address: "0x000000000000000000000000000000000000dEaD",
-    title: "The Impact of Positional Encoding on Length Generalization in Transformers",
-    abstract: "Length generalization, the ability to generalize from small training context sizes to larger ones, is a critical challenge in the development of Transformer-based language models. Positional encoding has been identified as a major factor influencing length generalization, but the exact impact of different PE schemes on extrapolation in downstream tasks remains unclear. We conduct a systematic empirical study comparing the length generalization performance of decoder-only Transformers with five different position encoding approaches.",
-    domain: "ml",
-    keywords: ["positional encoding", "length generalization", "transformers"],
-    paper_hash: createHash("sha256").update("arxiv:2305.19466|Positional Encoding|v2").digest("hex"),
-    pdfUrl: "https://arxiv.org/pdf/2305.19466v2",
-    fee_tx_hash: "0x0000000000000000000000000000000000000000000000000000000000000000",
-    fee_amount_wei: "1000000000000000",
-    status: "submitted",
-  }],
 } as const;
 
-// Council roster (off-chain multisig; members are wallet addresses).
-// APPROVER_PRIVATE_KEYS (comma-separated) is authoritative when set — it
-// replaces the throwaway testnet keys entirely, so one configured approver
-// means threshold 1, not a surprise 2-of-2. Without it, fall back to the
-// throwaway keys. Missing keys → empty member lists (signed path closed,
-// unsigned stand-in still resolves).
-function councilFixture(): Array<{ name: string; members: string[]; threshold: number; safe_address: null }> {
-  const members: Record<string, string[]> = {};
-  try {
-    const extra = (process.env.APPROVER_PRIVATE_KEYS ?? "")
-      .split(",")
-      .map((k) => k.trim())
-      .filter(Boolean)
-      .map((k) => privateKeyToAccount(k as `0x${string}`).address);
-    let all: string[];
-    if (extra.length) {
-      all = extra;
-    } else {
-      const owner = process.env.AGENT_OWNER_KEY;
-      const client = process.env.AGENT_CLIENT_KEY;
-      const ownerAddr = owner ? privateKeyToAccount(owner as `0x${string}`).address : null;
-      const clientAddr = client ? privateKeyToAccount(client as `0x${string}`).address : null;
-      all = [];
-      for (const a of [ownerAddr, clientAddr]) {
-        if (a && !all.some((x) => x.toLowerCase() === a.toLowerCase())) all.push(a);
-      }
-    }
-    if (all.length) {
-      members["deploy-council"] = [all[0]];
-      members["treasury-council"] = all.length >= 2 ? [all[0], all[1]] : [all[0]];
-    }
-  } catch {
-    // no keys / no viem — councils seed empty (unsigned resolves unaffected)
-  }
-  const treasury = members["treasury-council"] ?? [];
-  return [
-    { name: "deploy-council", members: members["deploy-council"] ?? [], threshold: 1, safe_address: null },
-    // Threshold follows membership so a single configured approver can always finalize.
-    { name: "treasury-council", members: treasury, threshold: treasury.length >= 2 ? 2 : 1, safe_address: null },
-  ];
-}
-
-export async function seed(): Promise<{ agents: number; tools: number; policies: number; tasks: number; papers: number }> {
+export async function seed(): Promise<{ agents: number }> {
   let [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));
   if (!tenant) {
     await db().insert(tenants).values({ slug: fixture.tenant.slug, name: fixture.tenant.name }).onConflictDoNothing({ target: tenants.slug });
@@ -191,25 +56,6 @@ export async function seed(): Promise<{ agents: number; tools: number; policies:
     const [updated] = await db().select().from(tenants).where(eq(tenants.id, tenant.id));
     if (updated) tenant = updated;
   }
-
-  // Demo-agent chain ids (child → parent), collected in JS to scope every delete by tenant.
-  const demoAgents = await db().select().from(agents).where(eq(agents.tenantId, tenant.id));
-  const agentIds = demoAgents.map((a) => a.id);
-  const tenantIntents = agentIds.length
-    ? await db().select().from(intents).where(inArray(intents.agentId, agentIds))
-    : [];
-  const intentIds = tenantIntents.map((i) => i.id);
-  const tenantDecisions = intentIds.length
-    ? await db().select().from(decisions).where(inArray(decisions.intentId, intentIds))
-    : [];
-  const decisionIds = tenantDecisions.map((d) => d.id);
-  const tenantCapabilities = decisionIds.length
-    ? await db().select().from(capabilities).where(inArray(capabilities.decisionId, decisionIds))
-    : [];
-  const capabilityIds = tenantCapabilities.map((c) => c.id);
-
-  // Demo pseudonyms for network_events; never touch other (foreign) pseudonyms.
-  const pseudonyms = fixture.agents.map((a) => withPseudonym(a.agent_key));
 
   // RAAC cleanup: papers → councils → messages/reviews/fees (children first)
   const existingPapers = await db().select().from(papers).where(eq(papers.tenantId, tenant.id));
@@ -228,26 +74,11 @@ export async function seed(): Promise<{ agents: number; tools: number; policies:
   }
 
   // Delete demo rows only, children first. Never TRUNCATE/never touch other tenants.
+  const pseudonyms = fixture.agents.map((a) => withPseudonym(a.agent_key));
   await db().delete(auditEvents).where(eq(auditEvents.tenantId, tenant.id));
-  if (capabilityIds.length) {
-    await db().delete(executions).where(inArray(executions.capabilityId, capabilityIds));
-    await db().delete(payments).where(inArray(payments.capabilityId, capabilityIds));
-  }
-  if (decisionIds.length) {
-    await db().delete(approvals).where(inArray(approvals.decisionId, decisionIds));
-    await db().delete(capabilities).where(inArray(capabilities.decisionId, decisionIds));
-  }
-  if (intentIds.length) await db().delete(decisions).where(inArray(decisions.intentId, intentIds));
-
-  if (agentIds.length) await db().delete(intents).where(inArray(intents.agentId, agentIds));
-  await db().delete(tasks).where(eq(tasks.tenantId, tenant.id));
   await db().delete(agents).where(eq(agents.tenantId, tenant.id));
-  await db().delete(tools).where(eq(tools.tenantId, tenant.id));
-  await db().delete(policies).where(eq(policies.tenantId, tenant.id));
-  await db().delete(councils).where(eq(councils.tenantId, tenant.id));
   await db().delete(networkEvents).where(inArray(networkEvents.agentPseudonym, pseudonyms));
 
-  // Upsert fixture — explicit field-by-field mapping, no generic case converter.
   const agentRows = fixture.agents.map((a) => ({
     tenantId: tenant.id,
     agentKey: a.agent_key,
@@ -258,60 +89,8 @@ export async function seed(): Promise<{ agents: number; tools: number; policies:
     declaredCapabilities: [...a.declared_capabilities],
   }));
   await db().insert(agents).values(agentRows);
-  await db().insert(tools).values(fixture.tools.map((tool) => ({
-    tenantId: tenant.id,
-    name: tool.name,
-    category: tool.category,
-    defaultRiskClass: tool.default_risk_class,
-    executor: tool.executor,
-    executorConfig: { ...tool.executor_config },
-  })));
-  await db().insert(policies).values(fixture.policies.map((policy) => ({
-    tenantId: tenant.id,
-    name: policy.name,
-    version: policy.version,
-    rules: policy.rules.map((rule) => ({ ...rule })),
-  })));
-  await db().insert(councils).values(councilFixture().map((c) => ({
-    tenantId: tenant.id,
-    name: c.name,
-    members: [...c.members],
-    threshold: c.threshold,
-    safeAddress: c.safe_address,
-  })));
 
-  const insertedAgents = await db().select().from(agents).where(eq(agents.tenantId, tenant.id));
-  const agentByKey = new Map(insertedAgents.map((a) => [a.agentKey, a.id]));
-  const taskRows = fixture.tasks.map((taskRep) => {
-    const agentId = agentByKey.get(taskRep.agent_key);
-    if (!agentId) throw new Error(`seed: fixture agent missing ${taskRep.agent_key}`);
-    return {
-      tenantId: tenant.id,
-      agentId,
-      title: taskRep.title,
-      budgetUsdCents: taskRep.budget_usd_cents,
-      status: taskRep.status,
-    };
-  });
-  await db().insert(tasks).values(taskRows);
-
-  // RAAC demo papers (4)
-  const paperRows = fixture.papers.map((p) => ({
-    tenantId: tenant.id,
-    authorAddress: p.author_address,
-    title: p.title,
-    abstract: p.abstract,
-    domain: p.domain,
-    keywords: [...p.keywords],
-    paperHash: p.paper_hash,
-    pdfUrl: (p as unknown as { pdfUrl?: string }).pdfUrl ?? null,
-    feeTxHash: p.fee_tx_hash,
-    feeAmountWei: p.fee_amount_wei,
-    status: p.status,
-  }));
-  await db().insert(papers).values(paperRows);
-
-  const counts = { agents: agentRows.length, tools: fixture.tools.length, policies: fixture.policies.length, tasks: taskRows.length, papers: paperRows.length };
+  const counts = { agents: agentRows.length };
   logger("seed").info("demo tenant reseeded", { tenant: fixture.tenant.slug, ...counts });
   return counts;
 }

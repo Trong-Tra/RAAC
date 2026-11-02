@@ -3,10 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 export type ApiErrorCode =
   | "AGENT_NOT_FOUND"
   | "TASK_NOT_FOUND"
-  | "TOOL_NOT_FOUND"
   | "INVALID_REQUEST"
-  | "CAPABILITY_REJECTED"
-  | "PAYMENT_REQUIRED"
   | "INTERNAL";
 
 export class ApiError extends Error {
@@ -55,106 +52,9 @@ export interface AuditEvent {
   id: number;
   event_type: string;
   tenant_id: string | null;
-  task_id: string | null;
   agent_id: string | null;
   payload: Record<string, unknown>;
   created_at: string;
-}
-
-export interface TraceIntent {
-  id: string;
-  tool: string;
-  resource: string | null;
-  arguments_redacted: Record<string, unknown> | null;
-  risk_class: string;
-  origin: string;
-  normalized: unknown;
-  created_at: string;
-}
-
-export interface TraceReason {
-  code: string;
-  detail?: string;
-}
-
-export interface TraceDecision {
-  id: string;
-  decision: "allow" | "deny" | "escalate";
-  matched_policy: string;
-  matched_rule_id: string;
-  reasons: TraceReason[];
-  context_snapshot_hash: string;
-  risk_score: number;
-  created_at: string;
-}
-
-export interface TraceCapability {
-  id: string;
-  subject: string;
-  action: string;
-  resource: string;
-  constraints: Record<string, unknown>;
-  budget_usd_cents: number | null;
-  expires_at: string;
-  nonce: string;
-  policy_hash: string;
-  status: string;
-}
-
-export interface TracePayment {
-  id: string;
-  service: string;
-  network: string;
-  amount_usd_cents: number;
-  status: string;
-  x402_ref: string | null;
-  created_at: string;
-  settled_at: string | null;
-}
-
-export interface TraceExecution {
-  id: string;
-  tool: string;
-  status: string;
-  executor: string;
-  result_summary: string | null;
-  error: string | null;
-  started_at: string;
-  completed_at: string | null;
-}
-
-export interface TraceApproval {
-  id: string;
-  type: string;
-  status: string;
-  provider: string;
-  provider_ref: string | null;
-  requested_at: string;
-  completed_at: string | null;
-}
-
-export interface TraceChainEntry {
-  intent: TraceIntent;
-  decision: TraceDecision | null;
-  capability: TraceCapability | null;
-  payments: TracePayment[];
-  executions: TraceExecution[];
-  approvals: TraceApproval[];
-}
-
-export interface Trace {
-  task: {
-    id: string;
-    title: string;
-    budget_usd_cents: number | null;
-    status: string;
-  };
-  chain: TraceChainEntry[];
-  events: {
-    event_type: string;
-    occurred_at: string;
-    payload: Record<string, unknown>;
-  }[];
 }
 
 export interface NetworkEvent {
@@ -170,11 +70,6 @@ export interface NetworkEvent {
 
 export interface NetworkStats {
   agents_observed: number;
-  intents_evaluated: number;
-  allowed: number;
-  denied: number;
-  escalated: number;
-  payments_completed: number;
   papers_submitted: number;
   councils_formed: number;
   reviews_submitted: number;
@@ -182,100 +77,14 @@ export interface NetworkStats {
   agents_registered: number;
 }
 
-export interface ResolveCapability {
-  capability_id: string;
-  subject: string;
-  action: string;
-  resource: string;
-  constraints: Record<string, unknown>;
-  budget_usd_cents: number | null;
-  expires_at: string;
-  nonce: string;
-  policy_hash: string;
-}
-
-export interface ResolveExecution {
-  execution_id: string;
-  status: "succeeded" | "failed";
-  result_summary: string | null;
-}
-
-export interface ResolveApprovalResult {
-  decision?: string;
-  approval_id?: string;
-  approval_outcome?: string;
-  intent_id?: string;
-  signer?: string | null;
-  status?: string;
-  council?: string;
-  threshold?: number;
-  collected?: number;
-  payment_required?: unknown;
-  capability: ResolveCapability | null;
-  payment: unknown;
-  execution: ResolveExecution | null;
-}
-
-export interface AnchorVerification {
-  topic_id: string;
-  network: string;
-  topic_url: string;
-  verified_count: number;
-  total: number;
-  events: Array<{ event_type: string; occurred_at: string; fingerprint: string; anchored: boolean; verified: boolean }>;
-}
-
-export function verifyTaskAnchors(taskId: string): Promise<AnchorVerification> {
-  return request<AnchorVerification>(`/api/anchors/verify?task_id=${encodeURIComponent(taskId)}`);
-}
-
-export function getAuditEvents(
-  opts: { limit?: number; taskId?: string; eventType?: string; beforeId?: number; page?: number } = {},
-): Promise<AuditEvent[]> {
-  const params = new URLSearchParams();
-  params.set("limit", String(opts.limit ?? 100));
-  if (opts.taskId) params.set("task_id", opts.taskId);
-  if (opts.eventType) params.set("event_type", opts.eventType);
-  if (opts.beforeId != null) params.set("before_id", String(opts.beforeId));
-  if (opts.page != null) params.set("page", String(opts.page));
-  return request<{ events: AuditEvent[] }>(`/api/audit/events?${params}`).then(
-    (data) => data.events,
-  );
-}
-
 export function getAuditEventsPage(
-  opts: { limit?: number; page?: number; taskId?: string; eventType?: string } = {},
+  opts: { limit?: number; page?: number; eventType?: string } = {},
 ): Promise<{ events: AuditEvent[]; pagination: { page: number; limit: number; total: number; totalPages: number; hasMore: boolean } }> {
   const params = new URLSearchParams();
   params.set("limit", String(opts.limit ?? 20));
   params.set("page", String(opts.page ?? 1));
-  if (opts.taskId) params.set("task_id", opts.taskId);
   if (opts.eventType) params.set("event_type", opts.eventType);
   return request<{ events: AuditEvent[]; pagination: { page: number; limit: number; total: number; totalPages: number; hasMore: boolean } }>(`/api/audit/events?${params}`);
-}
-
-export function getTrace(taskId: string): Promise<Trace> {
-  return request<Trace>(`/api/audit/trace/${encodeURIComponent(taskId)}`);
-}
-
-export async function getAuditEventsPaged(
-  opts: { eventType?: string; maxPages?: number; pageSize?: number } = {},
-): Promise<AuditEvent[]> {
-  const maxPages = opts.maxPages ?? 5;
-  const pageSize = opts.pageSize ?? 200;
-  const rows: AuditEvent[] = [];
-  let beforeId: number | undefined;
-  for (let page = 0; page < maxPages; page += 1) {
-    const batch = await getAuditEvents({
-      limit: pageSize,
-      eventType: opts.eventType,
-      beforeId,
-    });
-    rows.push(...batch);
-    if (batch.length < pageSize) break;
-    beforeId = batch[batch.length - 1].id;
-  }
-  return rows;
 }
 
 export function getNetworkEvents(
@@ -292,25 +101,6 @@ export function getNetworkEvents(
 export function getNetworkStats(): Promise<NetworkStats> {
   return request<NetworkStats>("/api/network/stats");
 }
-
-export function resolveApproval(
-  id: string,
-  outcome: "approved" | "rejected",
-  signature?: { signature: string; signer: string },
-): Promise<ResolveApprovalResult> {
-  return request<ResolveApprovalResult>(
-    `/api/approvals/${encodeURIComponent(id)}/resolve`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ outcome, ...(signature ?? {}) }),
-    },
-  );
-}
-
-// Canonical approval-signing message (EIP-191 personal_sign). Built here so
-// the browser wallet and the verifying route sign/check identical bytes.
-export { approvalSignMessage } from "./approval-message";
 
 export function mergeNetworkEvents(
   a: NetworkEvent[],
@@ -409,225 +199,4 @@ export function useNetworkStream(): {
   }, []);
 
   return { events, connected, error };
-}
-
-// plan-16 — demo chat fetchers (append-only).
-
-export interface ChatTemplateSummary {
-  id: string;
-  label: string;
-  chat_text: string;
-  agent_key: string;
-}
-
-export interface ChatAgentSummary {
-  agent_key: string;
-  name: string;
-}
-
-export interface ChatTurn {
-  kind: "tool" | "no-tool" | "lifecycle";
-  template_id: string | null;
-  chat_text: string;
-  client_label: string;
-  reply: string | null;
-  follow_up: string | null;
-  /** Client-only: follow-up synthesis in flight (post-approval generating state). */
-  generating?: boolean;
-  task_id: string | null;
-  tool: string | null;
-  arguments: Record<string, unknown>;
-  transport: "mcp" | "gateway" | null;
-  intent: Record<string, unknown> | null;
-  decision: "allow" | "deny" | "escalate" | null;
-  matched_policy: string | null;
-  matched_rule_id: string | null;
-  reasons: Array<{ code: string; detail?: string }>;
-  risk_score: number | null;
-  approval: { id: string; provider: string; status: string } | null;
-  approval_outcome: "approved" | "rejected" | null;
-  capability: {
-    capability_id: string;
-    action: string;
-    resource: string;
-    nonce: string;
-    expires_at: string;
-  } | null;
-  execution: { execution_id: string; status: string; result_summary: string | null } | null;
-  payment: { payment_id: string; status: string; settlement_ref: string | null; error_code: string | null } | null;
-  payment_required: { price_usd_cents: number; challenge: unknown } | null;
-  lines: { capability?: string; execution?: string; payment?: string };
-  receipt: { amount_usd_cents: number; network: string; ref: string; ref_kind: "settlement" | "challenge" } | null;
-  rejections: Array<{ step: string; reason: string; capability_id: string }>;
-  anchors: Array<{ event_type: string; fingerprint: string; topic_id: string | null; topic_url: string | null }>;
-  trace_url: string | null;
-  network_url: string;
-  provider: { configured: boolean; model: string };
-  tools: { connected: number | null };
-  no_tool_message: string | null;
-}
-
-export interface ChatBootstrap {
-  templates: ChatTemplateSummary[];
-  agents: ChatAgentSummary[];
-  provider: { configured: boolean; model: string };
-  tools: { connected: number | null };
-  client_label: string;
-}
-
-export interface ChatResponse {
-  intent: Record<string, unknown> | null;
-  decision: "allow" | "deny" | "escalate" | null;
-  trace_url: string | null;
-  network_url: string;
-  turn: ChatTurn;
-}
-
-export function getChatBootstrap(): Promise<ChatBootstrap> {
-  return request<ChatBootstrap>("/api/demo/chat");
-}
-
-export interface ApprovalPoll {
-  approval_id: string;
-  status: string;
-  outcome: "approved" | "rejected" | null;
-  execution_summary: string | null;
-  follow_up: string | null;
-}
-
-// Post-approval poll: after the console resolves an escalated chat turn,
-// pick up the outcome (execution summary + agent follow-up) for in-place render.
-export function pollApprovalFollowUp(input: {
-  approval_id: string;
-  message: string;
-  tool: string;
-  agent_key?: string;
-}): Promise<ApprovalPoll> {
-  const params = new URLSearchParams({
-    approval_id: input.approval_id,
-    message: input.message,
-    tool: input.tool,
-    ...(input.agent_key ? { agent_key: input.agent_key } : {}),
-  });
-  return request<ApprovalPoll>(`/api/demo/chat?${params}`);
-}
-
-export function postChatTurn(input: {
-  message?: string;
-  template_id?: string;
-  task_id?: string;
-  agent_key?: string;
-}): Promise<ChatResponse> {
-  return request<ChatResponse>("/api/demo/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-}
-
-// Agent registry + profile (names, grants, reputation, SOUL/MEMORY).
-
-export interface AgentRegistryEntry {
-  id: string;
-  agent_key: string;
-  name: string;
-  environment: string;
-  status: string;
-}
-
-export interface AgentProfileTool {
-  name: string;
-  category: string;
-  risk_class: string;
-  origin: "mcp" | "direct";
-}
-
-export interface AgentProfile {
-  id: string;
-  agent_key: string;
-  name: string;
-  environment: string;
-  status: string;
-  erc8004_identity: string | null;
-  reputation: {
-    score: number;
-    source: "agent0-subgraph" | "offline-fallback" | "static";
-    identity: string | null;
-    validation: "passed" | "failed" | "unknown";
-    capabilities: string[];
-    feedbackCount: number;
-  };
-  subgraph_docs_url: string;
-  granted_tools: AgentProfileTool[];
-  ungranted_tools: AgentProfileTool[];
-  soul: string | null;
-  memory: string | null;
-}
-
-export function getAgents(): Promise<AgentRegistryEntry[]> {
-  return request<AgentRegistryEntry[]>("/api/console/agents");
-}
-
-export function getAgentProfile(id: string): Promise<AgentProfile> {
-  return request<AgentProfile>(`/api/console/agents/${id}`);
-}
-
-// Councils (off-chain multisig) + policy rule→council assignment.
-
-export interface Council {
-  id: string;
-  name: string;
-  members: string[];
-  threshold: number;
-  safe_address: string | null;
-}
-
-export interface PolicyDocRule {
-  id: string;
-  type: string;
-  decision: string;
-  reason: string;
-  council: string | null;
-}
-
-export interface PolicyDoc {
-  name: string;
-  version: number;
-  rules: PolicyDocRule[];
-}
-
-export function getCouncils(): Promise<Council[]> {
-  return request<Council[]>("/api/console/councils");
-}
-
-export function createCouncil(input: {
-  name: string;
-  members: string[];
-  threshold: number;
-  safe_address?: string | null;
-}): Promise<Council> {
-  return request<Council>("/api/console/councils", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-}
-
-export function getPolicyDocs(): Promise<PolicyDoc[]> {
-  return request<PolicyDoc[]>("/api/console/policies");
-}
-
-export function assignRuleCouncil(
-  policy: string,
-  ruleId: string,
-  council: string | null,
-): Promise<{ policy: string; rule: string; council: string | null }> {
-  return request<{ policy: string; rule: string; council: string | null }>(
-    `/api/console/policies/${encodeURIComponent(policy)}/rules/${encodeURIComponent(ruleId)}`,
-    {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ council }),
-    },
-  );
 }
