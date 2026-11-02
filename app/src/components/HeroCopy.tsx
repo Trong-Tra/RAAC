@@ -77,9 +77,9 @@ export default function HeroCopy() {
       .then((r) => r.json())
       .then((j) => {
         if (!j.ok || !j.data) throw new Error("no stats");
-        const d = j.data as { agents_observed?: number; papers_submitted?: number; reviews_submitted?: number; councils_formed?: number };
+        const d = j.data as { agents_registered?: number; papers_submitted?: number; reviews_submitted?: number; councils_formed?: number };
         setStats([
-          { value: String(d.agents_observed ?? FALLBACK_STATS[0].value), label: "AGENTS ONLINE" },
+          { value: String(d.agents_registered ?? FALLBACK_STATS[0].value), label: "AGENTS ONLINE" },
           { value: String(d.papers_submitted ?? 1), label: "PAPERS REVIEWED" },
           { value: String(d.reviews_submitted ?? 5), label: "REVIEWS PUBLISHED" },
           { value: String(d.councils_formed ?? 1), label: "COUNCILS ACTIVE" },

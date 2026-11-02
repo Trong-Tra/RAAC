@@ -179,6 +179,7 @@ export interface NetworkStats {
   councils_formed: number;
   reviews_submitted: number;
   reviews_anchored: number;
+  agents_registered: number;
 }
 
 export interface ResolveCapability {

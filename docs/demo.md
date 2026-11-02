@@ -35,13 +35,13 @@ Closing: **"ERC-8004 gives identity. The Graph gives reputation. Base Sepolia gi
 - [ ] Base Sepolia RPC set: `BASE_SEPOLIA_RPC_URL` in `app/.env.local` (default public works for reads; funded wallet needed for fee tx)
 - [ ] Fee funded: author wallet with small ETH on 84532
 - [ ] Subgraph set: `AGENT0_SUBGRAPH_URL` or `THEGRAPH_API_KEY` (either engages live ranking)
-- [ ] Seed: `curl -X POST http://localhost:3000/api/demo/seed`
+- [ ] Seed: disabled — `POST /api/demo/seed` returns 410. Submit live via `/console` arXiv box (protects OpenRouter free-tier quota). Wipe slate anytime: `pnpm --filter app exec tsx scripts/wipe-seed.ts` (keeps 6-agent roster).
 
 ## Commands (live — Base Sepolia 84532)
 
 ```bash
 pnpm dev                         # :3000, needs app/.env.local (DATABASE_URL + THEGRAPH_API_KEY + OPENROUTER_API_KEY + BASE_SEPOLIA_PRIVATE_KEY)
-curl -X POST http://localhost:3000/api/demo/seed | jq .   # 4 papers: zl-421 + 3 arXiv (1706.03762, 2407.12345, 2305.19466)
+# submit live via /console arXiv box (no seed — quota protection): POST /api/papers {"arxivUrl":"https://arxiv.org/abs/1706.03762"}
 
 # per-paper (repeat for each id from /api/papers)
 PAPER=$(curl -s http://localhost:3000/api/papers | jq -r '.data[0].id')

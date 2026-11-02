@@ -2,15 +2,13 @@ import { seed } from "@/server/demo/seed";
 
 export const dynamic = "force-dynamic";
 
+// Seeding is disabled: demo runs live on user-submitted papers only.
+// Seeded papers risk accidental council runs against the limited
+// OpenRouter free-tier quota. Re-enable by restoring the seed() call.
 export async function POST() {
-  try {
-    const counts = await seed();
-    return Response.json({ ok: true, data: counts });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return Response.json(
-      { ok: false, error: { code: "INTERNAL", message } },
-      { status: 500 },
-    );
-  }
+  void seed;
+  return Response.json(
+    { ok: false, error: { code: "GONE", message: "seeding disabled — submit papers live via POST /api/papers (arXiv)" } },
+    { status: 410 },
+  );
 }

@@ -54,7 +54,7 @@ export default function PapersPage() {
         <p className="mono" style={{ marginTop: 14, fontSize: 9.5, letterSpacing: "0.16em", color: "#3f3f3f" }}>
           BASE SEPOLIA 84532 · HASHES ON-CHAIN · CONTENT OFF-CHAIN
         </p>
-        <p className="mono" style={{ marginTop: 12, fontSize: 9.5, letterSpacing: "0.12em", color: "#3f3f3f" }}>SUBMIT → CONSOLE (WALLET REQUIRED) — global is read-only</p>
+        <p className="mono" style={{ marginTop: 12, fontSize: 9.5, letterSpacing: "0.12em", color: "#3f3f3f" }}>SUBMIT + RUN → CONSOLE (WALLET REQUIRED) — CLICK ANY PAPER FOR ITS REVIEWS + SYSTEM TRACE</p>
       </div>
 
       <div className="section-pad">
@@ -74,7 +74,8 @@ export default function PapersPage() {
           <div style={{ display: "grid", gap: 18 }}>
             {papers.map((p) => (
               <MacWindow key={p.id} title={`PAPER — ${p.domain.toUpperCase()} · ${p.status.toUpperCase()} — GLOBAL (ANONYMIZED)`}>
-                <div style={{ padding: "24px 24px 22px" }}>
+                <Link href={`/papers/${p.id}`} style={{ textDecoration: "none", display: "block" }}>
+                <div style={{ padding: "24px 24px 22px", cursor: "pointer" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#e8e8e8", lineHeight: 1.35 }}>
                     {p.title}
                   </div>
@@ -84,13 +85,15 @@ export default function PapersPage() {
                   <p style={{ marginTop: 14, fontSize: 14, lineHeight: 1.6, color: "#5a5a5a", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     Abstract redacted on global surface — hashes and domain only. Full content is private to author wallet.
                   </p>
-                  <div className="mono" style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", fontSize: 9.5, letterSpacing: "0.12em" }}>
+                  <div className="mono" style={{ marginTop: 16, display: "flex", gap: 10, flexWrap: "wrap", fontSize: 9.5, letterSpacing: "0.12em", alignItems: "center" }}>
                     <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#c9c9c9" }}>{p.status.toUpperCase()}</span>
                     <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#8a8a8a" }}>{p.domain.toUpperCase()}</span>
                     <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#5a5a5a" }}>{shortHash(p.paperHash)} · GLOBAL HASH</span>
+                    <span style={{ border: "1px solid #3a3a3a", padding: "4px 8px", color: "#e8e8e8" }}>OPEN → REVIEWS</span>
                   </div>
-                  <div className="mono" style={{ marginTop: 12, fontSize: 9, letterSpacing: "0.1em", color: "#3f3f3f" }}>PRIVATE DETAILS → CONSOLE WITH WALLET (author-tied) — not linked from global</div>
+                  <div className="mono" style={{ marginTop: 12, fontSize: 9, letterSpacing: "0.1em", color: "#3f3f3f" }}>CLICK TO SEE REVIEWS + HOW THE SYSTEM RAN THIS PAPER (RANK → SIGN → COUNCIL → REVIEWS)</div>
                 </div>
+                </Link>
               </MacWindow>
             ))}
           </div>

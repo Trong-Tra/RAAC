@@ -192,8 +192,8 @@ export default function PaperDetailPage() {
     if (!id) return;
     setRunning(true);
     setRunMsg(null);
-    // start polling immediately so each review appears as agent finishes (no refresh needed)
-    const pollIv = setInterval(pollLive, 1500);
+    // live updates come from the single poll loop below (active while running) —
+    // each review appears as its agent finishes, no refresh needed
     try {
       const r = await fetch(`/api/papers/${id}/council/run`, { method: "POST" });
       const j = await r.json();
@@ -202,7 +202,6 @@ export default function PaperDetailPage() {
     } catch (e) {
       setRunMsg(e instanceof Error ? e.message : String(e));
     } finally {
-      clearInterval(pollIv);
       setRunning(false);
       load();
       pollLive();

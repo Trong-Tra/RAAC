@@ -1,6 +1,6 @@
 import { and, count, eq, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { networkEvents, papers, paperCouncils, reviews } from "@/server/db/schema";
+import { networkEvents, papers, paperCouncils, reviews, agents } from "@/server/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 // escalated, payments_completed}}.
 export async function GET() {
   try {
-    const [[observed], [evaluated], [allowed], [denied], [escalated], [paid], [papersCount], [councilsCount], [reviewsCount], [anchoredCount]] = await Promise.all([
+    const [[observed], [evaluated], [allowed], [denied], [escalated], [paid], [papersCount], [councilsCount], [reviewsCount], [anchoredCount], [agentsCount]] = await Promise.all([
       db()
         .select({ value: sql<number>`count(distinct ${networkEvents.agentPseudonym})` })
         .from(networkEvents),
@@ -37,6 +37,7 @@ export async function GET() {
       db().select({ value: count() }).from(paperCouncils),
       db().select({ value: count() }).from(reviews),
       db().select({ value: count() }).from(reviews).where(eq(reviews.status, "anchored")),
+      db().select({ value: count() }).from(agents),
     ]);
 
     return Response.json({
@@ -53,6 +54,7 @@ export async function GET() {
         councils_formed: Number(councilsCount?.value ?? 0),
         reviews_submitted: Number(reviewsCount?.value ?? 0),
         reviews_anchored: Number(anchoredCount?.value ?? 0),
+        agents_registered: Number(agentsCount?.value ?? 0),
       },
     });
   } catch (err) {

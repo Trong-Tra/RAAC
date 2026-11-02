@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import MacWindow from "@/components/MacWindow";
 import SiteFooter from "@/components/SiteFooter";
@@ -14,9 +15,29 @@ export default function ConsoleLayout({
 }) {
   const pathname = usePathname();
   const { address, connect } = useWallet();
+  const [paperCount, setPaperCount] = useState<string | undefined>(undefined);
+
+  // Wallet paper count for the PAPERS badge — per-wallet management at a glance.
+  useEffect(() => {
+    if (!address) {
+      setPaperCount(undefined);
+      return;
+    }
+    fetch("/api/papers", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (!j.ok) return;
+        const n = (j.data as Array<{ authorAddress: string }>).filter(
+          (p) => p.authorAddress.toLowerCase() === address.toLowerCase(),
+        ).length;
+        setPaperCount(String(n));
+      })
+      .catch(() => {});
+  }, [address, pathname]);
 
   const ITEMS: Array<{ label: string; href: string; badge?: string }> = [
     { label: "OVERVIEW", href: "/console" },
+    { label: "PAPERS", href: "/console/papers", badge: paperCount },
     { label: "AUDIT", href: "/console/audit" },
     { label: "SYSTEM", href: "/console/settings" },
   ];

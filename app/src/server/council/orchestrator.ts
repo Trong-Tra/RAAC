@@ -306,21 +306,25 @@ export async function runCouncil(paperId: string, tenantId: string) {
   if (!council) throw new Error("no council");
   if (council.status !== "active") throw new Error(`council must be active to run, got ${council.status}`);
 
-  const selectedKeys = council.selectedAgentIds as string[];
-  // Prevent double-run: if reviews already exist, return them
-  const existing = await db().select().from(reviews).where(eq(reviews.councilId, council.id));
-  if (existing.length > 0) return { council, messages: await db().select().from(councilMessages).where(eq(councilMessages.councilId, council.id)), reviews: existing };
-
-  // 1) Discussion: one message per selected agent (deterministic)
+  const selectedKeys = (council.selectedAgentIds as string[]) ?? [];
+  // Resumable: reuse existing rows so an interrupted run (killed server,
+  // timed-out POST) continues where it left off instead of bricking the paper.
   const agentRows = await db().select().from(agents).where(eq(agents.tenantId, tenantId));
   const byKey = new Map(agentRows.map((a) => [a.agentKey, a.id]));
-  const messages: typeof councilMessages.$inferSelect[] = [];
+  const keyById = new Map(agentRows.map((a) => [a.id, a.agentKey]));
+  let messages = await db().select().from(councilMessages).where(eq(councilMessages.councilId, council.id));
+  const existing = await db().select().from(reviews).where(eq(reviews.councilId, council.id));
+  const reviewedKeys = new Set(existing.map((r) => keyById.get(r.agentId)).filter((k): k is string => !!k));
+
+  // 1) Discussion: one message per selected agent (deterministic) — only if none yet
+  if (messages.length === 0) {
+  const fresh: typeof councilMessages.$inferSelect[] = [];
   for (const key of selectedKeys) {
     const agentId = byKey.get(key) ?? null;
     const templates = DISCUSSION_TEMPLATES[key] ?? ["No comment — review to follow."];
     for (const content of templates) {
       const [msg] = await db().insert(councilMessages).values({ councilId: council.id, agentId, authorType: "agent", content }).returning();
-      messages.push(msg);
+      fresh.push(msg);
       // emit discussion.message (non-blocking for MVP)
       const t = agentRows.find((a) => a.agentKey === key);
       await emit(
@@ -335,10 +339,14 @@ export async function runCouncil(paperId: string, tenantId: string) {
       );
     }
   }
+  messages = fresh;
+  }
 
   // 2) Reviews: one per selected agent — live OpenRouter if key set, else deterministic mock (free tier, never bills). Council reads full PDF via arXiv URL on their own; we pass the URL, DB never stores 80-page content.
-  const created: typeof reviews.$inferSelect[] = [];
+  // Skips agents already reviewed so an interrupted run resumes instead of restarting.
+  const created: typeof reviews.$inferSelect[] = [...existing];
   for (const key of selectedKeys) {
+    if (reviewedKeys.has(key)) continue;
     const agentId = byKey.get(key);
     if (!agentId) continue;
     const agentRow = agentRows.find((a) => a.agentKey === key);
@@ -381,7 +389,11 @@ export async function runCouncil(paperId: string, tenantId: string) {
     );
   }
 
-  // 3) Mark council + paper completed (no fee release tx yet — Phase 6 anchoring will add anchorTxHash)
+  // 3) Mark council + paper completed only once ALL selected agents have
+  // reviewed (no fee release tx yet — Phase 6 anchoring will add anchorTxHash).
+  // Partial runs stay active so RUN can resume them.
+  const allReviewed = selectedKeys.length > 0 && created.length >= selectedKeys.length;
+  if (allReviewed) {
   await db().update(paperCouncils).set({ status: "completed", completedAt: new Date().toISOString() }).where(eq(paperCouncils.id, council.id));
   await db().update(papers).set({ status: "completed" }).where(eq(papers.id, paper.id));
 
@@ -396,6 +408,7 @@ export async function runCouncil(paperId: string, tenantId: string) {
     },
     { agent_key: selectedKeys[0], risk_class: "low" },
   );
+  }
 
   const [updatedCouncil] = await db().select().from(paperCouncils).where(eq(paperCouncils.id, council.id));
   return { council: updatedCouncil, messages, reviews: created };
