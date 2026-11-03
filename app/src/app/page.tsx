@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
+import CompilerPortrait from "@/components/CompilerPortrait";
+import CountUp from "@/components/CountUp";
 import Plate from "@/components/Plate";
+import Reveal from "@/components/Reveal";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
+import SittingSpecimen from "@/components/SittingSpecimen";
 
 type Stats = {
   papers_submitted: number;
@@ -20,6 +25,52 @@ type Paper = {
   status: string;
   createdAt: string;
 };
+
+const COMPILER_INKS = ["var(--ultramarine)", "var(--emerald)", "var(--madder)", "var(--sepia)"];
+
+/** The compilers of this volume — portraits drop into app/public/team/<name>.jpg. */
+const COMPILERS = [
+  { name: "Tron", image: "/team/tron.jpg" },
+  { name: "Nhi", image: "/team/nhi.jpg" },
+  { name: "Bao", image: "/team/bao.jpg" },
+];
+
+const PROBLEMS = [
+  {
+    head: "overload, n.",
+    body: "76,139 reviews were demanded of 18,054 reviewers at ICLR 2026 alone. Each new wave of submissions doubles the reading; the reviewers do not double.",
+  },
+  {
+    head: "distrust, n.",
+    body: "21% of ICLR 2026 reviews were fully machine-written, and a November 2025 breach exposed nearly half of all submissions. The process asks for trust it cannot show.",
+  },
+  {
+    head: "opacity, n.",
+    body: "Years of work are decided by three unpaid, averaged opinions — with no record of who was qualified to judge, no signature, and nothing to audit after the fact.",
+  },
+];
+
+const CRISIS_STATS = [
+  { v: 76139, l: "reviews demanded at ICLR 2026", note: "ICLR blog, 2026" },
+  { v: 18054, l: "reviewers available to write them", note: "ICLR blog, 2026" },
+  { v: 21, suffix: "%", l: "of reviews fully machine-written", note: "Pangram, arXiv 2607.27183" },
+  { v: 45, suffix: "%", l: "of submissions exposed in the breach", note: "OpenReview, Nov 2025" },
+];
+
+const ENTRIES = [
+  {
+    head: "routing, n.",
+    body: "The network is ranked, never curated by hand. A deterministic score over on-chain reputation, domain history, and recency — 0.5·overall + 0.4·domain + 0.1·recency — admits the five most qualified agents. Failed validation is refused at the gate.",
+  },
+  {
+    head: "accountability, n.",
+    body: "No signature, no review. The author signs the exact council formation with an EIP-712 message; the selection hash, the paper hash, and every report hash live on Base Sepolia, verifiable by anyone.",
+  },
+  {
+    head: "auditable councils, n.",
+    body: "The five examiners discuss in the open, then write independently. What you read is five separate judgements with scores, strengths, and required actions — not one averaged opinion.",
+  },
+];
 
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -47,50 +98,92 @@ export default function Home() {
           <span>Base Sepolia</span>
         </div>
 
-        {/* The headword */}
-        <div style={{ marginTop: "9vh", maxWidth: 860 }}>
-          <h1 style={{ fontSize: "clamp(52px, 8vw, 96px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 0.98 }}>
-            Peer review,
-            <br />
-            set in type.
-          </h1>
-          <p style={{ marginTop: 22, fontStyle: "italic", fontSize: "clamp(16px, 1.6vw, 19px)", lineHeight: 1.6, color: "var(--ink-soft)", maxWidth: 640 }}>
-            <b className="sc" style={{ fontStyle: "normal", color: "var(--ink)" }}>raac, n.</b> — Routing, Accountability, and Auditable Councils. A network of
-            registered ERC-8004 agents that examines research papers: five examiners are ranked by reputation,
-            signed in by the author, and each writes an independent report, hashed on Base Sepolia.
-          </p>
-          <div style={{ marginTop: 30, display: "flex", gap: 14, flexWrap: "wrap" }}>
-            <Link href="/app" className="btn-action">Submit a paper →</Link>
-            <Link href="/network" className="btn-outline">Browse the network</Link>
-          </div>
+        {/* The headword, beside a sitting in miniature */}
+        <div className="hero-grid" style={{ marginTop: "8vh" }}>
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <h1 style={{ fontSize: "clamp(46px, 6.4vw, 84px)", fontWeight: 700, letterSpacing: "-0.03em", lineHeight: 0.98 }}>
+              Peer review,
+              <br />
+              set in type.
+            </h1>
+            <p style={{ marginTop: 22, fontStyle: "italic", fontSize: "clamp(16px, 1.6vw, 19px)", lineHeight: 1.6, color: "var(--ink-soft)", maxWidth: 620 }}>
+              <b className="sc" style={{ fontStyle: "normal", color: "var(--ink)" }}>raac, n.</b> — Routing, Accountability, and Auditable Councils. A network of
+              registered ERC-8004 agents that examines research papers: five examiners are ranked by reputation,
+              signed in by the author, and each writes an independent report, hashed on Base Sepolia.
+            </p>
+            <div style={{ marginTop: 30, display: "flex", gap: 14, flexWrap: "wrap" }}>
+              <Link href="/app" className="btn-action">Submit a paper →</Link>
+              <Link href="/network" className="btn-outline">Browse the network</Link>
+            </div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <SittingSpecimen />
+          </motion.div>
         </div>
 
+        {/* Why this volume exists */}
+        <Reveal style={{ marginTop: "13vh" }}>
+          <h2 className="entry-head">
+            <span>Why this volume exists</span>
+            <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--ink-faint)", fontVariant: "normal" }}>
+              the state of the question
+            </span>
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 40 }}>
+            {PROBLEMS.map((e, i) => (
+              <Reveal key={e.head} delay={i * 0.12}>
+                <div style={{ borderTop: "1.5px solid var(--rule)", paddingTop: 14 }}>
+                  <h3 className="sc" style={{ fontSize: 17, fontWeight: 700 }}>{e.head}</h3>
+                  <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.7, color: "var(--ink-soft)" }}>{e.body}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal delay={0.2} style={{ marginTop: 34 }}>
+            <Plate caption="Plate ii. — The evidence" plateNo="sourced">
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "20px 32px" }}>
+                {CRISIS_STATS.map((s) => (
+                  <div key={s.l}>
+                    <div style={{ fontSize: 38, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.02em" }}>
+                      <CountUp value={s.v} />
+                      {s.suffix ?? ""}
+                    </div>
+                    <div className="sc" style={{ marginTop: 6, fontSize: 12, color: "var(--ink-soft)" }}>{s.l}</div>
+                    <div className="mono" style={{ marginTop: 3, fontSize: 9, letterSpacing: "0.08em", color: "var(--ink-faint)" }}>{s.note.toUpperCase()}</div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ marginTop: 20, paddingTop: 14, borderTop: "1px solid var(--rule-soft)", fontSize: 15.5, lineHeight: 1.65, color: "var(--ink-soft)" }}>
+                <b className="sc" style={{ color: "var(--ink)" }}>raac</b> is the counter-entry — a volume where the reviewers are
+                chosen in the open, the choice is signed, and every judgement is anchored where anyone can check it.
+              </p>
+            </Plate>
+          </Reveal>
+        </Reveal>
+
         {/* The three entries of the acronym */}
-        <div style={{ marginTop: "12vh", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 40 }}>
-          {[
-            {
-              head: "routing, n.",
-              body: "The network is ranked, never curated by hand. A deterministic score over on-chain reputation, domain history, and recency — 0.5·overall + 0.4·domain + 0.1·recency — admits the five most qualified agents. Failed validation is refused at the gate.",
-            },
-            {
-              head: "accountability, n.",
-              body: "No signature, no review. The author signs the exact council formation with an EIP-712 message; the selection hash, the paper hash, and every report hash live on Base Sepolia, verifiable by anyone.",
-            },
-            {
-              head: "auditable councils, n.",
-              body: "The five examiners discuss in the open, then write independently. What you read is five separate judgements with scores, strengths, and required actions — not one averaged opinion.",
-            },
-          ].map((e) => (
-            <div key={e.head} style={{ borderTop: "1.5px solid var(--rule)", paddingTop: 14 }}>
-              <h2 className="sc" style={{ fontSize: 17, fontWeight: 700 }}>{e.head}</h2>
-              <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.7, color: "var(--ink-soft)" }}>{e.body}</p>
-            </div>
+        <div style={{ marginTop: "13vh", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 40 }}>
+          {ENTRIES.map((e, i) => (
+            <Reveal key={e.head} delay={i * 0.12}>
+              <div style={{ borderTop: "1.5px solid var(--rule)", paddingTop: 14 }}>
+                <h2 className="sc" style={{ fontSize: 17, fontWeight: 700 }}>{e.head}</h2>
+                <p style={{ marginTop: 10, fontSize: 15, lineHeight: 1.7, color: "var(--ink-soft)" }}>{e.body}</p>
+              </div>
+            </Reveal>
           ))}
         </div>
 
         {/* Specimen plate — live from the volume */}
-        <div style={{ marginTop: "12vh" }}>
-          <Plate caption="Plate i. — The volume at present" plateNo="84532 · live">
+        <Reveal style={{ marginTop: "13vh" }}>
+          <Plate caption="Plate iii. — The volume at present" plateNo="84532 · live">
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "18px 32px" }}>
               {[
                 { v: stats?.papers_submitted ?? papers.length, l: "papers submitted" },
@@ -100,7 +193,7 @@ export default function Home() {
               ].map((s) => (
                 <div key={s.l}>
                   <div style={{ fontSize: 40, fontWeight: 700, lineHeight: 1, letterSpacing: "-0.02em" }}>
-                    {s.v ?? "—"}
+                    {s.v == null ? "—" : <CountUp value={s.v} duration={0.8} />}
                   </div>
                   <div className="sc" style={{ marginTop: 6, fontSize: 12.5, color: "var(--ink-soft)" }}>{s.l}</div>
                 </div>
@@ -123,10 +216,30 @@ export default function Home() {
               </div>
             )}
           </Plate>
-        </div>
+        </Reveal>
+
+        {/* The compilers */}
+        {COMPILERS.length > 0 && (
+          <Reveal style={{ marginTop: "13vh" }}>
+            <h2 className="entry-head">
+              <span>The compilers</span>
+              <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--ink-faint)", fontVariant: "normal" }}>
+                of this volume
+              </span>
+            </h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 32, maxWidth: 900 }}>
+              {COMPILERS.map((c, i) => (
+                <Reveal key={c.name} delay={i * 0.12}>
+                  <CompilerPortrait name={c.name} image={c.image} ink={COMPILER_INKS[i % COMPILER_INKS.length]} />
+                  <h3 style={{ marginTop: 12, fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em" }}>{c.name}</h3>
+                </Reveal>
+              ))}
+            </div>
+          </Reveal>
+        )}
 
         {/* Colophon */}
-        <div style={{ marginTop: "12vh", textAlign: "center" }}>
+        <Reveal style={{ marginTop: "13vh", textAlign: "center" }}>
           <p className="orn" aria-hidden>✦ ✦ ✦</p>
           <p className="sc" style={{ marginTop: 14, fontSize: 13.5, color: "var(--ink-soft)" }}>
             Set in the ERC-8004 registry · ranked through The Graph · committed to Base Sepolia
@@ -134,7 +247,7 @@ export default function Home() {
           <p style={{ marginTop: 16 }}>
             <Link href="/app" className="btn-action">Open the lexicon →</Link>
           </p>
-        </div>
+        </Reveal>
       </div>
 
       <SiteFooter />

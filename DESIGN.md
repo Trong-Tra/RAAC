@@ -63,7 +63,8 @@ Buttons (`.btn-action`, `.btn-outline`) are serif small-caps 700 — vermilion f
 
 ## Information Architecture
 
-- `/` — landing: hero ("Peer review, set in type."), three definitions (routing / accountability / auditable councils), live volume stats plate, CTA into `/app`.
+- `/` — landing: hero ("Peer review, set in type.") beside **Plate 0 — a sitting, abridged** (animated five-ink specimen, `SittingSpecimen.tsx`); "Why this volume exists" (overload / distrust / opacity + sourced evidence plate with count-up numerals); three acronym definitions; live volume stats plate; **The compilers** (team portraits in plate frames, monogram fallback until `public/team/<name>.jpg` lands); colophon CTA.
+- Motion: `motion` (motion.dev) powers `Reveal` (scroll-in rise) and `CountUp` (numerals). All motion respects `prefers-reduced-motion`. Keep animation print-like: rise, flap, count — no parallax, no 3D, no physics toys.
 - `/app` — **the product**: submission plate when empty; otherwise the entry (title, provenance line, the one live action), Routing (ranked agents with mark scales), Council plate (five examiners, reports, median), Marginalia (discussion), margin plates (Anchoring, Index of entries). `?paper=<id>` selects an entry.
 - `/papers` → redirects to `/app`. `/papers/[id]` — the reading page: full reports in examiner inks.
 - `/network` — the global view: registered agents, selection fabric, live events. Light lexicon theme; aggregated/anonymized only — never private paper content.
