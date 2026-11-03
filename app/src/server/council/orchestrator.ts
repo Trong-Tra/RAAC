@@ -99,7 +99,8 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
   await new Promise((r) => setTimeout(r, 1200));
   for (let ki = 0; ki < keys.length; ki++) {
     const key = keys[ki];
-    for (let attempt = 0; attempt < 3; attempt++) {
+    // Max 2 attempts per key (was 3) — 2 keys × 2 = 4 calls/agent ceiling.
+    for (let attempt = 0; attempt < 2; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 45000);
     try {
@@ -178,7 +179,7 @@ JSON shape you MUST return:
     }
     if (!res.ok) {
       clearTimeout(timer);
-      if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      if (attempt < 1) { await new Promise((r) => setTimeout(r, 1500)); continue; }
       if (ki < keys.length - 1) {
         await new Promise((r) => setTimeout(r, 500));
         break;
@@ -189,7 +190,7 @@ JSON shape you MUST return:
     const content = body?.choices?.[0]?.message?.content;
     if (typeof content !== "string") {
       clearTimeout(timer);
-      if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      if (attempt < 1) { await new Promise((r) => setTimeout(r, 1500)); continue; }
       if (ki < keys.length - 1) {
         await new Promise((r) => setTimeout(r, 500));
         break;
@@ -206,7 +207,7 @@ JSON shape you MUST return:
         return { score, confidence, summary: String((obj as Record<string, unknown>).summary).slice(0, 800), strengths: String((obj as Record<string, unknown>).strengths ?? "—").slice(0, 800), weaknesses: String((obj as Record<string, unknown>).weaknesses ?? "—").slice(0, 1000), questions: String((obj as Record<string, unknown>).questions ?? "—").slice(0, 800) };
       }
       clearTimeout(timer);
-      if (attempt < 2) { await new Promise((r) => setTimeout(r, 1500)); continue; }
+      if (attempt < 1) { await new Promise((r) => setTimeout(r, 1500)); continue; }
       if (ki < keys.length - 1) {
         await new Promise((r) => setTimeout(r, 500));
         break;
@@ -228,7 +229,7 @@ JSON shape you MUST return:
     return { score, confidence, summary: `${summary}\n\nFULL_JSON:${fullJson}`, strengths, weaknesses, questions };
     } catch (e) {
       clearTimeout(timer);
-      if (attempt < 2) { await new Promise((r) => setTimeout(r, 2000)); continue; }
+      if (attempt < 1) { await new Promise((r) => setTimeout(r, 2000)); continue; }
       if (ki < keys.length - 1) {
         await new Promise((r) => setTimeout(r, 500));
         break;
@@ -299,7 +300,26 @@ const REVIEW_TEMPLATES: Record<string, { score: number; confidence: number; summ
   "agent:lab-1": { score: 5, confidence: 5, summary: "Incremental over prior ZK-federated; thin delta.", strengths: "Baseline comparison.", weaknesses: "Limited novelty; weak related work.", questions: "Differentiate vs. [16]?" },
 };
 
+// One run per paper — stored on globalThis so verify/route and run/route
+// (separate module instances under Next) share the same lock. Concurrent
+// POSTs join the same promise instead of double-billing OpenRouter.
+type CouncilRunResult = Awaited<ReturnType<typeof runCouncilBody>>;
+declare global {
+  // eslint-disable-next-line no-var
+  var __raacCouncilRuns: Map<string, Promise<CouncilRunResult>> | undefined;
+}
+const inFlightRuns: Map<string, Promise<CouncilRunResult>> =
+  (globalThis.__raacCouncilRuns ??= new Map());
+
 export async function runCouncil(paperId: string, tenantId: string) {
+  const existing = inFlightRuns.get(paperId);
+  if (existing) return existing;
+  const p = runCouncilBody(paperId, tenantId).finally(() => inFlightRuns.delete(paperId));
+  inFlightRuns.set(paperId, p);
+  return p;
+}
+
+async function runCouncilBody(paperId: string, tenantId: string) {
   const [paper] = await db().select().from(papers).where(eq(papers.id, paperId));
   if (!paper) throw new Error("paper not found");
   const [council] = await db().select().from(paperCouncils).where(eq(paperCouncils.paperId, paperId));
@@ -342,12 +362,23 @@ export async function runCouncil(paperId: string, tenantId: string) {
   }
 
   // 2) Reviews: one per selected agent — live OpenRouter if key set, else deterministic mock (free tier, never bills). Council reads full PDF via arXiv URL on their own; we pass the URL, DB never stores 80-page content.
-  // Skips agents already reviewed so an interrupted run resumes instead of restarting.
+  // Re-checks the DB before EVERY LLM call so a second runner (or a resume)
+  // never re-bills an agent that already has a report.
   const created: typeof reviews.$inferSelect[] = [...existing];
   for (const key of selectedKeys) {
     if (reviewedKeys.has(key)) continue;
     const agentId = byKey.get(key);
     if (!agentId) continue;
+
+    // Fresh existence check — closes the race where two runners both saw
+    // an empty review set at the top of runCouncilBody.
+    const existingForAgent = await db().select({ agentId: reviews.agentId }).from(reviews)
+      .where(eq(reviews.councilId, council.id));
+    if (existingForAgent.some((r) => r.agentId === agentId)) {
+      reviewedKeys.add(key);
+      continue;
+    }
+
     const agentRow = agentRows.find((a) => a.agentKey === key);
     const live = await generateReviewViaOpenRouter({ title: paper.title, abstract: paper.abstract, domain: paper.domain, pdfUrl: paper.pdfUrl }, { key, name: agentRow?.name ?? key });
     let tmpl: { score: number; confidence: number; summary: string; strengths: string; weaknesses: string; questions: string };
@@ -358,22 +389,35 @@ export async function runCouncil(paperId: string, tenantId: string) {
       tmpl = academicMockFor({ title: paper.title, abstract: paper.abstract, domain: paper.domain, pdfUrl: paper.pdfUrl }, { key, name: agentRow?.name ?? key }, base);
     }
     const hash = reviewHash(paper.paperHash, key, tmpl.score, tmpl.summary);
-    const [rev] = await db()
-      .insert(reviews)
-      .values({
-        councilId: council.id,
-        paperId: paper.id,
-        agentId,
-        score: tmpl.score,
-        confidence: tmpl.confidence,
-        summary: tmpl.summary,
-        strengths: tmpl.strengths,
-        weaknesses: tmpl.weaknesses,
-        questions: tmpl.questions,
-        reviewHash: hash,
-        status: "submitted",
-      })
-      .returning();
+    let rev: typeof reviews.$inferSelect | undefined;
+    try {
+      [rev] = await db()
+        .insert(reviews)
+        .values({
+          councilId: council.id,
+          paperId: paper.id,
+          agentId,
+          score: tmpl.score,
+          confidence: tmpl.confidence,
+          summary: tmpl.summary,
+          strengths: tmpl.strengths,
+          weaknesses: tmpl.weaknesses,
+          questions: tmpl.questions,
+          reviewHash: hash,
+          status: "submitted",
+        })
+        .returning();
+    } catch (e) {
+      // Lost the race to another runner — row already exists (unique council+agent).
+      // The LLM call already happened; do not retry, do not fail the whole sitting.
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/duplicate|unique/i.test(msg)) {
+        reviewedKeys.add(key);
+        continue;
+      }
+      throw e;
+    }
+    if (!rev) continue;
     created.push(rev);
     const t = agentRows.find((a) => a.agentKey === key);
     await emit(

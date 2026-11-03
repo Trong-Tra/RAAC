@@ -93,12 +93,12 @@ export default function PaperEntryPage() {
   if (err) {
     return (
       <main style={{ minHeight: "100dvh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
-        <SiteHeader active="APP" />
+        <SiteHeader active="CONSOLE" />
         <div className="section-pad page-measure" style={{ flex: 1, width: "100%" }}>
           <Plate caption="Entry — error">
             <p style={{ color: "var(--madder)" }}>{err}</p>
           </Plate>
-          <p style={{ marginTop: 18 }}><Link href="/app" className="link sc" style={{ fontSize: 13 }}>← back to the journey</Link></p>
+          <p style={{ marginTop: 18 }}><Link href="/console" className="link sc" style={{ fontSize: 13 }}>← back to the journey</Link></p>
         </div>
         <SiteFooter />
       </main>
@@ -108,7 +108,7 @@ export default function PaperEntryPage() {
   if (!data) {
     return (
       <main style={{ minHeight: "100dvh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
-        <SiteHeader active="APP" />
+        <SiteHeader active="CONSOLE" />
         <div className="section-pad page-measure mono" style={{ flex: 1, width: "100%", fontSize: 11, letterSpacing: "0.12em", color: "var(--ink-faint)" }}>
           Opening the entry…
         </div>
@@ -132,11 +132,11 @@ export default function PaperEntryPage() {
 
   return (
     <main style={{ minHeight: "100dvh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
-      <SiteHeader active="APP" />
+      <SiteHeader active="CONSOLE" />
 
       <div className="section-pad page-measure" style={{ flex: 1, width: "100%" }}>
         <div className="guide-line">
-          <span><Link href="/app" className="link" style={{ color: "inherit" }}>← the journey</Link></span>
+          <span><Link href="/console" className="link" style={{ color: "inherit" }}>← the journey</Link></span>
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "46%" }}>
             Entry — {paper.domain} · {shortHash(paper.paperHash)}
           </span>
@@ -170,7 +170,7 @@ export default function PaperEntryPage() {
                       : "No council sits on this entry yet — begin the journey to rank one."}
                   </p>
                   <p style={{ marginTop: 14 }}>
-                    <Link href={`/app?paper=${paper.id}`} className="btn-action">Continue the journey →</Link>
+                    <Link href={`/console?paper=${paper.id}`} className="btn-action">Continue the journey →</Link>
                   </p>
                 </Plate>
               </>

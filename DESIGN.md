@@ -53,10 +53,10 @@ Buttons (`.btn-action`, `.btn-outline`) are serif small-caps 700 — vermilion f
 ## Layout & Components
 
 - **Measure**: content rides `.page-measure` with `.section-pad`; the `.guide-line` (volume · entry · network) tops every page.
-- **Journey grid** (`.journey-grid`, desktop: shoulder | entry | margin): the `/app` page layout. ≤640px it collapses to one column; the shoulder becomes a horizontal wrapped row; the header wraps and puts nav on a second full-width row.
+- **Journey grid** (`.journey-grid`, desktop: shoulder | entry | margin): the `/console` page layout. ≤640px it collapses to one column; the shoulder becomes a horizontal wrapped row; the header wraps and puts nav on a second full-width row.
 - **Shoulder** (`.shoulder`, `.shoulder-step`, `.shoulder-thumb`): the five journey steps as thumb tabs; `here` = vermilion thumb + vermilion label, `done` = filled ink thumb.
 - **Plate** (`app/src/components/Plate.tsx`): the artifact frame — double-rule border, small-caps caption left, plate number right (e.g. "Plate ii. — The five examiners" / "median 7/10"). Reuse it; do not invent new card chrome.
-- **Mark scale**: ten ticks filled by reputation score, drawn in the owner's ink — used in routing rows (`/app`).
+- **Mark scale**: ten ticks filled by reputation score, drawn in the owner's ink — used in routing rows (`/console`).
 - **Chips** (`.chip`): mono registry codes, outlined.
 - **Lexicon definition paragraphs**: `<b class="sc">selection, n.</b>` + running italic-free prose — the recurring explanatory pattern.
 - Motion is minimal and print-like: `flap-in` (small rise) for arriving reports, `blink`/`think-dot`/`ring-in` for live session indicators only.
@@ -65,10 +65,10 @@ Buttons (`.btn-action`, `.btn-outline`) are serif small-caps 700 — vermilion f
 
 - `/` — landing: hero ("Peer review, set in type.") beside **Plate 0 — a sitting, abridged** (animated five-ink specimen, `SittingSpecimen.tsx`); "Why this volume exists" (overload / distrust / opacity + sourced evidence plate with count-up numerals); three acronym definitions; live volume stats plate; **The compilers** (team portraits in plate frames, monogram fallback until `public/team/<name>.jpg` lands); colophon CTA.
 - Motion: `motion` (motion.dev) powers `Reveal` (scroll-in rise) and `CountUp` (numerals). All motion respects `prefers-reduced-motion`. Keep animation print-like: rise, flap, count — no parallax, no 3D, no physics toys.
-- `/app` — **the product**: submission plate when empty; otherwise the entry (title, provenance line, the one live action), Routing (ranked agents with mark scales), Council plate (five examiners, reports, median), Marginalia (discussion), margin plates (Anchoring, Index of entries). `?paper=<id>` selects an entry.
-- `/papers` → redirects to `/app`. `/papers/[id]` — the reading page: full reports in examiner inks.
+- `/console` — **the product** (renamed from `/app`, 2026-11-04): submission plate when empty; otherwise the entry (title, provenance line, the one live action), Routing (ranked agents with mark scales), Council plate (five examiners, reports, median), Marginalia (discussion), margin plates (Anchoring, Index of entries). `?paper=<id>` selects an entry. The old power-user console (papers/audit/settings sub-pages) was removed — this is the single product surface.
+- `/papers` → redirects to `/console`. `/papers/[id]` — the reading page: full reports in examiner inks.
+- `/catalogue` — **the public shelf**: every entry the network has examined, open to any reader (no wallet). Titles, domains, scores, median verdict, anchor status; filter all/published/in review. Links to `/papers/[id]` for full reports. Aggregated/public content only — no author-private data.
 - `/network` — the global view: registered agents, selection fabric, live events. Light lexicon theme; aggregated/anonymized only — never private paper content.
-- `/console` — author operations (papers, audit, settings); overview redirects to `/app` preserving `?paper=`. Wallet-gated sub-pages show a locked plate when disconnected.
 - `/faq` — must describe the real shipped mechanism only (see below).
 
 ## Truth Rules (binding)

@@ -5,7 +5,9 @@ import { db } from "@/server/db/client";
 import { papers, tenants, paperCouncils, agents } from "@/server/db/schema";
 import { config } from "@/server/config";
 import { verifyCouncilSignature } from "@/server/council/signature";
+import { runCouncil } from "@/server/council/orchestrator";
 import { emit } from "@/server/events/bus";
+import { logger } from "@/server/logging";
 
 export const dynamic = "force-dynamic";
 
@@ -89,6 +91,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       },
       { agent_key: council.selectedAgentIds[0] as string, risk_class: "low" },
     );
+
+    // Kick the sitting off immediately — server-side, no client required.
+    // Resumable + single-flight inside runCouncil; safe if the author navigates away.
+    void runCouncil(paper.id, tenant.id).catch((e) => {
+      logger("council").error("background run failed", {
+        paper_id: paper.id,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    });
 
     return Response.json({ ok: true, data: { council: updated, paper: { ...paper, status: "reviewing" } } });
   } catch (err) {

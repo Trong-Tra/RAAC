@@ -37,7 +37,7 @@ Demo-first product: the key ritual is a recorded end-to-end run — submit → r
 - Name: RAAC — Routing, Accountability, and Auditable Councils.
 - Wordmark: "RAAC" with an outlined square as the period.
 - Confirmed 2026-11-03: bright palette for the education/science track — light, academic-ink family (paper-white ground, ink text, committed science accent). The previous monochrome black world is replaced.
-- IA confirmed 2026-11-03: landing (judges) + /app guided journey (console+papers merged) + /network public showcase + /console kept as power-user area.
+- IA confirmed 2026-11-04: landing (judges) + /console guided journey (product surface, renamed from /app; old power-user console removed) + /network public showcase.
 
 ## Evidence on Hand
 

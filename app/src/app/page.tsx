@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import CompilerPortrait from "@/components/CompilerPortrait";
 import CountUp from "@/components/CountUp";
 import Plate from "@/components/Plate";
 import Reveal from "@/components/Reveal";
@@ -25,15 +24,6 @@ type Paper = {
   status: string;
   createdAt: string;
 };
-
-const COMPILER_INKS = ["var(--ultramarine)", "var(--emerald)", "var(--madder)", "var(--sepia)"];
-
-/** The compilers of this volume — portraits drop into app/public/team/<name>.jpg. */
-const COMPILERS = [
-  { name: "Tron", image: "/team/tron.jpg" },
-  { name: "Nhi", image: "/team/nhi.jpg" },
-  { name: "Bao", image: "/team/bao.jpg" },
-];
 
 const PROBLEMS = [
   {
@@ -116,7 +106,7 @@ export default function Home() {
               signed in by the author, and each writes an independent report, hashed on Base Sepolia.
             </p>
             <div style={{ marginTop: 30, display: "flex", gap: 14, flexWrap: "wrap" }}>
-              <Link href="/app" className="btn-action">Submit a paper →</Link>
+              <Link href="/console" className="btn-action">Submit a paper →</Link>
               <Link href="/network" className="btn-outline">Browse the network</Link>
             </div>
           </motion.div>
@@ -218,26 +208,6 @@ export default function Home() {
           </Plate>
         </Reveal>
 
-        {/* The compilers */}
-        {COMPILERS.length > 0 && (
-          <Reveal style={{ marginTop: "13vh" }}>
-            <h2 className="entry-head">
-              <span>The compilers</span>
-              <span className="mono" style={{ fontSize: 10, letterSpacing: "0.08em", color: "var(--ink-faint)", fontVariant: "normal" }}>
-                of this volume
-              </span>
-            </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 32, maxWidth: 900 }}>
-              {COMPILERS.map((c, i) => (
-                <Reveal key={c.name} delay={i * 0.12}>
-                  <CompilerPortrait name={c.name} image={c.image} ink={COMPILER_INKS[i % COMPILER_INKS.length]} />
-                  <h3 style={{ marginTop: 12, fontSize: 20, fontWeight: 700, letterSpacing: "-0.01em" }}>{c.name}</h3>
-                </Reveal>
-              ))}
-            </div>
-          </Reveal>
-        )}
-
         {/* Colophon */}
         <Reveal style={{ marginTop: "13vh", textAlign: "center" }}>
           <p className="orn" aria-hidden>✦ ✦ ✦</p>
@@ -245,7 +215,7 @@ export default function Home() {
             Set in the ERC-8004 registry · ranked through The Graph · committed to Base Sepolia
           </p>
           <p style={{ marginTop: 16 }}>
-            <Link href="/app" className="btn-action">Open the lexicon →</Link>
+            <Link href="/console" className="btn-action">Open the lexicon →</Link>
           </p>
         </Reveal>
       </div>

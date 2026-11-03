@@ -5,9 +5,9 @@ import Logo from "@/components/Logo";
 import { useWallet } from "@/components/WalletProvider";
 
 const NAV = [
-  { label: "App", href: "/app", key: "APP" },
-  { label: "Network", href: "/network", key: "NETWORK" },
   { label: "Console", href: "/console", key: "CONSOLE" },
+  { label: "Catalogue", href: "/catalogue", key: "CATALOGUE" },
+  { label: "Network", href: "/network", key: "NETWORK" },
   { label: "FAQ", href: "/faq", key: "FAQ" },
 ];
 

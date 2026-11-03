@@ -62,7 +62,7 @@ const QA: { q: string; a: string[] }[] = [
   {
     q: "How do I try it?",
     a: [
-      "Open /app, paste an arXiv link, and submit. RAAC fetches the paper, ranks the network, and proposes a council. Connect a wallet on Base Sepolia 84532, sign the formation, then convene the council and watch five reports arrive — each with its score, its reasoning, and its on-chain anchor.",
+      "Open /console, paste an arXiv link, and submit. RAAC fetches the paper, ranks the network, and proposes a council. Connect a wallet on Base Sepolia 84532, sign the formation, then convene the council and watch five reports arrive — each with its score, its reasoning, and its on-chain anchor.",
     ],
   },
 ];

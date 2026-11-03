@@ -164,7 +164,7 @@ export default function NetworkPage() {
                   <p className="mono" style={{ fontSize: 10, letterSpacing: "0.14em", color: "var(--ink-faint)" }}>Unrolling the fabric…</p>
                 ) : fabric.length === 0 ? (
                   <p style={{ fontSize: 15, fontStyle: "italic", color: "var(--ink-faint)" }}>
-                    No entries yet — submit a paper in <Link href="/app">the app</Link> and its lifecycle appears here live.
+                    No entries yet — submit a paper in <Link href="/console">the app</Link> and its lifecycle appears here live.
                   </p>
                 ) : (
                   fabric.map((p) => {
@@ -252,7 +252,7 @@ export default function NetworkPage() {
           <Plate caption="Plate iii. — The event stream" plateNo="newest first">
             {feed.length === 0 ? (
               <p style={{ fontSize: 15, fontStyle: "italic", color: "var(--ink-faint)" }}>
-                No live events yet — submit a paper in <Link href="/app">the app</Link> to start the pipeline.
+                No live events yet — submit a paper in <Link href="/console">the app</Link> to start the pipeline.
               </p>
             ) : (
               <div style={{ display: "grid", gap: 11 }}>
