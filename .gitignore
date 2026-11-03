@@ -44,3 +44,11 @@ yarn-error.log*
 .cache/
 coverage/
 .gitnexus
+
+# Local tool hooks
+.codex/
+
+# impeccable working artifacts (surfaces/, refs/, design.json stay tracked)
+app/.impeccable/mocks/
+app/.impeccable/questions/
+app/.impeccable/review/

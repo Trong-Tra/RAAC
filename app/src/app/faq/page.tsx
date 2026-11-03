@@ -7,28 +7,27 @@ export default function FaqPage() {
     <main
       style={{
         minHeight: "100dvh",
-        background: "#000",
+        background: "var(--paper)",
         display: "flex",
         flexDirection: "column",
       }}
     >
       <SiteHeader active="FAQ" />
 
-      <div className="section-pad" style={{ flex: 1 }}>
-        <p
-          className="mono"
-          style={{ fontSize: 11, letterSpacing: "0.2em", color: "#5a5a5a" }}
-        >
-          FAQ
-        </p>
+      <div className="section-pad page-measure" style={{ flex: 1, width: "100%" }}>
+        <div className="guide-line">
+          <span>RAAC · Vol. 84532</span>
+          <span>appendix</span>
+          <span>F.A.Q.</span>
+        </div>
+
         <h1
           style={{
-            marginTop: 18,
-            fontSize: "clamp(34px, 4.5vw, 64px)",
+            marginTop: 40,
+            fontSize: "clamp(34px, 4.5vw, 56px)",
             fontWeight: 700,
             letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            color: "#f4f4f4",
+            lineHeight: 1.08,
           }}
         >
           Asked, answered.
@@ -36,9 +35,9 @@ export default function FaqPage() {
         <p
           style={{
             marginTop: 16,
-            fontSize: 15.5,
+            fontSize: 16,
             lineHeight: 1.65,
-            color: "#8a8a8a",
+            color: "var(--ink-soft)",
             maxWidth: 640,
           }}
         >

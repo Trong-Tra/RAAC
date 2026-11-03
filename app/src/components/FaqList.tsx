@@ -1,80 +1,68 @@
 "use client";
 
-// FAQ accordion — answers drafted from PROJECT.md (§2 boundaries, §3
-// architecture, §5 intent handling, §7/8/15 partners, §13 competitors).
-// Copy is UI-owned; expect product edits before launch.
+// FAQ accordion — answers describe the mechanism as built: deterministic
+// top-5 selection over The Graph, EIP-712 council formation, discuss-then-
+// write councils, hash anchoring on Base Sepolia. Copy is UI-owned.
 import { useState } from "react";
 
 const QA: { q: string; a: string[] }[] = [
   {
     q: "What is RAAC?",
     a: [
-      "RAAC is the implementation of Verifiable AI Reviewers — a decentralized multi-agent qualification framework for peer review on Base Sepolia. It extends ERC‑8004 with a hybrid identity (ERC‑5192 soulbound reputation badge + ERC‑721 endpoint NFT), deterministic hierarchical skill matching, and a VRF-selected review council — built for on-chain efficiency and immutable trust.",
+      "RAAC — Routing, Accountability, and Auditable Councils — is a peer-review network on Base Sepolia. You submit an arXiv paper with a small escrowed fee; the network ranks every registered ERC-8004 agent for your paper’s domain, seats the top five as a council, and each examiner writes an independent review. Every hash that matters is anchored on-chain, so the process is auditable end to end.",
     ],
   },
   {
-    q: "How does skill matching work without LLM embeddings?",
+    q: "How are the five reviewers chosen?",
     a: [
-      "Agents declare Sa={(qj,ℓ)} with ℓ∈{NOVICE,PROFICIENT,EXPERT} over a disclosed taxonomy T=(V,E), |V|=247 (ACM CCS + arXiv). For a paper’s Sp={(si,wi)}, relevance w(si,qj) uses exact/parent/child/sibling/graph-distance decays (βp,βc,βs,βg) and proficiency λ(ℓ): M(a,p)=Σ wi·max w(si,qj)λ(ℓ). Cost O(|A|·|Sp|·|Sa|), ~42 ms/paper — F1 0.812 vs SPECTER2 0.773 and Jaccard 0.666 on 100 arXiv papers.",
+      "Deterministically, never by hand and never by an LLM. The selector reads the Agent0 / ERC-8004 subgraphs on The Graph — each agent’s overall reputation, its review history in your paper’s domain, and how recently it has been active — and computes score = 0.5·overall + 0.4·domain + 0.1·recency, minus penalties. The top five are admitted; an agent that failed validation is refused at the gate. The same inputs always produce the same council, and the selection is committed to a hash you sign.",
     ],
   },
   {
-    q: "How does hybrid identity stop reputation laundering?",
+    q: "Why does the author sign the council?",
     a: [
-      "On registration the Identity Registry mints ⟨SBTrep, NFTendpoint⟩. The ERC‑5192 SBTrep is locked to the operator wallet and accumulates R(a)=wr·r̂+wα·α+wh·h+wc·c; the ERC‑721 NFTendpoint holds the service URI. Transferring the endpoint migrates routing only — credibility stays with the original operator. Skill claims ℓ(qj) are staked via validationRequest/validationResponse and slashed by TEE or human challenge if inflated.",
+      "The signature is the accountability gate. Before any review happens, you sign an EIP-712 CouncilFormation message binding three things: the paper hash, the selection hash of the exact five examiners, and your author address. No signature, no review — a council cannot be swapped or padded after the fact, because what you signed is what sits.",
     ],
   },
   {
-    q: "How does reputation recover after a failure?",
+    q: "What happens inside a council?",
     a: [
-      "Updates use EMA Rt+1=(1−η)Rt+ηR(Δt) with ηrecovery < ηnormal after slashing. A Premium agent (≈85) slashed to Entry (≈45) needs ~100–150 sustained honest reviews to return to Standard. Gini converges to ~0.38 — meritocratic without monopoly. Proposition 1 bounds drift tracking as O(√η + K/ηT).",
+      "The five examiners discuss the paper first — strengths, gaps, questions — and that transcript is stored off-chain where you can read it. Then each examiner writes its own independent report: manuscript summary, overall assessment, major issues (each with claim, evidence, gap, and required action), minor issues, strengths, questions to the author, and a scored recommendation out of 10. You get five separate judgements, not one averaged opinion.",
     ],
   },
   {
-    q: "How is the council formed and why VRF?",
+    q: "What exactly lives on-chain?",
     a: [
-      "Qualified agents are ranked Γ(a,p)=γm·M(a,p)+γr·R(a)/100, top-2N go to Chainlink VRF which picks final N. A diversity constraint (≥⌈N/2⌉+1 distinct model families) enforces the Boland dependent-jurors bound PN,ρ,c¯. If ρ<0.5, enlarging the council amplifies errors — system falls back to human review.",
+      "Base Sepolia (chain 84532) holds the fee escrow, the paper hash, the signed selection hash, and the sha256 of every submitted review, each anchored in its own transaction you can open on Basescan. Paper PDFs, abstracts, and the council transcript stay off-chain — the chain carries proof, not content.",
     ],
   },
   {
-    q: "What about Sybil, collusion, and prompt injection?",
+    q: "Where do ERC-8004 and The Graph fit?",
     a: [
-      "VRF makes Sybil 4.1% seat share → 0.035 decision-flip, collusion k=3 → 0.07 (k=4 → 0.162). Layered defense (PDF-text filtering + guard + majority) drops prompt-injection from 78.0% (raw LLM) to 4.0% (2/50).",
-    ],
-  },
-  {
-    q: "What does it cost on-chain?",
-    a: [
-      "Base Sepolia: mintHybridIdentity ~182K gas (±6.6K), validationResponse ~103K, validationRequest ~88K, giveFeedback ~73K. Off-chain qualifier ~42 ms/paper. No new Solidity beyond the ERC‑8004-compatible registries; contracts were benchmarked on Base Sepolia.",
-    ],
-  },
-  {
-    q: "Where do The Graph and Base Sepolia fit?",
-    a: [
-      "Off-chain engine does NLP ingestion, skill extraction, and LLM review generation; the on-chain EVM trust layer anchors identity, reputation, validation, and CID storage governance (IPFS/Arweave). The Graph Agent0/ERC‑8004 subgraphs are the live source for R(a) and validation — not decoration.",
-    ],
-  },
-  {
-    q: "What data is on-chain vs off-chain?",
-    a: [
-      "On-chain: hybrid identities, staked skill validations, reputation R(a), review hashes/CIDs, and governance. Off-chain: manuscript ingestion, Sp extraction, M(a,p) ranking, and council LLM inference. Paper PDFs stay on arXiv; DB only stores URL + hash + abstract for the demo.",
+      "ERC-8004 provides the identity, reputation, and validation registries the examiners live in — the reviewer is a registered agent with a verifiable track record, not an anonymous model call. The Graph’s Agent0 subgraphs are the live ranking source for that reputation and domain history. Neither is decoration: remove them and the selector has nothing to rank.",
     ],
   },
   {
     q: "What are the on-chain addresses?",
     a: [
       "Base Sepolia 84532 — verify on sepolia.basescan.org and thegraph.com:",
-      "Identity Registry (Hybrid SBTrep ERC‑5192 + NFTendpoint ERC‑721): 0x8004a818bfb912233c491871b3d84c89a494bd9e",
+      "Identity Registry: 0x8004a818bfb912233c491871b3d84c89a494bd9e",
       "Reputation Registry: 0x8004b663056a597dffe9eccc1965a193b7388713",
-      "Demo agents: 84532:9223, 84532:9224, 84532:9225, 8453:74108",
+      "Demo agents: 84532:9223, 84532:9224, 84532:9225, 84532:9226, 84532:9227",
       "Agent0 subgraph: 4yYAvQLFjBhBtdRCY7eUWo181VNoTSLLFd5M7FXQAi6u",
       "Deployer: 0x7EA634e331CF7b503df2e224f77a7C589462F1F2",
     ],
   },
   {
+    q: "What does it cost?",
+    a: [
+      "The demo charges a flat 0.001 ETH review fee on Base Sepolia, escrowed at submission and split across the five examiners once their reports are in. Anchoring transactions are paid by the network operator in the demo.",
+    ],
+  },
+  {
     q: "How do I try it?",
     a: [
-      "Connect a wallet (Base Sepolia 84532) → /console → paste an arXiv link. RAAC digests it, ranks demo agents by M(a,p) + R(a), you sign the council (EIP-712), then watch the council discuss and stream independent peer reviews.",
+      "Open /app, paste an arXiv link, and submit. RAAC fetches the paper, ranks the network, and proposes a council. Connect a wallet on Base Sepolia 84532, sign the formation, then convene the council and watch five reports arrive — each with its score, its reasoning, and its on-chain anchor.",
     ],
   },
 ];
@@ -82,18 +70,17 @@ const QA: { q: string; a: string[] }[] = [
 export default function FaqList() {
   const [open, setOpen] = useState(0);
   return (
-    <div style={{ marginTop: "5vh", display: "grid" }}>
+    <div style={{ marginTop: "5vh", display: "grid", maxWidth: 860 }}>
       {QA.map((item, i) => {
         const on = i === open;
         return (
           <div
             key={item.q}
-            style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+            style={{ borderTop: "1px solid var(--rule-soft)" }}
           >
             <button
               onClick={() => setOpen(on ? -1 : i)}
               aria-expanded={on}
-              className="mono"
               style={{
                 width: "100%",
                 cursor: "pointer",
@@ -101,35 +88,27 @@ export default function FaqList() {
                 justifyContent: "space-between",
                 alignItems: "baseline",
                 gap: 20,
-                padding: "22px 0",
+                padding: "20px 0",
                 background: "transparent",
                 border: "none",
                 textAlign: "left",
-                color: on ? "#f4f4f4" : "#c9c9c9",
                 fontFamily: "inherit",
+                color: on ? "var(--ink)" : "var(--ink-soft)",
               }}
             >
-              <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em", fontFamily: "var(--font-sans, inherit)" }}>
+              <span style={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.01em" }}>
                 {item.q}
               </span>
               <span
                 aria-hidden
+                className="sc"
                 style={{
                   fontSize: 13,
-                  color: "#5a5a5a",
-                  border: "1px solid #2e2e2e",
-                  width: 26,
-                  height: 26,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
+                  color: on ? "var(--vermilion)" : "var(--ink-faint)",
                   flexShrink: 0,
-                  background: on ? "#e8e8e8" : "transparent",
                 }}
               >
-                <span style={{ color: on ? "#000" : "#8a8a8a" }}>
-                  {on ? "–" : "+"}
-                </span>
+                {on ? "close" : "read"}
               </span>
             </button>
             {on && (
@@ -137,7 +116,7 @@ export default function FaqList() {
                 {item.a.map((p) => (
                   <p
                     key={p.slice(0, 24)}
-                    style={{ fontSize: 15, lineHeight: 1.7, color: "#8a8a8a" }}
+                    style={{ fontSize: 15, lineHeight: 1.7, color: "var(--ink-soft)" }}
                   >
                     {p}
                   </p>
@@ -147,7 +126,7 @@ export default function FaqList() {
           </div>
         );
       })}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }} />
+      <div style={{ borderTop: "1px solid var(--rule-soft)" }} />
     </div>
   );
 }

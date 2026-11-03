@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   EmptyState,
@@ -65,7 +64,7 @@ export default function ConsoleAudit() {
   if (loading && !data) {
     return (
       <div>
-        <PageHead eyebrow="CONSOLE — AUDIT" title="Audit trace." sub="Most recent 20 per page — paginated, newest first. Private to this workspace." />
+        <PageHead title="Audit trace." sub="Most recent 20 per page — paginated, newest first. Private to this workspace." />
         <div style={{ marginTop: 28, display: "grid", gap: 10 }}>
           {[0, 1, 2, 3, 4].map((row) => (
             <Skeleton key={row} height={40} />
@@ -78,15 +77,15 @@ export default function ConsoleAudit() {
   if (error && !data) {
     return (
       <div>
-        <PageHead eyebrow="CONSOLE — AUDIT" title="Audit trace." sub="Most recent 20 per page — paginated, newest first. Private to this workspace." />
+        <PageHead title="Audit trace." sub="Most recent 20 per page — paginated, newest first. Private to this workspace." />
         <div style={{ marginTop: 28 }}>
-          <ErrorWindow code={error.code} message={error.message} title="AUDIT — ERROR" />
+          <ErrorWindow code={error.code} message={error.message} title="Audit — error" />
           <button
             onClick={reload}
-            className="mono btn-outline"
-            style={{ marginTop: 18, background: "transparent", cursor: "pointer" }}
+            className="btn-outline"
+            style={{ marginTop: 18, cursor: "pointer" }}
           >
-            RETRY
+            Retry
           </button>
         </div>
       </div>
@@ -100,7 +99,6 @@ export default function ConsoleAudit() {
   return (
     <div>
       <PageHead
-        eyebrow="CONSOLE — AUDIT"
         title="Audit trace."
         sub="Most recent 20 per page — paginated, newest first. Private to this workspace."
       />
@@ -115,8 +113,8 @@ export default function ConsoleAudit() {
           flexWrap: "wrap",
         }}
       >
-        <p className="mono" style={{ fontSize: 10.5, letterSpacing: "0.14em", color: "#5a5a5a" }}>
-          PAGE {pagination?.page ?? page} OF {totalPages} · {events.length} OF {total} EVENTS — NEWEST FIRST
+        <p className="sc" style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>
+          Page {pagination?.page ?? page} of {totalPages} · {events.length} of {total} events — newest first
         </p>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <select
@@ -125,14 +123,12 @@ export default function ConsoleAudit() {
             className="mono"
             aria-label="Filter audit events by type"
             style={{
-              background: "#000",
-              border: "1px solid #2e2e2e",
-              borderRadius: 8,
+              background: "var(--paper-raised)",
+              border: "1px solid var(--rule-soft)",
               padding: "9px 12px",
-              color: "#e8e8e8",
+              color: "var(--ink)",
               fontSize: 10.5,
               letterSpacing: "0.1em",
-              fontFamily: "inherit",
               outline: "none",
             }}
           >
@@ -146,24 +142,24 @@ export default function ConsoleAudit() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1 || loading}
-            className="mono btn-outline"
+            className="btn-outline"
             style={{ padding: "8px 12px", fontSize: 10, opacity: page <= 1 ? 0.4 : 1, cursor: page <= 1 ? "default" : "pointer" }}
           >
-            ← PREV
+            ← Prev
           </button>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages || loading}
-            className="mono btn-outline"
+            className="btn-outline"
             style={{ padding: "8px 12px", fontSize: 10, opacity: page >= totalPages ? 0.4 : 1, cursor: page >= totalPages ? "default" : "pointer" }}
           >
-            NEXT →
+            Next →
           </button>
         </div>
       </div>
 
       <div style={{ marginTop: 20 }}>
-        <Panel title={`AUDIT LOG${filter === "ALL" ? "" : ` — ${filter}`} · PAGE ${page}/${totalPages}`}>
+        <Panel title={`Audit log${filter === "ALL" ? "" : ` — ${filter}`} · page ${page}/${totalPages}`}>
           {events.length === 0 ? (
             <EmptyState />
           ) : (
@@ -171,11 +167,11 @@ export default function ConsoleAudit() {
               <table className="mono" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
-                    <th style={th}>TIME</th>
-                    <th style={th}>EVENT</th>
-                    <th style={th}>PAPER/TASK</th>
-                    <th style={th}>AGENT</th>
-                    <th style={th}>DETAIL</th>
+                    <th style={th}>Time</th>
+                    <th style={th}>Event</th>
+                    <th style={th}>Paper</th>
+                    <th style={th}>Agent</th>
+                    <th style={th}>Detail</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -184,7 +180,7 @@ export default function ConsoleAudit() {
                       <td style={{ ...td, fontSize: 11, whiteSpace: "nowrap" }}>
                         {fmtDateTime(event.created_at)}
                       </td>
-                      <td style={{ ...td, fontSize: 11, color: "#e8e8e8" }}>
+                      <td style={{ ...td, fontSize: 11, color: "var(--ink)" }}>
                         {event.event_type}
                       </td>
                       <td style={{ ...td, fontSize: 11 }}>
@@ -203,15 +199,15 @@ export default function ConsoleAudit() {
             </div>
           )}
         </Panel>
-        <div style={{ marginTop: 14, display: "flex", justifyContent: "center", gap: 8 }} className="mono">
-          <span style={{ fontSize: 10, letterSpacing: "0.12em", color: "#5a5a5a" }}>
-            PAGE {page} / {totalPages} · {total} TOTAL
+        <div style={{ marginTop: 14, display: "flex", justifyContent: "center", gap: 8, alignItems: "center" }} className="mono">
+          <span style={{ fontSize: 10, letterSpacing: "0.12em", color: "var(--ink-faint)" }}>
+            Page {page} / {totalPages} · {total} total
           </span>
-          <span style={{ fontSize: 10, color: "#3a3a3a" }}>·</span>
-          <button onClick={() => setPage(1)} disabled={page === 1} className="mono" style={{ background: "transparent", border: "none", color: page === 1 ? "#3a3a3a" : "#8a8a8a", cursor: page === 1 ? "default" : "pointer", fontSize: 10, letterSpacing: "0.08em" }}>FIRST</button>
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="mono" style={{ background: "transparent", border: "none", color: page === 1 ? "#3a3a3a" : "#8a8a8a", cursor: page === 1 ? "default" : "pointer", fontSize: 10 }}>←</button>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="mono" style={{ background: "transparent", border: "none", color: page >= totalPages ? "#3a3a3a" : "#8a8a8a", cursor: page >= totalPages ? "default" : "pointer", fontSize: 10 }}>→</button>
-          <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="mono" style={{ background: "transparent", border: "none", color: page === totalPages ? "#3a3a3a" : "#8a8a8a", cursor: page === totalPages ? "default" : "pointer", fontSize: 10, letterSpacing: "0.08em" }}>LAST</button>
+          <span style={{ fontSize: 10, color: "var(--rule-soft)" }}>·</span>
+          <button onClick={() => setPage(1)} disabled={page === 1} className="mono" style={{ background: "transparent", border: "none", color: page === 1 ? "var(--rule-soft)" : "var(--vermilion-deep)", cursor: page === 1 ? "default" : "pointer", fontSize: 10, letterSpacing: "0.08em" }}>First</button>
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="mono" style={{ background: "transparent", border: "none", color: page === 1 ? "var(--rule-soft)" : "var(--vermilion-deep)", cursor: page === 1 ? "default" : "pointer", fontSize: 10 }}>←</button>
+          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="mono" style={{ background: "transparent", border: "none", color: page >= totalPages ? "var(--rule-soft)" : "var(--vermilion-deep)", cursor: page >= totalPages ? "default" : "pointer", fontSize: 10 }}>→</button>
+          <button onClick={() => setPage(totalPages)} disabled={page === totalPages} className="mono" style={{ background: "transparent", border: "none", color: page === totalPages ? "var(--rule-soft)" : "var(--vermilion-deep)", cursor: page === totalPages ? "default" : "pointer", fontSize: 10, letterSpacing: "0.08em" }}>Last</button>
         </div>
       </div>
     </div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import MacWindow from "@/components/MacWindow";
+import Plate from "@/components/Plate";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import { useWallet } from "@/components/WalletProvider";
@@ -36,17 +36,16 @@ export default function ConsoleLayout({
   }, [address, pathname]);
 
   const ITEMS: Array<{ label: string; href: string; badge?: string }> = [
-    { label: "OVERVIEW", href: "/console" },
-    { label: "PAPERS", href: "/console/papers", badge: paperCount },
-    { label: "AUDIT", href: "/console/audit" },
-    { label: "SYSTEM", href: "/console/settings" },
+    { label: "Papers", href: "/console/papers", badge: paperCount },
+    { label: "Audit", href: "/console/audit" },
+    { label: "System", href: "/console/settings" },
   ];
 
   return (
     <main
       style={{
         minHeight: "100dvh",
-        background: "#000",
+        background: "var(--paper)",
         display: "flex",
         flexDirection: "column",
       }}
@@ -63,25 +62,16 @@ export default function ConsoleLayout({
             justifyContent: "center",
           }}
         >
-          <MacWindow title="CONSOLE — LOCKED" style={{ width: "min(480px, 100%)" }}>
-            <div style={{ padding: "38px 34px 42px", textAlign: "center" }}>
-              <span
-                aria-hidden
-                style={{
-                  display: "inline-block",
-                  width: 34,
-                  height: 34,
-                  border: "1px solid #5a5a5a",
-                  position: "relative",
-                }}
-              />
+          <Plate caption="The console — locked" style={{ width: "min(480px, 100%)" }}>
+            <div style={{ padding: "14px 10px 18px", textAlign: "center" }}>
+              <p className="orn" aria-hidden>✦</p>
               <h1
                 style={{
-                  marginTop: 22,
+                  marginTop: 14,
                   fontSize: 26,
                   fontWeight: 700,
                   letterSpacing: "-0.01em",
-                  color: "#f4f4f4",
+                  color: "var(--ink)",
                 }}
               >
                 Connect to enter the console.
@@ -89,69 +79,56 @@ export default function ConsoleLayout({
               <p
                 style={{
                   marginTop: 12,
-                  fontSize: 14,
+                  fontSize: 14.5,
                   lineHeight: 1.65,
-                  color: "#8a8a8a",
+                  color: "var(--ink-soft)",
                 }}
               >
-                The console is your RAAC dashboard — papers, councils,
-                agents, and audit on Base Sepolia 84532. Connect a wallet
-                (demo).
+                The console holds your wallet’s papers, the audit trace, and
+                system reference on Base Sepolia 84532. The guided journey
+                lives in <Link href="/app">the app</Link>.
               </p>
               <button
                 onClick={connect}
-                className="btn-outline mono"
-                style={{
-                  marginTop: 26,
-                  background: "#f4f4f4",
-                  borderColor: "#f4f4f4",
-                  color: "#000",
-                  cursor: "pointer",
-                  fontSize: 11,
-                  letterSpacing: "0.14em",
-                }}
+                className="btn-action"
+                style={{ marginTop: 22 }}
               >
-                CONNECT WALLET
+                Connect wallet
               </button>
             </div>
-          </MacWindow>
+          </Plate>
         </div>
       ) : (
-        <div className="section-pad console-wrap">
-          <nav className="mono console-nav" aria-label="Console sections">
+        <div className="section-pad page-measure console-wrap" style={{ width: "100%" }}>
+          <nav className="console-nav" aria-label="Console sections">
             {ITEMS.map((item) => {
-              const active =
-                item.href === "/console"
-                  ? pathname === "/console"
-                  : pathname.startsWith(item.href);
+              const active = pathname.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
+                  className="sc"
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "space-between",
-                    padding: "11px 14px",
-                    border: active
-                      ? "1px solid #e8e8e8"
-                      : "1px solid transparent",
-                    borderRadius: 8,
-                    color: active ? "#fff" : "#8a8a8a",
+                    padding: "10px 14px",
+                    borderLeft: active ? "2px solid var(--vermilion)" : "2px solid transparent",
+                    color: active ? "var(--vermilion)" : "var(--ink-soft)",
+                    fontWeight: active ? 700 : 400,
                     textDecoration: "none",
-                    fontSize: 11,
-                    letterSpacing: "0.14em",
+                    fontSize: 13.5,
                   }}
                 >
                   {item.label}
                   {item.badge && (
                     <span
+                      className="mono"
                       style={{
                         fontSize: 10,
-                        border: "1px solid #3a3a3a",
-                        borderRadius: 4,
-                        padding: "2px 7px",
-                        color: "#e8e8e8",
+                        border: "1px solid var(--rule-soft)",
+                        padding: "1px 7px",
+                        color: "var(--ink-soft)",
                       }}
                     >
                       {item.badge}

@@ -16,7 +16,7 @@ type Paper = {
 };
 
 const stepLabel = (status: string) =>
-  status === "completed" ? "STEP 5 — REVIEWS" : status === "reviewing" ? "STEP 4 — RUNNING" : status === "council_proposed" ? "STEP 3 — SIGN" : "STEP 2 — COUNCIL";
+  status === "completed" ? "reports written" : status === "reviewing" ? "council in session" : status === "council_proposed" ? "awaiting signature" : "awaiting council";
 
 export default function ConsolePapers() {
   const { address } = useWallet();
@@ -38,41 +38,40 @@ export default function ConsolePapers() {
   return (
     <div>
       <PageHead
-        eyebrow="CONSOLE — PAPERS"
         title="Your papers."
         sub={address ? `Signed by ${address.slice(0, 6)}…${address.slice(-4)} on 84532 — each wallet manages its own.` : "Connect a wallet — each wallet manages its own papers."}
       />
 
-      {msg && <div className="mono" style={{ marginTop: 14, fontSize: 11, letterSpacing: "0.08em", color: "#8a8a8a" }}>{msg}</div>}
+      {msg && <p className="mono" style={{ marginTop: 14, fontSize: 11, letterSpacing: "0.08em", color: "var(--madder)" }}>{msg}</p>}
 
-      <div style={{ marginTop: 18 }}>
-        <Panel title={`WALLET PAPERS — ${mine.length}`}>
+      <div style={{ marginTop: 22 }}>
+        <Panel title={`Wallet papers — ${mine.length}`}>
           {!papers ? (
-            <div className="mono" style={{ fontSize: 11, color: "#5a5a5a", letterSpacing: "0.12em" }}>LOADING…</div>
+            <div className="mono" style={{ fontSize: 11, color: "var(--ink-faint)", letterSpacing: "0.12em" }}>Opening the register…</div>
           ) : mine.length === 0 ? (
-            <div style={{ fontSize: 13, color: "#8a8a8a" }}>
+            <p style={{ fontSize: 14.5, color: "var(--ink-soft)" }}>
               No papers signed by this wallet yet.{" "}
-              <Link href="/console" className="mono" style={{ color: "#e8e8e8", fontSize: 11, letterSpacing: "0.12em" }}>
-                SUBMIT ONE IN OVERVIEW →
+              <Link href="/app" className="sc" style={{ fontSize: 13, color: "var(--vermilion-deep)" }}>
+                Submit one in the app →
               </Link>
-            </div>
+            </p>
           ) : (
-            <div style={{ display: "grid", gap: 12 }}>
+            <div style={{ display: "grid", gap: 14 }}>
               {mine.map((p) => (
-                <div key={p.id} style={{ border: "1px solid rgba(255,255,255,0.08)", padding: "14px 16px", display: "grid", gap: 10 }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#e8e8e8", lineHeight: 1.4 }}>{p.title}</div>
-                  <div className="mono" style={{ display: "flex", gap: 8, flexWrap: "wrap", fontSize: 9, letterSpacing: "0.1em", color: "#5a5a5a" }}>
-                    <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px", color: "#c9c9c9" }}>{p.status.toUpperCase()}</span>
-                    <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px" }}>{p.domain.toUpperCase()}</span>
-                    <span style={{ border: "1px solid #2a2a2a", padding: "4px 8px" }}>{stepLabel(p.status)}</span>
-                    <span style={{ padding: "4px 0" }}>{new Date(p.createdAt).toLocaleDateString()}</span>
+                <div key={p.id} style={{ borderTop: "1px solid var(--rule-faint)", paddingTop: 14, display: "grid", gap: 8 }}>
+                  <div style={{ fontSize: 15.5, fontWeight: 700, color: "var(--ink)", lineHeight: 1.4 }}>{p.title}</div>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                    <span className="chip">{p.status.replace(/_/g, " ")}</span>
+                    <span className="chip">{p.domain}</span>
+                    <span className="sc" style={{ fontSize: 12, color: "var(--ink-faint)" }}>{stepLabel(p.status)}</span>
+                    <span className="mono" style={{ fontSize: 9.5, color: "var(--ink-faint)" }}>{new Date(p.createdAt).toLocaleDateString()}</span>
                   </div>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                    <Link href={`/console?paper=${p.id}`} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", textDecoration: "none" }}>
-                      LOAD IN PIPELINE →
+                    <Link href={`/app?paper=${p.id}`} className="btn-outline" style={{ padding: "8px 14px", fontSize: 10 }}>
+                      Open in the journey →
                     </Link>
-                    <Link href={`/papers/${p.id}`} className="mono btn-outline" style={{ padding: "8px 14px", fontSize: 10, letterSpacing: "0.12em", textDecoration: "none" }}>
-                      OPEN →
+                    <Link href={`/papers/${p.id}`} className="btn-outline" style={{ padding: "8px 14px", fontSize: 10 }}>
+                      Read reports →
                     </Link>
                   </div>
                 </div>
@@ -82,9 +81,9 @@ export default function ConsolePapers() {
         </Panel>
       </div>
 
-      <div className="mono" style={{ marginTop: 18, fontSize: 9.5, letterSpacing: "0.12em", color: "#3f3f3f" }}>
-        GLOBAL SHOWCASE LIVES IN /PAPERS — THIS TAB IS YOUR WALLET ONLY.
-      </div>
+      <p className="mono" style={{ marginTop: 18, fontSize: 9.5, letterSpacing: "0.12em", color: "var(--ink-faint)" }}>
+        The public showcase lives in /network — this register is your wallet only.
+      </p>
     </div>
   );
 }

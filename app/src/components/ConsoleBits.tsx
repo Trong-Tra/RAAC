@@ -1,30 +1,21 @@
-import MacWindow from "@/components/MacWindow";
+import Plate from "@/components/Plate";
 
 export function PageHead({
-  eyebrow,
   title,
   sub,
 }: {
-  eyebrow: string;
   title: string;
   sub?: string;
 }) {
   return (
     <div>
-      <p
-        className="mono"
-        style={{ fontSize: 11, letterSpacing: "0.2em", color: "#5a5a5a" }}
-      >
-        {eyebrow}
-      </p>
       <h1
         style={{
-          marginTop: 14,
-          fontSize: "clamp(28px, 3.4vw, 48px)",
+          fontSize: "clamp(28px, 3.4vw, 44px)",
           fontWeight: 700,
           letterSpacing: "-0.02em",
           lineHeight: 1.1,
-          color: "#f4f4f4",
+          color: "var(--ink)",
         }}
       >
         {title}
@@ -32,10 +23,10 @@ export function PageHead({
       {sub && (
         <p
           style={{
-            marginTop: 12,
-            fontSize: 14.5,
+            marginTop: 10,
+            fontSize: 15,
             lineHeight: 1.65,
-            color: "#8a8a8a",
+            color: "var(--ink-soft)",
             maxWidth: 640,
           }}
         >
@@ -56,7 +47,7 @@ export function StatRow({
       style={{
         marginTop: 26,
         paddingTop: 22,
-        borderTop: "1px solid rgba(255,255,255,0.1)",
+        borderTop: "1.5px solid var(--rule)",
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
         gap: "20px 28px",
@@ -64,19 +55,15 @@ export function StatRow({
     >
       {stats.map((s) => (
         <div key={s.label}>
-          <div
-            className="mono"
-            style={{ fontSize: 19, color: "#e8e8e8", letterSpacing: "0.02em" }}
-          >
+          <div style={{ fontSize: 30, fontWeight: 700, color: "var(--ink)", letterSpacing: "-0.02em", lineHeight: 1 }}>
             {s.value}
           </div>
           <div
-            className="mono"
+            className="sc"
             style={{
               marginTop: 6,
-              fontSize: 9.5,
-              letterSpacing: "0.16em",
-              color: "#5a5a5a",
+              fontSize: 12,
+              color: "var(--ink-soft)",
             }}
           >
             {s.label}
@@ -97,17 +84,18 @@ export function Panel({
   style?: React.CSSProperties;
 }) {
   return (
-    <MacWindow title={title} style={style}>
-      <div style={{ padding: "24px 24px 26px" }}>{children}</div>
-    </MacWindow>
+    <Plate caption={title} style={style}>
+      {children}
+    </Plate>
   );
 }
 
 export const th: React.CSSProperties = {
   textAlign: "left",
-  fontSize: 9.5,
-  letterSpacing: "0.16em",
-  color: "#5a5a5a",
+  fontSize: 12,
+  fontVariant: "small-caps",
+  letterSpacing: "0.1em",
+  color: "var(--ink-faint)",
   fontWeight: 400,
   padding: "0 12px 12px 0",
   whiteSpace: "nowrap",
@@ -115,9 +103,9 @@ export const th: React.CSSProperties = {
 
 export const td: React.CSSProperties = {
   fontSize: 13,
-  color: "#c9c9c9",
+  color: "var(--ink-soft)",
   padding: "12px 12px 12px 0",
-  borderTop: "1px solid rgba(255,255,255,0.07)",
+  borderTop: "1px solid var(--rule-faint)",
   verticalAlign: "top",
 };
 
@@ -131,9 +119,8 @@ export function DecisionTag({ d }: { d: string }) {
         fontSize: 10,
         letterSpacing: "0.12em",
         padding: "4px 10px",
-        border: "1px solid #3a3a3a",
-        background: filled ? "#e8e8e8" : "transparent",
-        color: filled ? "#000" : "#c9c9c9",
+        border: `1px solid ${filled ? "var(--emerald)" : "var(--rule-soft)"}`,
+        color: filled ? "var(--emerald)" : "var(--ink-soft)",
         whiteSpace: "nowrap",
       }}
     >
@@ -157,7 +144,7 @@ export function Skeleton({
       style={{
         height,
         width,
-        background: "#161616",
+        background: "var(--paper-sunk)",
         animation: "blink 1.6s steps(2, start) infinite",
         ...style,
       }}
@@ -168,42 +155,38 @@ export function Skeleton({
 export function ErrorWindow({
   code,
   message,
-  title = "ERROR",
+  title = "Error",
 }: {
   code: string;
   message: string;
   title?: string;
 }) {
   return (
-    <MacWindow title={title}>
-      <div style={{ padding: "26px 24px 28px" }}>
-        <div
-          className="mono"
-          style={{ fontSize: 11, letterSpacing: "0.16em", color: "#e8e8e8" }}
-        >
-          {code}
-        </div>
-        <p style={{ marginTop: 10, fontSize: 14, lineHeight: 1.6, color: "#8a8a8a" }}>
-          {message}
-        </p>
+    <Plate caption={title}>
+      <div
+        className="mono"
+        style={{ fontSize: 11, letterSpacing: "0.14em", color: "var(--madder)" }}
+      >
+        {code}
       </div>
-    </MacWindow>
+      <p style={{ marginTop: 10, fontSize: 14.5, lineHeight: 1.6, color: "var(--ink-soft)" }}>
+        {message}
+      </p>
+    </Plate>
   );
 }
 
 export function EmptyState({ children }: { children?: React.ReactNode }) {
   return (
     <div
-      className="mono"
       style={{
-        border: "1px solid #232323",
-        borderRadius: 10,
-        padding: "34px 24px",
+        border: "1px dashed var(--rule-soft)",
+        padding: "30px 24px",
         textAlign: "center",
-        fontSize: 11,
-        letterSpacing: "0.14em",
-        lineHeight: 1.8,
-        color: "#5a5a5a",
+        fontSize: 14.5,
+        fontStyle: "italic",
+        lineHeight: 1.7,
+        color: "var(--ink-faint)",
       }}
     >
       {children ?? "No live events yet — submit a paper to start a council."}
@@ -212,20 +195,5 @@ export function EmptyState({ children }: { children?: React.ReactNode }) {
 }
 
 export function Tag({ children }: { children: React.ReactNode }) {
-  return (
-    <span
-      className="mono"
-      style={{
-        display: "inline-block",
-        fontSize: 9.5,
-        letterSpacing: "0.12em",
-        padding: "3px 8px",
-        border: "1px solid #3a3a3a",
-        color: "#c9c9c9",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {children}
-    </span>
-  );
+  return <span className="chip">{children}</span>;
 }

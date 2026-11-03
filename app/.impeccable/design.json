@@ -1,0 +1,30 @@
+{
+  "world": "rw-lexicon-shoulder-and-plate",
+  "worldName": "Nineteenth-century lexicon page",
+  "seed": "seed:709395222734454b",
+  "conceptSeedKey": "98adb0e8f02ede8afd1cff391edfd748",
+  "chosen": "lexicon-shoulder-and-plate",
+  "chosenKind": "challenger",
+  "finishVerdict": "ship",
+  "tokens": {
+    "paper": "#f4efe4",
+    "paperRaised": "#faf7ee",
+    "paperSunk": "#ece5d3",
+    "ink": "#1a1712",
+    "inkSoft": "#4a4438",
+    "inkFaint": "#6f6757",
+    "vermilion": "#b7341f",
+    "vermilionDeep": "#8f2b1f",
+    "chrome": "#8a680b",
+    "examinerInks": ["#28418f", "#1f6e4a", "#a63d55", "#6b4a2f", "#6a4a8f"],
+    "examinerInkNames": ["ultramarine", "emerald", "madder", "sepia", "violet"]
+  },
+  "typography": {
+    "serif": "Source Serif 4",
+    "mono": "Courier Prime",
+    "monoReservedFor": ["registry codes", "hashes", "scores", "measurements"]
+  },
+  "surfaces": ["app"],
+  "refs": [".impeccable/refs/lexicon-hero.webp", ".impeccable/refs/lexicon-card.webp"],
+  "directionContract": ".impeccable/surfaces/app.md"
+}

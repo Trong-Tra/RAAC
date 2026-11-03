@@ -1,59 +1,43 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 const COLS: { head: string; links: { label: string; href: string }[] }[] = [
   {
-    head: "PRODUCT",
+    head: "Product",
     links: [
-      { label: "CONSOLE", href: "/console" },
-      { label: "NETWORK", href: "/network" },
+      { label: "App", href: "/app" },
+      { label: "Network", href: "/network" },
+      { label: "Console", href: "/console" },
       { label: "FAQ", href: "/faq" },
     ],
   },
   {
-    head: "PROTOCOL",
+    head: "Protocol",
     links: [
       { label: "ERC-8004", href: "https://eips.ethereum.org/EIPS/eip-8004" },
-      { label: "THE GRAPH", href: "https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/" },
-      { label: "BASE SEPOLIA", href: "https://sepolia.basescan.org" },
+      { label: "The Graph", href: "https://thegraph.com/docs/en/subgraphs/existing-subgraphs/agent0/" },
+      { label: "Base Sepolia", href: "https://sepolia.basescan.org" },
     ],
   },
   {
-    head: "COMPANY",
+    head: "Project",
     links: [
-      { label: "GITHUB", href: "#" },
-      { label: "DOCS", href: "#" },
-      { label: "CONTACT", href: "#" },
+      { label: "GitHub", href: "#" },
+      { label: "Docs", href: "#" },
+      { label: "Contact", href: "#" },
     ],
   },
 ];
 
 export default function SiteFooter() {
   return (
-    <footer
-      style={{
-        borderTop: "1px solid rgba(255,255,255,0.07)",
-        padding: "56px 7vw 28px",
-      }}
-    >
+    <footer className="site-footer">
       <div className="footer-grid">
         <div>
-          <p style={{ fontWeight: 800, fontSize: 22, letterSpacing: "-0.03em", color: "#f4f4f4" }}>
-            RAAC
-            <span
-              aria-hidden
-              style={{
-                display: "inline-block",
-                width: "0.13em",
-                height: "0.13em",
-                marginLeft: "0.08em",
-                border: "0.028em solid currentColor",
-                borderRadius: "18%",
-              }}
-            />
-          </p>
+          <Logo fontSize={24} />
           <p
-            className="mono"
-            style={{ marginTop: 12, fontSize: 11, letterSpacing: "0.12em", color: "#5a5a5a", lineHeight: 1.9 }}
+            className="sc"
+            style={{ marginTop: 12, fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.8 }}
           >
             Routing, Accountability, and Auditable Councils.
           </p>
@@ -61,17 +45,17 @@ export default function SiteFooter() {
 
         {COLS.map((c) => (
           <div key={c.head}>
-            <p className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#3f3f3f" }}>
+            <p className="sc" style={{ fontSize: 12, color: "var(--ink-faint)", borderBottom: "1px solid var(--rule-soft)", paddingBottom: 4 }}>
               {c.head}
             </p>
-            <div style={{ marginTop: 14, display: "grid", gap: 10 }}>
+            <div style={{ marginTop: 12, display: "grid", gap: 9 }}>
               {c.links.map((l) =>
                 l.href.startsWith("/") ? (
-                  <Link key={l.label} href={l.href} className="link mono" style={{ fontSize: 12, letterSpacing: "0.1em" }}>
+                  <Link key={l.label} href={l.href} className="link" style={{ fontSize: 14 }}>
                     {l.label}
                   </Link>
                 ) : (
-                  <a key={l.label} href={l.href} className="link mono" style={{ fontSize: 12, letterSpacing: "0.1em" }}>
+                  <a key={l.label} href={l.href} className="link" style={{ fontSize: 14 }}>
                     {l.label}
                   </a>
                 )
@@ -84,20 +68,20 @@ export default function SiteFooter() {
       <div
         className="mono"
         style={{
-          marginTop: 48,
-          paddingTop: 20,
-          borderTop: "1px solid rgba(255,255,255,0.07)",
+          marginTop: 44,
+          paddingTop: 16,
+          borderTop: "1px solid var(--rule-soft)",
           display: "flex",
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: "10px 20px",
           fontSize: 10,
-          letterSpacing: "0.14em",
-          color: "#3f3f3f",
+          letterSpacing: "0.12em",
+          color: "var(--ink-faint)",
         }}
       >
         <span>© 2026 RAAC</span>
-        <span>RAAC — BASE SEPOLIA</span>
+        <span>Vol. 84532 · Base Sepolia</span>
       </div>
     </footer>
   );

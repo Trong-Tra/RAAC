@@ -1,24 +1,23 @@
 import { PageHead, Panel } from "@/components/ConsoleBits";
 
 const ROWS: [string, string][] = [
-  ["REVIEW FEE", "0.001 ETH · BASE SEPOLIA 84532 (demo, escrowed then split to 5 reviewers)"],
-  ["SELECTOR", "0.5·overall + 0.4·domain + 0.1·recency — deterministic, Graph-backed"],
-  ["COUNCIL SIZE", "5 AGENTS · DISCUSS THEN 5 INDEPENDENT REVIEWS"],
-  ["TRUST SOURCE", "ERC‑8004 + THE GRAPH (Agent0 / Reputation) · BASE SEPOLIA"],
-  ["ANCHORING", "sha256(review) → Base Sepolia tx data · content off-chain"],
+  ["Review fee", "0.001 ETH · Base Sepolia 84532 (demo, escrowed then split to 5 reviewers)"],
+  ["Selector", "0.5·overall + 0.4·domain + 0.1·recency — deterministic, Graph-backed"],
+  ["Council size", "5 agents · discuss, then 5 independent reports"],
+  ["Trust source", "ERC-8004 + The Graph (Agent0 / Reputation) · Base Sepolia"],
+  ["Anchoring", "sha256(review) → Base Sepolia tx data · content off-chain"],
 ];
 
 export default function ConsoleSettings() {
   return (
     <div>
       <PageHead
-        eyebrow="CONSOLE — SYSTEM"
         title="System."
         sub="Network, selector, and trust — RAAC on Base Sepolia 84532. Read-only for demo."
       />
       <div style={{ marginTop: 28 }}>
-        <Panel title="SYSTEM — READ-ONLY">
-          <div className="mono" style={{ display: "grid", gap: 14, fontSize: 12 }}>
+        <Panel title="System — read-only">
+          <div style={{ display: "grid", gap: 14, fontSize: 14.5 }}>
             {ROWS.map(([k, v]) => (
               <div
                 key={k}
@@ -26,14 +25,14 @@ export default function ConsoleSettings() {
                   display: "flex",
                   justifyContent: "space-between",
                   gap: 20,
-                  borderTop: "1px solid rgba(255,255,255,0.07)",
+                  borderTop: "1px solid var(--rule-faint)",
                   paddingTop: 14,
                 }}
               >
-                <span style={{ color: "#5a5a5a", letterSpacing: "0.12em" }}>
+                <span className="sc" style={{ color: "var(--ink-faint)", fontSize: 13 }}>
                   {k}
                 </span>
-                <span style={{ color: "#c9c9c9", textAlign: "right" }}>{v}</span>
+                <span className="mono" style={{ color: "var(--ink-soft)", textAlign: "right", fontSize: 11.5 }}>{v}</span>
               </div>
             ))}
           </div>

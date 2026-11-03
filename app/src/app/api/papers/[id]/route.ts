@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { papers, tenants, paperCouncils, agents, reviews } from "@/server/db/schema";
 import { config } from "@/server/config";
@@ -23,7 +23,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     let councilReviews: typeof reviews.$inferSelect[] = [];
     if (council) {
-      councilReviews = await db().select().from(reviews).where(eq(reviews.councilId, council.id));
+      councilReviews = await db().select().from(reviews).where(eq(reviews.councilId, council.id)).orderBy(asc(reviews.createdAt));
     }
 
     const agentRows = await db().select().from(agents).where(eq(agents.tenantId, tenant.id));

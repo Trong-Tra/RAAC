@@ -5,10 +5,10 @@ import Logo from "@/components/Logo";
 import { useWallet } from "@/components/WalletProvider";
 
 const NAV = [
-  { label: "PAPERS", href: "/papers" },
-  { label: "NETWORK", href: "/network" },
-  { label: "CONSOLE", href: "/console" },
-  { label: "FAQ", href: "/faq" },
+  { label: "App", href: "/app", key: "APP" },
+  { label: "Network", href: "/network", key: "NETWORK" },
+  { label: "Console", href: "/console", key: "CONSOLE" },
+  { label: "FAQ", href: "/faq", key: "FAQ" },
 ];
 
 export default function SiteHeader({ active }: { active?: string }) {
@@ -17,51 +17,59 @@ export default function SiteHeader({ active }: { active?: string }) {
   return (
     <header className="site-header">
       <Link href="/" style={{ textDecoration: "none" }}>
-        <Logo fontSize={24} />
+        <Logo fontSize={22} />
       </Link>
 
-      <nav className="mono">
-        {NAV.map((item) =>
-          item.href.startsWith("/") ? (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="link"
-              style={
-                active === item.label
-                  ? { color: "#fff", textDecoration: "none" }
-                  : undefined
-              }
-            >
-              {item.label}
-            </Link>
-          ) : (
-            <a key={item.label} href={item.href} className="link">
-              {item.label}
-            </a>
-          )
-        )}
+      <nav>
+        {NAV.map((item) => (
+          <Link
+            key={item.key}
+            href={item.href}
+            className="link"
+            style={
+              active === item.key
+                ? { color: "var(--vermilion)", fontWeight: 700 }
+                : undefined
+            }
+          >
+            {item.label}
+          </Link>
+        ))}
       </nav>
 
       {address ? (
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span className="mono" style={{ fontSize: 9, letterSpacing: "0.12em", color: isCorrectChain ? "#6f6" : "#fa6", border: `1px solid ${isCorrectChain ? "#2a4" : "#a50"}`, padding: "0 16px", minWidth: 132, height: 32, display: "inline-flex", alignItems: "center", justifyContent: "center", boxSizing: "border-box" }}>
-            {chainId ? `Chain-ID: ${chainId}` : "Chain-ID: …"}
+          <span
+            className="mono"
+            style={{
+              fontSize: 9,
+              letterSpacing: "0.12em",
+              color: isCorrectChain ? "var(--emerald)" : "var(--chrome)",
+              border: `1px solid ${isCorrectChain ? "var(--emerald)" : "var(--chrome)"}`,
+              padding: "0 12px",
+              minWidth: 116,
+              height: 32,
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxSizing: "border-box",
+            }}
+          >
+            {chainId ? `Chain ${chainId}` : "Chain …"}
           </span>
           <button
             onClick={() => (isCorrectChain ? disconnect() : switchToBaseSepolia())}
-            className="btn-outline mono"
+            className="btn-outline"
             style={{
-              background: isCorrectChain ? "transparent" : "#1a1a00",
               cursor: "pointer",
-              fontSize: 11,
+              fontSize: 10,
               letterSpacing: "0.12em",
-              maxWidth: 140,
+              maxWidth: 150,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               height: 32,
-              padding: "0 16px",
+              padding: "0 14px",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -69,27 +77,26 @@ export default function SiteHeader({ active }: { active?: string }) {
             }}
             title={isCorrectChain ? "Disconnect" : "Switch to Base Sepolia 84532"}
           >
-            {isCorrectChain ? `${address.slice(0, 6)}…${address.slice(-4)}` : "SWITCH TO 84532"}
+            {isCorrectChain ? `${address.slice(0, 6)}…${address.slice(-4)}` : "Switch to 84532"}
           </button>
         </div>
       ) : (
         <button
           onClick={() => void connect()}
-          className="btn-outline mono"
+          className="btn-outline"
           style={{
-            background: "transparent",
             cursor: "pointer",
-            fontSize: 11,
+            fontSize: 10,
             letterSpacing: "0.14em",
             height: 32,
-            padding: "0 16px",
+            padding: "0 14px",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
             boxSizing: "border-box",
           }}
         >
-          CONNECT WALLET
+          Connect wallet
         </button>
       )}
     </header>

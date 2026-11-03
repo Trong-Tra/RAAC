@@ -1,6 +1,6 @@
 export default function Logo({
-  fontSize = 18,
-  color = "#f4f4f4",
+  fontSize = 20,
+  color = "var(--ink)",
 }: {
   fontSize?: number | string;
   color?: string;
@@ -8,11 +8,12 @@ export default function Logo({
   return (
     <span
       style={{
-        fontWeight: 800,
+        fontWeight: 700,
         fontSize,
-        letterSpacing: "-0.03em",
+        letterSpacing: "-0.02em",
         lineHeight: 1,
         color,
+        fontFamily: "var(--serif)",
       }}
     >
       RAAC
@@ -20,11 +21,11 @@ export default function Logo({
         aria-hidden
         style={{
           display: "inline-block",
-          width: "0.13em",
-          height: "0.13em",
-          marginLeft: "0.08em",
-          border: "0.028em solid currentColor",
-          borderRadius: "18%",
+          width: "0.22em",
+          height: "0.22em",
+          marginLeft: "0.14em",
+          background: "var(--vermilion)",
+          transform: "rotate(45deg) translateY(-0.06em)",
         }}
       />
     </span>

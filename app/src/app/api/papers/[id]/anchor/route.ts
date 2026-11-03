@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { papers, tenants } from "@/server/db/schema";
 import { config } from "@/server/config";
@@ -34,7 +34,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const { paperCouncils, reviews } = await import("@/server/db/schema");
     const [council] = await db().select().from(paperCouncils).where(eq(paperCouncils.paperId, paper.id));
     if (!council) return Response.json({ ok: true, data: { council: null, reviews: [] } });
-    const revs = await db().select().from(reviews).where(eq(reviews.councilId, council.id));
+    const revs = await db().select().from(reviews).where(eq(reviews.councilId, council.id)).orderBy(asc(reviews.createdAt));
     const withUrls = revs.map((r) => ({ ...r, basescan_url: r.anchorTxHash ? basescanTxUrl(r.anchorTxHash) : null }));
     return Response.json({ ok: true, data: { council, reviews: withUrls } });
   } catch (err) {

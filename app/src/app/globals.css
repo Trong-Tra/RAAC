@@ -1,3 +1,32 @@
+/* RAAC — lexicon world design tokens
+   World: nineteenth-century lexicon page (shoulder index + plate).
+   Ground: uncoated cream stock. Ink: engraving black. Vermilion carries
+   the live action and the "you are here" mark. Five mineral inks carry
+   the five reviewers' lenses. Mono is reserved for registry codes,
+   hashes, and measurements. */
+
+:root {
+  --paper: #f4efe4;
+  --paper-raised: #faf7ee;
+  --paper-sunk: #ece5d3;
+  --ink: #1a1712;
+  --ink-soft: #4a4438;
+  --ink-faint: #6f6757;
+  --vermilion: #b7341f;
+  --vermilion-deep: #8f2b1f;
+  --chrome: #8a680b;
+  --emerald: #1f6e4a;
+  --ultramarine: #28418f;
+  --madder: #a63d55;
+  --sepia: #6b4a2f;
+  --violet: #6a4a8f;
+  --rule: rgba(26, 23, 18, 0.9);
+  --rule-soft: rgba(26, 23, 18, 0.28);
+  --rule-faint: rgba(26, 23, 18, 0.14);
+  --serif: var(--font-serif), Georgia, "Times New Roman", serif;
+  --mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -7,17 +36,59 @@
 html,
 body {
   height: 100%;
-  background: #000;
-  color: #fff;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI",
-    sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: #fff;
-  color: #000;
+  background: var(--vermilion);
+  color: var(--paper-raised);
+}
+
+:focus-visible {
+  outline: 2px solid var(--vermilion);
+  outline-offset: 2px;
+}
+
+/* Browser surfaces belong to the world too. */
+html {
+  scrollbar-color: var(--ink-faint) var(--paper-sunk);
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper-sunk);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-faint);
+  border: 2px solid var(--paper-sunk);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-soft);
+}
+
+a {
+  color: var(--vermilion-deep);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+input,
+textarea,
+select {
+  font-family: var(--serif);
+  caret-color: var(--vermilion);
+}
+
+::placeholder {
+  color: var(--ink-faint);
+  opacity: 0.8;
 }
 
 @keyframes blink {
@@ -42,56 +113,6 @@ body {
   }
 }
 
-.mono {
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-}
-
-.link {
-  color: #8a8a8a;
-  text-decoration: none;
-  transition: color 0.15s;
-}
-
-.link:hover {
-  color: #fff;
-}
-
-.btn-outline {
-  display: inline-block;
-  padding: 9px 16px;
-  border: 1px solid #3a3a3a;
-  color: #e0e0e0;
-  font-family: ui-monospace, "SF Mono", Menlo, monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-decoration: none;
-  transition:
-    background 0.15s,
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.btn-outline:hover {
-  /* !important: many call sites set an inline transparent background, which
-     would otherwise beat this rule and leave black-on-black text on hover. */
-  background: #fff !important;
-  border-color: #fff;
-  color: #000;
-}
-
-.tab-inactive:hover {
-  color: #9a9a9a;
-}
-
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
-}
-
 @keyframes ring-in {
   from {
     opacity: 0;
@@ -103,12 +124,309 @@ body {
   }
 }
 
+/* Split-flap: a status line arrives by flipping down into place. */
+@keyframes flap-in {
+  0% {
+    opacity: 0;
+    transform: perspective(600px) rotateX(-72deg);
+  }
+  60% {
+    opacity: 1;
+    transform: perspective(600px) rotateX(14deg);
+  }
+  100% {
+    opacity: 1;
+    transform: perspective(600px) rotateX(0deg);
+  }
+}
+
+.flap-in {
+  animation: flap-in 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top center;
+}
+
 .ring-readout {
   animation: ring-in 0.35s ease;
 }
 
 .feed-line {
   animation: ring-in 0.4s ease;
+}
+
+.mono {
+  font-family: var(--mono);
+}
+
+.sc {
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+}
+
+.link {
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.link:hover {
+  color: var(--vermilion-deep);
+}
+
+/* Plate-button: the lexicon world's control — engraved frame, vermilion
+   for the live action, ink outline for the quiet one. Set in serif
+   small-caps; mono stays with registry codes and measurements. */
+.btn-outline {
+  display: inline-block;
+  padding: 9px 16px;
+  border: 1.5px solid var(--ink);
+  color: var(--ink);
+  background: var(--paper-raised);
+  font-family: var(--serif) !important;
+  font-variant: small-caps;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    color 0.15s,
+    border-color 0.15s;
+}
+
+.btn-outline:hover {
+  background: var(--ink) !important;
+  border-color: var(--ink);
+  color: var(--paper-raised) !important;
+}
+
+.btn-action {
+  display: inline-block;
+  padding: 12px 22px;
+  border: 1.5px solid var(--vermilion-deep);
+  background: var(--vermilion);
+  color: var(--paper-raised);
+  font-family: var(--serif) !important;
+  font-variant: small-caps;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+
+.btn-action:hover {
+  background: var(--vermilion-deep) !important;
+  border-color: var(--vermilion-deep);
+  color: var(--paper-raised) !important;
+}
+
+.btn-action:disabled,
+.btn-outline:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.tab-inactive:hover {
+  color: var(--ink);
+}
+
+/* ---- Lexicon primitives ---- */
+
+/* Guide line: the running head across the top of a page. */
+.guide-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1.5px solid var(--rule);
+  font-variant: small-caps;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+/* Section head: small-caps with a hairline below — the lexicon's own
+   heading, never a kicker above one. */
+.entry-head {
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 5px;
+  margin: 34px 0 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+/* Plate: the framed figure of the lexicon page. Double rule outside,
+   hairline inside, caption across the top. */
+.plate {
+  position: relative;
+  background: var(--paper-raised);
+  border: 1.5px solid var(--rule);
+  padding: 4px;
+}
+
+.plate-inner {
+  border: 1px solid var(--rule-soft);
+  padding: 18px 20px 20px;
+  min-height: 100%;
+}
+
+.plate-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-variant: small-caps;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--rule-soft);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+/* Ornament: the diamond separator of the running head. */
+.orn {
+  color: var(--ink-faint);
+  font-size: 0.75em;
+  letter-spacing: 0.4em;
+  user-select: none;
+}
+
+/* Registry chip: mono, hairline frame — for ERC-8004 codes and hashes. */
+.chip {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  padding: 3px 8px;
+  border: 1px solid var(--rule-soft);
+  color: var(--ink-soft);
+  background: transparent;
+  white-space: nowrap;
+}
+
+/* Shoulder index: the thumb tabs down the page edge marking the journey. */
+.shoulder {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shoulder-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-variant: small-caps;
+  letter-spacing: 0.1em;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  text-decoration: none;
+  padding: 6px 0;
+}
+
+.shoulder-thumb {
+  width: 10px;
+  height: 26px;
+  background: var(--rule-faint);
+  flex-shrink: 0;
+}
+
+.shoulder-step.done {
+  color: var(--ink-soft);
+}
+
+.shoulder-step.done .shoulder-thumb {
+  background: var(--ink);
+}
+
+.shoulder-step.here {
+  color: var(--vermilion);
+  font-weight: 700;
+}
+
+.shoulder-step.here .shoulder-thumb {
+  background: var(--vermilion);
+}
+
+/* ---- Layout ---- */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  background: var(--paper);
+  border-bottom: 1.5px solid var(--rule);
+  height: 58px;
+  padding: 0 max(22px, 4vw);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.site-header nav {
+  display: flex;
+  gap: 34px;
+  font-size: 12px;
+  font-variant: small-caps;
+  letter-spacing: 0.14em;
+}
+
+@media (max-width: 640px) {
+  .site-header {
+    height: auto;
+    min-height: 52px;
+    padding: 8px 14px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .site-header nav {
+    display: flex;
+    order: 3;
+    width: 100%;
+    gap: 20px;
+    font-size: 11px;
+    border-top: 1px solid var(--rule-faint);
+    padding-top: 6px;
+  }
+
+  .site-header .btn-outline {
+    font-size: 11px !important;
+    padding: 0 10px !important;
+    height: 30px !important;
+    white-space: nowrap;
+  }
+
+  .guide-line > :nth-child(2) {
+    display: none;
+  }
+}
+
+.section-pad {
+  padding: 8vh 7vw;
+}
+
+@media (max-width: 640px) {
+  .section-pad {
+    padding: 8vh 6vw;
+  }
+}
+
+.page-measure {
+  max-width: 1240px;
+  margin: 0 auto;
 }
 
 .footer-grid {
@@ -130,179 +448,16 @@ body {
   }
 }
 
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee 36s linear infinite;
-}
-
-.marquee-track:hover {
-  animation-play-state: paused;
-}
-
-/* ---- Responsive layout ----
-   Desktop values below are byte-identical to the previous inline styles. */
-
-.site-header {
-  position: sticky;
-  top: 14px;
-  z-index: 10;
-  width: min(1040px, 86vw);
-  margin: 14px auto 0;
-  background: #0d0d0d;
-  border: 1px solid #232323;
-  border-radius: 12px;
-  height: 54px;
-  padding: 0 22px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-}
-
-.site-header nav {
-  display: flex;
-  gap: 36px;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-}
-
-@media (max-width: 640px) {
-  .site-header {
-    height: 48px;
-    padding: 0 16px;
-  }
-
-  .site-header nav {
-    display: none;
-  }
-}
-
-.hero {
-  height: calc(100dvh - 82px);
-  min-height: 540px;
-  display: flex;
-  align-items: stretch;
-  position: relative;
-}
-
-.hero-copy {
-  width: 46%;
-  min-width: 440px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-left: 7vw;
-  padding-right: 48px;
-  position: relative;
-  z-index: 1;
-}
-
-.hero-canvas-wrap {
-  flex: 1;
-  position: relative;
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 22%);
-  mask-image: linear-gradient(to right, transparent 0%, black 22%);
-}
-
-@media (max-width: 1024px) {
-  .hero {
-    display: block;
-    height: auto;
-    min-height: 0;
-  }
-
-  .hero-canvas-wrap {
-    display: none;
-  }
-
-  .hero-copy {
-    width: 100%;
-    min-width: 0;
-    padding: 8vh 7vw 12vh;
-  }
-}
-
-.section-pad {
-  padding: 14vh 7vw;
-}
-
-@media (max-width: 640px) {
-  .section-pad {
-    padding: 12vh 6vw;
-  }
-}
-
-.team-grid {
-  display: grid;
-  grid-template-columns: minmax(340px, 5fr) 6fr;
-  gap: 72px;
-  align-items: center;
-}
-
-@media (max-width: 1024px) {
-  .team-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-
-  .team-grid > div:first-child {
-    max-width: 460px;
-    width: 100%;
-    margin: 0 auto;
-  }
-}
-
-.details-grid {
-  margin-top: 7vh;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  align-items: stretch;
-}
-
-@media (max-width: 1024px) {
-  .details-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-}
-
 .site-footer {
-  height: 52px;
-  padding: 0 7vw;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  color: #555;
+  border-top: 1.5px solid var(--rule);
+  padding: 48px 7vw 26px;
   flex-shrink: 0;
-}
-
-.site-footer nav {
-  display: flex;
-  gap: 28px;
-}
-
-@media (max-width: 640px) {
-  .site-footer {
-    height: auto;
-    padding: 18px 6vw;
-    flex-wrap: wrap;
-    gap: 10px 20px;
-    justify-content: flex-start;
-  }
-
-  .site-footer .footer-tag {
-    display: none;
-  }
 }
 
 .network-grid {
   display: grid;
   grid-template-columns: 7fr 5fr;
-  gap: 24px;
+  gap: 28px;
   align-items: stretch;
 }
 
@@ -315,7 +470,7 @@ body {
 .console-wrap {
   display: grid;
   grid-template-columns: 220px 1fr;
-  gap: 32px;
+  gap: 36px;
   align-items: start;
   flex: 1;
 }
@@ -323,7 +478,7 @@ body {
 .console-nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   position: sticky;
   top: 82px;
 }
@@ -356,21 +511,6 @@ body {
   }
 }
 
-.market-grid {
-  margin-top: 6vh;
-  display: grid;
-  grid-template-columns: minmax(300px, 5fr) 6fr;
-  gap: 72px;
-  align-items: start;
-}
-
-@media (max-width: 1024px) {
-  .market-grid {
-    grid-template-columns: 1fr;
-    gap: 48px;
-  }
-}
-
 .agent-grid {
   margin-top: 5vh;
   display: grid;
@@ -389,3 +529,43 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* Journey grid: shoulder | entry | margin. */
+.journey-grid {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) 320px;
+  gap: 40px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .journey-grid {
+    grid-template-columns: 130px minmax(0, 1fr);
+  }
+
+  .journey-margin {
+    grid-column: 2;
+  }
+}
+
+@media (max-width: 760px) {
+  .journey-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .journey-shoulder {
+    position: static !important;
+  }
+
+  .journey-shoulder .shoulder {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 2px 14px;
+  }
+
+  .journey-margin {
+    grid-column: 1;
+  }
+}
+

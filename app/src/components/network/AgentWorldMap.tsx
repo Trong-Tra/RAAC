@@ -97,20 +97,20 @@ export default function AgentWorldMap({ totalAgents }: { totalAgents?: number })
           gap: "8px 22px",
           fontSize: 9.5,
           letterSpacing: "0.14em",
-          color: "#5a5a5a",
+          color: "var(--ink-soft)",
           marginBottom: 14,
         }}
       >
         <span>REGIONS {scaled ? placed.length : "—"}</span>
         <span>OPERATOR NODES {scaled ? totalAgents : "—"}</span>
         <span>HUBS {scaled ? hubs : "—"}</span>
-        <span style={{ marginLeft: "auto", color: "#3f3f3f" }}>
+        <span style={{ marginLeft: "auto", color: "var(--ink-faint)" }}>
           SQUARE = OPERATOR · SIZE = AGENT COUNT · HOVER FOR LOCATION
         </span>
       </div>
 
       <div
-        style={{ border: "1px solid #1c1c1c", background: "#050505", position: "relative" }}
+        style={{ border: "1px solid var(--rule-soft)", background: "var(--paper)", position: "relative" }}
         onMouseMove={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           setCursor({ x: e.clientX - r.left, y: e.clientY - r.top });
@@ -123,15 +123,15 @@ export default function AgentWorldMap({ totalAgents }: { totalAgents?: number })
           projectionConfig={{ scale: 158, center: [12, 4] }}
           style={{ width: "100%", height: "auto", display: "block" }}
         >
-          <Graticule stroke="rgba(255,255,255,0.045)" strokeWidth={0.4} />
+          <Graticule stroke="rgba(26,23,18,0.10)" strokeWidth={0.4} />
           <Geographies geography={GEO_URL}>
             {({ geographies }) =>
               geographies.map((geo) => (
                 <Geography
                   key={geo.rsmKey}
                   geography={geo}
-                  fill="#101010"
-                  stroke="#242424"
+                  fill="#e7dfca"
+                  stroke="rgba(26,23,18,0.45)"
                   strokeWidth={0.5}
                 />
               ))
@@ -147,7 +147,7 @@ export default function AgentWorldMap({ totalAgents }: { totalAgents?: number })
                 key={`${a}-${b}`}
                 from={from.coords}
                 to={to.coords}
-                stroke="#3a3a3a"
+                stroke="var(--ink-faint)"
                 strokeWidth={0.7}
                 strokeDasharray="3 4"
                 className="raac-arc"
@@ -179,7 +179,7 @@ export default function AgentWorldMap({ totalAgents }: { totalAgents?: number })
                     width={size}
                     height={size}
                     fill="none"
-                    stroke="#e8e8e8"
+                    stroke="var(--vermilion)"
                     strokeWidth={0.6}
                   />
                 )}
@@ -189,10 +189,10 @@ export default function AgentWorldMap({ totalAgents }: { totalAgents?: number })
                   width={size}
                   height={size}
                   fill="none"
-                  stroke={hub ? "#e8e8e8" : "#7a7a7a"}
+                  stroke={hub ? "var(--vermilion)" : "var(--ink)"}
                   strokeWidth={hub ? 1.1 : 0.9}
                 />
-                {hub && <rect x={-1.5} y={-1.5} width={3} height={3} fill="#e8e8e8" />}
+                {hub && <rect x={-1.5} y={-1.5} width={3} height={3} fill="var(--vermilion)" />}
               </Marker>
             );
           })}
@@ -205,12 +205,12 @@ export default function AgentWorldMap({ totalAgents }: { totalAgents?: number })
               left: cursor.x + 14,
               top: cursor.y - 12,
               pointerEvents: "none",
-              background: "#000",
-              border: "1px solid #3a3a3a",
+              background: "var(--paper-raised)",
+              border: "1px solid var(--rule-soft)",
               padding: "5px 9px",
               fontSize: 9.5,
               letterSpacing: "0.12em",
-              color: "#e8e8e8",
+              color: "var(--ink)",
               whiteSpace: "nowrap",
               zIndex: 10,
             }}
@@ -226,7 +226,7 @@ export default function AgentWorldMap({ totalAgents }: { totalAgents?: number })
           marginTop: 12,
           fontSize: 9,
           letterSpacing: "0.12em",
-          color: "#3f3f3f",
+          color: "var(--ink-faint)",
         }}
       >
         NODES ARE ERC-8004 OPERATORS RUNNING REVIEW WORKLOADS. HUBS RELAY COUNCIL DISCUSSION BETWEEN REGIONS.

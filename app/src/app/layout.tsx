@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { Darker_Grotesque } from "next/font/google";
+import { Source_Serif_4, Courier_Prime } from "next/font/google";
 import { WalletProvider } from "@/components/WalletProvider";
 import "./globals.css";
 
-const darkerGrotesque = Darker_Grotesque({
+const sourceSerif = Source_Serif_4({
   subsets: ["latin"],
-  weight: ["400", "500", "700", "800"],
+  variable: "--font-serif",
+  weight: ["400", "600", "700"],
+  style: ["normal", "italic"],
+});
+
+const courierPrime = Courier_Prime({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -21,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={darkerGrotesque.className}>
+      <body className={`${sourceSerif.variable} ${courierPrime.variable}`}>
         <WalletProvider>{children}</WalletProvider>
       </body>
     </html>
