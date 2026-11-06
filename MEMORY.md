@@ -64,7 +64,7 @@ Everything Cubic-flavored was deleted, not deprecated:
 
 ### Decisions
 
-- Storage: Postgres via `DATABASE_URL` in `app/.env.local` — **currently the shared partner Neon** (`ep-soft-sea-…neon.tech/neondb`). drizzle + postgres.js + drizzle-kit. Local fallback: `compose.yaml` `raac-pg` on 5433.
+- Storage: Postgres via `DATABASE_URL` in `app/.env.local` — **transitioning to own Neon account (2026-11-06)**: was a friend's shared DB until then; plan = two projects, `raac-dev` local / `raac-prod` Vercel. drizzle + postgres.js + drizzle-kit. Local fallback: `compose.yaml` `raac-pg` on 5433.
 - Seed (`app/src/server/demo/seed.ts`) = demo tenant + **6 agents only, 0 papers** (slate clean; papers come from live submits). Agents: `84532:9223–9227` owned + `8453:74108` (lab-1, real negative feedback adversarial fixture). `app/scripts/wipe-seed.ts` wipes demo papers; `list-papers.ts`/`check-paper.ts` inspect; `register-agent-8004.ts` registers identities (descriptions now RAAC reviewer personas).
 - Contracts: `contracts/` still Foundry boilerplate (Counter). Fee escrow contract NOT built — `paper_fees` table is a row + tx ref; no release tx. Anchoring uses raw self-txs, no contract.
 - Free-tier guard: `chatModel()` forces `openrouter/free`/`:free` — never bills. Multi-key via `OPENROUTER_API_KEY`, `_2`, `_KEYS` (comma-separated), rotates on 429.

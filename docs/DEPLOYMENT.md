@@ -28,7 +28,7 @@ Against **Neon Free** (1 GB/project, 100 CU-hours/mo, autoscale to 2 CU, scale-t
 | Account | Status |
 |---|---|
 | **vercel.com** | **the only new signup** (Hobby is enough — fluid functions default & max at 300 s, which covers a council sitting) |
-| **neon.tech** | already yours — the app has been running on the shared demo DB all along |
+| **neon.tech** | **create one** — until 2026-11-06 the app piggybacked a friend's shared DB (fine for dev, not for production) |
 | **openrouter.ai** | already yours — reuse the key from `app/.env.local` |
 | **thegraph.com/studio** | already yours — reuse `THEGRAPH_API_KEY` / `AGENT0_SUBGRAPH_URL` from `app/.env.local`; The Graph is called at runtime, nothing to deploy or provision there |
 | **Base Sepolia relayer** | already yours — the funded demo wallet key in `.env.local`; optional: make a dedicated wallet later |
@@ -37,10 +37,10 @@ Against **Neon Free** (1 GB/project, 100 CU-hours/mo, autoscale to 2 CU, scale-t
 
 ## 3. Pick the database (two paths)
 
-**Path A — reuse the shared Neon you've been running on.** Paste that same `DATABASE_URL` into Vercel and **skip the rest of this section** — tenant, 6-agent roster, and the five demo papers already exist.
-> Caveat: your local `pnpm test` wipes this database by design. While production points at it, keep local testing off it (or switch to Path B).
+**Path A — reuse an existing database you already run.** Only valid if it's *yours*. Paste that `DATABASE_URL` into Vercel and skip the rest of this section — tenant, 6-agent roster, and papers already exist.
+> ⚠ Never point production at a DB that local `pnpm test` wipes (the seeds destroy all papers by design).
 
-**Path B — fresh production database (recommended for anything public).** Same Neon account, new database (no new service):
+**Path B — fresh production database (your own Neon account — the normal path).** One account, **two projects** keeps dev and prod from ever colliding (`raac-dev` for your laptop where tests run, `raac-prod` for Vercel — Neon's free plan allows 100 projects):
 
 ```bash
 pnpm i                                                     # repo root
