@@ -44,6 +44,41 @@ const fixture = {
   }],
 } as const;
 
+/** Ensure demo tenant + 6-agent roster exist. Does NOT touch papers/councils/reviews. */
+export async function seedRoster(): Promise<{ agents: number }> {
+  let [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));
+  if (!tenant) {
+    await db().insert(tenants).values({ slug: fixture.tenant.slug, name: fixture.tenant.name }).onConflictDoNothing({ target: tenants.slug });
+    [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));
+  }
+  if (!tenant) throw new Error("seed: demo tenant missing");
+  if (tenant.name !== fixture.tenant.name) {
+    await db().update(tenants).set({ name: fixture.tenant.name }).where(eq(tenants.id, tenant.id));
+    const [updated] = await db().select().from(tenants).where(eq(tenants.id, tenant.id));
+    if (updated) tenant = updated;
+  }
+
+  const existing = await db().select().from(agents).where(eq(agents.tenantId, tenant.id));
+  const have = new Set(existing.map((a) => a.agentKey));
+  const missing = fixture.agents.filter((a) => !have.has(a.agent_key));
+  if (missing.length) {
+    await db().insert(agents).values(
+      missing.map((a) => ({
+        tenantId: tenant.id,
+        agentKey: a.agent_key,
+        erc8004Identity: a.erc8004_identity,
+        name: a.name,
+        environment: a.environment,
+        status: a.status,
+        declaredCapabilities: [...a.declared_capabilities],
+      })),
+    );
+  }
+  const count = (await db().select().from(agents).where(eq(agents.tenantId, tenant.id))).length;
+  if (missing.length) logger("seed").info("roster topped up", { tenant: fixture.tenant.slug, added: missing.length, agents: count });
+  return { agents: count };
+}
+
 export async function seed(): Promise<{ agents: number }> {
   let [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));
   if (!tenant) {
@@ -58,6 +93,7 @@ export async function seed(): Promise<{ agents: number }> {
   }
 
   // RAAC cleanup: papers → councils → messages/reviews/fees (children first)
+  // DESTRUCTIVE — demo reset only. Scripts that must preserve papers use seedRoster().
   const existingPapers = await db().select().from(papers).where(eq(papers.tenantId, tenant.id));
   const paperIds = existingPapers.map((p) => p.id);
   if (paperIds.length) {
