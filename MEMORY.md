@@ -27,7 +27,7 @@ Full UX redesign via the `impeccable` skill for the Eureka education/science tra
 - **Positioning:** broker/recruiter + orchestrator. The Graph = trust/data layer; Base Sepolia = settlement/anchor layer.
 - Repo root dir is `RAAC` (the old `cubic` dir name is gone). Packages: root `raac-network`, app `@raac/app`.
 
-### 2026-11-02 Cubic Purge (commit after `8af2d8b`)
+### 2026-11-02 Cubic Purge (commit after `840f6d8`)
 
 Everything Cubic-flavored was deleted, not deprecated:
 
