@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { papers, tenants } from "@/server/db/schema";
 import { config } from "@/server/config";
@@ -7,11 +7,19 @@ import { emit } from "@/server/events/bus";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const [tenant] = await db().select().from(tenants).where(eq(tenants.slug, config().DEMO_TENANT_SLUG));
     if (!tenant) return Response.json({ ok: true, data: [] });
-    const rows = await db().select().from(papers).where(eq(papers.tenantId, tenant.id));
+    // Optional author scope: console only lists papers for the connected wallet.
+    const author = new URL(req.url).searchParams.get("author");
+    const scoped = author && /^0x[0-9a-fA-F]{40}$/.test(author)
+      ? and(
+          eq(papers.tenantId, tenant.id),
+          sql`lower(${papers.authorAddress}) = lower(${author})`,
+        )
+      : eq(papers.tenantId, tenant.id);
+    const rows = await db().select().from(papers).where(scoped);
     // newest first
     rows.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
     return Response.json({ ok: true, data: rows });

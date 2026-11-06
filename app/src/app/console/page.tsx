@@ -115,7 +115,7 @@ export default function AppPage() {
 
 function Journey() {
   const searchParams = useSearchParams();
-  const { address } = useWallet();
+  const { address, ready, connect } = useWallet();
   const [papers, setPapers] = useState<Paper[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
@@ -127,16 +127,23 @@ function Journey() {
   const [err, setErr] = useState<string | null>(null);
 
   const loadPapers = (select?: string) => {
-    fetch("/api/papers", { cache: "no-store" })
+    if (!address) {
+      setPapers(null);
+      return;
+    }
+    fetch(`/api/papers?author=${encodeURIComponent(address)}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
         if (!j.ok) throw new Error(j.error?.message ?? "load failed");
         const list = j.data as Paper[];
         setPapers(list);
-        if (select) setSelectedId(select);
-        else if (!selectedId && list.length) {
-          const mine = address ? list.find((p) => p.authorAddress.toLowerCase() === address.toLowerCase()) : undefined;
-          setSelectedId((mine ?? list[0]).id);
+        if (select) {
+          setSelectedId(list.some((p) => p.id === select) ? select : null);
+        } else {
+          setSelectedId((prev) => {
+            if (prev && list.some((p) => p.id === prev)) return prev;
+            return list[0]?.id ?? null;
+          });
         }
       })
       .catch((e) => setErr(e.message));
@@ -147,7 +154,14 @@ function Journey() {
       .then((r) => r.json())
       .then((j) => {
         if (!j.ok) return;
-        setDetail(j.data as Detail);
+        // Only ever render detail for this wallet's own paper.
+        const d = j.data as Detail;
+        if (address && d.paper.authorAddress.toLowerCase() !== address.toLowerCase()) {
+          setDetail(null);
+          setSelectedId(null);
+          return;
+        }
+        setDetail(d);
       })
       .catch(() => {});
     fetch(`/api/papers/${id}/council/run`, { cache: "no-store" })
@@ -172,9 +186,26 @@ function Journey() {
       .catch(() => {});
   };
 
+  // Scope the console to the connected wallet: load only when ready + connected.
   useEffect(() => {
+    if (!ready || !address) {
+      setPapers(null);
+      setSelectedId(null);
+      setDetail(null);
+      setLiveMessages([]);
+      setLiveReviews([]);
+      return;
+    }
     loadPapers(searchParams.get("paper") ?? undefined);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, address]);
+
+  // Wallet switch: clear the current entry before the scoped reload lands.
+  useEffect(() => {
+    setDetail(null);
+    setLiveMessages([]);
+    setLiveReviews([]);
+  }, [address]);
 
   useEffect(() => {
     if (selectedId) loadDetail(selectedId);
@@ -183,7 +214,8 @@ function Journey() {
       setLiveMessages([]);
       setLiveReviews([]);
     }
-  }, [selectedId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, address]);
 
   const reviewCount = liveReviews.length || (detail?.reviews.length ?? 0);
   const displayedReviews: LiveReview[] = liveReviews.length ? liveReviews : (detail?.reviews ?? []);
@@ -221,6 +253,7 @@ function Journey() {
   }, [selectedId, councilActive]);
 
   const submitArxiv = async () => {
+    if (!address) { setMsg("Connect your wallet first — Base Sepolia 84532."); return; }
     const url = arxivUrl.trim();
     if (!url) { setMsg("Paste an arXiv URL — e.g. https://arxiv.org/abs/1706.03762"); return; }
     if (!url.includes("arxiv.org") && !/^\d{4}\.\d{4,5}/.test(url)) { setMsg("That is not an arXiv URL or ID — try https://arxiv.org/abs/1706.03762"); return; }
@@ -350,6 +383,34 @@ function Journey() {
           <span>Base Sepolia</span>
         </div>
 
+        {!ready ? (
+          <p className="mono" style={{ marginTop: 44, fontSize: 11, letterSpacing: "0.1em", color: "var(--chrome)" }}>
+            ● reading the wallet
+          </p>
+        ) : !address ? (
+          <div style={{ marginTop: 36, display: "flex", justifyContent: "center" }}>
+            <Plate caption="Console" style={{ width: "100%", maxWidth: 460 }}>
+              <h1 style={{ fontSize: "clamp(26px, 3vw, 34px)", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.14 }}>
+                Connect a wallet to access your console.
+              </h1>
+              <p style={{ marginTop: 10, fontSize: 15.5, fontStyle: "italic", color: "var(--ink-soft)", lineHeight: 1.6 }}>
+                Entries, council, and reports are held against your address on Base Sepolia — the console reads only what you authored.
+              </p>
+              <div style={{ marginTop: 18, display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+                <button onClick={() => void connect()} className="btn-action">
+                  Connect wallet →
+                </button>
+                <Link href="/catalogue" className="link sc" style={{ fontSize: 13 }}>
+                  read the public shelf →
+                </Link>
+              </div>
+              <p className="sc" style={{ marginTop: 14, fontSize: 12, color: "var(--ink-faint)" }}>
+                entries belong to the address you connect · base sepolia{" "}
+                <span className="mono" style={{ letterSpacing: "0.06em" }}>84532</span>
+              </p>
+            </Plate>
+          </div>
+        ) : (
         <div className="journey-grid" style={{ marginTop: 36 }}>
           {/* Shoulder index — the journey as thumb tabs */}
           <aside className="journey-shoulder" style={{ position: "sticky", top: 82 }}>
@@ -376,7 +437,7 @@ function Journey() {
                 <p style={{ marginTop: 12, fontStyle: "italic", fontSize: 16.5, color: "var(--ink-soft)", maxWidth: 640 }}>
                   An arXiv preprint in, five examiner reports out — ranked, signed, discussed, and anchored on Base Sepolia.
                 </p>
-                <Plate caption="Plate i. — Submission" plateNo="fee 0.001 ETH" style={{ marginTop: 26 }}>
+                <Plate caption="Submission" plateNo="fee 0.001 ETH" style={{ marginTop: 26 }}>
                   <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
                     <input
                       value={arxivUrl}
@@ -532,7 +593,7 @@ function Journey() {
                     {detail.council ? `sitting ${detail.council.status}` : "not yet convened"}
                   </span>
                 </h2>
-                <Plate caption="Plate ii. — The five examiners" plateNo={median !== null ? `median ${median}/10` : "reports pending"}>
+                <Plate caption="The five examiners" plateNo={median !== null ? `median ${median}/10` : "reports pending"}>
                   <div style={{ display: "grid", gap: 0 }}>
                     {detail.selection.slice(0, 5).map((s, i) => {
                       const review = reviewFor(s.agent_key);
@@ -599,14 +660,14 @@ function Journey() {
           </div>
 
           {/* Margin column */}
-          <div className="journey-margin" style={{ display: "grid", gap: 24, alignContent: "start" }}>
+          <div className="journey-margin" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 24, alignContent: "start" }}>
             <Plate caption="Anchoring plate" plateNo="84532">
               {!detail || displayedReviews.length === 0 ? (
                 <p style={{ fontSize: 14, color: "var(--ink-faint)", fontStyle: "italic" }}>
                   No reports to anchor yet — each review’s hash is committed to Base Sepolia once written.
                 </p>
               ) : (
-                <div style={{ display: "grid", gap: 0 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 0 }}>
                   {detail.selection.slice(0, 5).map((s, i) => {
                     const r = reviewFor(s.agent_key);
                     if (!r) return null;
@@ -639,7 +700,7 @@ function Journey() {
               {!papers || papers.length === 0 ? (
                 <p style={{ fontSize: 14, color: "var(--ink-faint)", fontStyle: "italic" }}>The volume is empty — the first submission opens it.</p>
               ) : (
-                <div style={{ display: "grid", gap: 0 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 0 }}>
                   {papers.slice(0, 8).map((p) => (
                     <button
                       key={p.id}
@@ -647,6 +708,7 @@ function Journey() {
                       style={{
                         display: "block",
                         width: "100%",
+                        minWidth: 0,
                         textAlign: "left",
                         background: p.id === selectedId ? "var(--paper-sunk)" : "transparent",
                         border: "none",
@@ -680,6 +742,7 @@ function Journey() {
             </Plate>
           </div>
         </div>
+        )}
       </div>
 
       <SiteFooter />

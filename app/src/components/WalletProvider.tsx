@@ -9,6 +9,8 @@ type WalletCtxType = {
   address: string | null;
   chainId: number | null;
   isCorrectChain: boolean;
+  /** False until the initial eth_accounts restore has settled. */
+  ready: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   switchToBaseSepolia: () => Promise<void>;
@@ -18,6 +20,7 @@ const WalletCtx = createContext<WalletCtxType>({
   address: null,
   chainId: null,
   isCorrectChain: false,
+  ready: false,
   connect: async () => {},
   disconnect: () => {},
   switchToBaseSepolia: async () => {},
@@ -31,6 +34,7 @@ function getEthereum(): { request: (args: { method: string; params?: unknown[] }
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [address, setAddress] = useState<string | null>(null);
   const [chainId, setChainId] = useState<number | null>(null);
+  const [ready, setReady] = useState(false);
 
   const isCorrectChain = chainId === BASE_SEPOLIA_CHAIN_ID;
 
@@ -93,12 +97,15 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const eth = getEthereum();
-    if (!eth) return;
+    if (!eth) {
+      setReady(true);
+      return;
+    }
     // Restore if already connected
     eth.request({ method: "eth_accounts" }).then((accs) => {
       const a = (accs as string[])[0];
       if (a) setAddress(a);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setReady(true));
     syncChain();
     const onAccounts = (accs: unknown) => {
       const a = (accs as string[])[0] ?? null;
@@ -120,7 +127,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   }, [syncChain]);
 
   return (
-    <WalletCtx.Provider value={{ address, chainId, isCorrectChain, connect, disconnect, switchToBaseSepolia }}>
+    <WalletCtx.Provider value={{ address, chainId, isCorrectChain, ready, connect, disconnect, switchToBaseSepolia }}>
       {children}
     </WalletCtx.Provider>
   );
