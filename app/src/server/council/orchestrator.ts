@@ -42,6 +42,23 @@ function extractJsonObject(text: string): unknown {
   return null;
 }
 
+// Free-tier providers sometimes return content as null, a parts array
+// ([{type:"text",text:"…"}]), or an object with .text — not a bare string.
+function normalizeContent(content: unknown): string | null {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    const joined = content
+      .map((p) => (typeof p === "string" ? p : p && typeof p === "object" && typeof (p as { text?: unknown }).text === "string" ? (p as { text: string }).text : ""))
+      .join("");
+    return joined.length > 0 ? joined : null;
+  }
+  if (content && typeof content === "object") {
+    const t = (content as { text?: unknown }).text;
+    if (typeof t === "string" && t.length > 0) return t;
+  }
+  return null;
+}
+
 async function fetchArxivFullText(pdfUrl: string | null): Promise<string | null> {
   if (!pdfUrl || !pdfUrl.includes("arxiv.org")) return null;
   const m = pdfUrl.match(/(\d{4}\.\d{4,5})(v\d+)?/);
@@ -102,7 +119,8 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
     // Max 2 attempts per key (was 3) — 2 keys × 2 = 4 calls/agent ceiling.
     for (let attempt = 0; attempt < 2; attempt++) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 45000);
+    // Free-tier reasoning models often need >45s for a full 7-section review.
+    const timer = setTimeout(() => controller.abort(), 120000);
     try {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
@@ -110,7 +128,9 @@ async function generateReviewViaOpenRouter(paper: { title: string; abstract: str
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
       body: JSON.stringify({
         model: chatModel(),
-        max_tokens: 2500,
+        // Free reasoning models spend a large share of the budget on hidden
+        // reasoning tokens — 2500 truncated the JSON body and forced mocks.
+        max_tokens: 8000,
         messages: [
           {
             role: "system",
@@ -175,6 +195,7 @@ JSON shape you MUST return:
         await new Promise((r) => setTimeout(r, 500));
         break; // break attempt loop → next key
       }
+      console.warn(`[openrouter] give up ${agent.key} keys=${keys.length} lastStatus=${res.status} ki=${ki} attempt=${attempt}`);
       return null;
     }
     if (!res.ok) {
@@ -186,15 +207,16 @@ JSON shape you MUST return:
       }
       return null;
     }
-    const body = (await res.json().catch(() => null)) as { choices?: Array<{ message?: { content?: unknown } }> } | null;
-    const content = body?.choices?.[0]?.message?.content;
-    if (typeof content !== "string") {
+    const body = (await res.json().catch(() => null)) as { choices?: Array<{ message?: { content?: unknown } }>; error?: { message?: string } } | null;
+    const content = normalizeContent(body?.choices?.[0]?.message?.content);
+    if (content === null) {
       clearTimeout(timer);
       if (attempt < 1) { await new Promise((r) => setTimeout(r, 1500)); continue; }
       if (ki < keys.length - 1) {
         await new Promise((r) => setTimeout(r, 500));
         break;
       }
+      console.warn(`[openrouter] bad-content ${agent.key} ki=${ki} attempt=${attempt} err=${body?.error?.message ?? "null/empty content"} finish=${(body as { choices?: Array<{ finish_reason?: string }> })?.choices?.[0]?.finish_reason ?? "?"}`);
       return null;
     }
     const obj = extractJsonObject(content) as Record<string, unknown> | null;
@@ -212,6 +234,7 @@ JSON shape you MUST return:
         await new Promise((r) => setTimeout(r, 500));
         break;
       }
+      console.warn(`[openrouter] no-json ${agent.key} ki=${ki} attempt=${attempt} head=${content.slice(0, 80).replace(/\n/g, " ")}`);
       return null;
     }
     const score = obj.score !== undefined ? Math.min(10, Math.max(1, Math.round(Number(obj.score)))) : (obj.recommendation === "Accept" ? 9 : obj.recommendation === "Minor Revision" ? 7 : obj.recommendation === "Major Revision" ? 5 : 3);
@@ -224,11 +247,12 @@ JSON shape you MUST return:
     const minor = Array.isArray(obj.minor_issues) ? (obj.minor_issues as string[]).join(" | ").slice(0, 800) : "";
     const weaknesses = `${major}${minor ? " | Minor: " + minor : ""}`.slice(0, 2000) || "—";
     const questions = Array.isArray(obj.questions) ? (obj.questions as string[]).join(" | ").slice(0, 800) : String(obj.questions ?? "—").slice(0, 800);
-    const fullJson = JSON.stringify(obj).slice(0, 8000);
+    const fullJson = JSON.stringify(obj);
     clearTimeout(timer);
     return { score, confidence, summary: `${summary}\n\nFULL_JSON:${fullJson}`, strengths, weaknesses, questions };
     } catch (e) {
       clearTimeout(timer);
+      console.warn(`[openrouter] throw ${agent.key} ki=${ki} attempt=${attempt} err=${e instanceof Error ? e.message : String(e)}`);
       if (attempt < 1) { await new Promise((r) => setTimeout(r, 2000)); continue; }
       if (ki < keys.length - 1) {
         await new Promise((r) => setTimeout(r, 500));
@@ -386,6 +410,7 @@ async function runCouncilBody(paperId: string, tenantId: string) {
     else {
       const base = REVIEW_TEMPLATES[key] ?? { score: 6, confidence: 6, summary: "Mock review.", strengths: "—", weaknesses: "—", questions: "—" };
       // When rate-limited (live null), emit academic mock so UI shows 7 sections even on 429
+      console.warn(`[openrouter] mock-fallback ${key} paper=${paper.title.slice(0, 40)}`);
       tmpl = academicMockFor({ title: paper.title, abstract: paper.abstract, domain: paper.domain, pdfUrl: paper.pdfUrl }, { key, name: agentRow?.name ?? key }, base);
     }
     const hash = reviewHash(paper.paperHash, key, tmpl.score, tmpl.summary);
@@ -410,8 +435,11 @@ async function runCouncilBody(paperId: string, tenantId: string) {
     } catch (e) {
       // Lost the race to another runner — row already exists (unique council+agent).
       // The LLM call already happened; do not retry, do not fail the whole sitting.
-      const msg = e instanceof Error ? e.message : String(e);
-      if (/duplicate|unique/i.test(msg)) {
+      // postgres-js may surface only "Failed query: insert…" without the word
+      // "unique" — also match SQLSTATE 23505 and the constraint name.
+      const msg = e instanceof Error ? [e.message, (e as { cause?: Error }).cause?.message].filter(Boolean).join(" ") : String(e);
+      const code = (e as { code?: string }).code;
+      if (code === "23505" || /duplicate|unique|reviews_council_agent/i.test(msg)) {
         reviewedKeys.add(key);
         continue;
       }
@@ -431,10 +459,13 @@ async function runCouncilBody(paperId: string, tenantId: string) {
     );
   }
 
-  // 3) Mark council + paper completed only once ALL selected agents have
-  // reviewed (no fee release tx yet — Phase 6 anchoring will add anchorTxHash).
-  // Partial runs stay active so RUN can resume them.
-  const allReviewed = selectedKeys.length > 0 && created.length >= selectedKeys.length;
+  // 3) Mark council + paper completed only once ALL selected agents have a
+  // LIVE review (no fee release tx yet — Phase 6 anchoring will add anchorTxHash).
+  // Academic mocks (429 fallback) do not count — council stays active so a
+  // post-quota resume can refill those agent slots with real LLM reviews.
+  const isMockRow = (r: { summary: string | null }) => /mock academic summary/i.test(r.summary ?? "");
+  const liveCreated = created.filter((r) => !isMockRow(r));
+  const allReviewed = selectedKeys.length > 0 && liveCreated.length >= selectedKeys.length;
   if (allReviewed) {
   await db().update(paperCouncils).set({ status: "completed", completedAt: new Date().toISOString() }).where(eq(paperCouncils.id, council.id));
   await db().update(papers).set({ status: "completed" }).where(eq(papers.id, paper.id));
@@ -445,7 +476,7 @@ async function runCouncilBody(paperId: string, tenantId: string) {
       event_type: "paper.completed",
       tenant_id: tenantId,
       agent_id: firstAgent?.id ?? null,
-      payload: { paper_id: paper.id, council_id: council.id, review_ids: created.map((r) => r.id), status: "completed" },
+      payload: { paper_id: paper.id, council_id: council.id, review_ids: liveCreated.map((r) => r.id), status: "completed" },
     },
     { agent_key: selectedKeys[0], risk_class: "low" },
   );
