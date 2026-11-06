@@ -18,16 +18,24 @@ Assumed starting point: clean `main`, `typecheck` / `lint` / `build` green.
 | Smart contracts | **none** | `contracts/` is unused Foundry scaffold — nothing to deploy |
 | File storage | **none** | papers are arXiv links + abstracts in Postgres |
 
-## 2. Create accounts (once)
+## 2. Accounts — status check
 
-1. **vercel.com** — Hobby is enough. Fluid-compute functions default (and max) at **300 s**, which covers a council sitting; runs are resumable anyway (§7).
-2. **neon.tech** — project → database `raac`. Copy **both** connection strings: direct (`ep-….neon.tech`) and pooled (`ep-…-pooler.neon.tech`).
-3. **openrouter.ai** — API key (+ optional second key for 429 rotation).
-4. **thegraph.com/studio** — gateway API key (live ERC-8004 reputation queries).
-5. Optional: **Alchemy / QuickNode** Base Sepolia RPC (steadier than the public endpoint).
-6. **Base Sepolia faucet** — gas for the relayer wallet (§4).
+| Account | Status |
+|---|---|
+| **vercel.com** | **the only new signup** (Hobby is enough — fluid functions default & max at 300 s, which covers a council sitting) |
+| **neon.tech** | already yours — the app has been running on the shared demo DB all along |
+| **openrouter.ai** | already yours — reuse the key from `app/.env.local` |
+| **thegraph.com/studio** | already yours — reuse `THEGRAPH_API_KEY` / `AGENT0_SUBGRAPH_URL` from `app/.env.local`; The Graph is called at runtime, nothing to deploy or provision there |
+| **Base Sepolia relayer** | already yours — the funded demo wallet key in `.env.local`; optional: make a dedicated wallet later |
+| Alchemy/QuickNode RPC | optional — the public `https://sepolia.base.org` default works |
+| Domain registrar | optional |
 
-## 3. Provision the database (from your machine)
+## 3. Pick the database (two paths)
+
+**Path A — reuse the shared Neon you've been running on.** Paste that same `DATABASE_URL` into Vercel and **skip the rest of this section** — tenant, 6-agent roster, and the five demo papers already exist.
+> Caveat: your local `pnpm test` wipes this database by design. While production points at it, keep local testing off it (or switch to Path B).
+
+**Path B — fresh production database (recommended for anything public).** Same Neon account, new database (no new service):
 
 ```bash
 pnpm i                                                     # repo root
@@ -41,13 +49,10 @@ DATABASE_URL='<neon-direct-url>' pnpm --filter @raac/app exec tsx scripts/provis
 
 A fresh DB without this returns `500 demo tenant missing` on paper intake (the app does not auto-create the tenant).
 
-> **Never** run `pnpm test` or `scripts/wipe-seed.ts` with the production `DATABASE_URL` — the vitest seeds wipe all papers by design. Keep `.env.local` pointing at a dev DB when you test locally.
-
 ## 4. Relayer wallet (on-chain anchoring)
 
-1. Create a **dedicated** wallet (fresh key — not a personal one).
-2. Fund it with Base Sepolia faucet ETH.
-3. Set it in Vercel as `BASE_SEPOLIA_PRIVATE_KEY`.
+1. You already have one: the funded demo relayer key in `app/.env.local` (`BASE_SEPOLIA_PRIVATE_KEY`) — paste it into Vercel as-is.
+2. Optional hardening for a long-lived production: a dedicated fresh wallet, funded from the Base Sepolia faucet.
 
 Unset → app runs normally, but the anchoring step logs a warning and reports stay unanchored.
 
@@ -55,7 +60,7 @@ Unset → app runs normally, but the anchoring step logs a warning and reports s
 
 1. **Add Git repo → New Project.** Set **Root Directory: `app`** (monorepo; Next.js preset is auto-detected, `pnpm-lock.yaml` lives at the repo root).
    - If install cannot find the workspace lockfile: Settings → Git → enable *Include files outside of the Root Directory*.
-2. Add **all environment variables** (table below) *before* the first deploy.
+2. Add **all environment variables** (table below) *before* the first deploy — quickest is a one-for-one mirror of `app/.env.local` (every key except `DATABASE_URL` stays identical either way).
 3. **Deploy.** Build command stays `next build` (default). Do not wire `pnpm test` into build/CI — destructive by design.
 4. Optional: Domains tab → add your domain → create the DNS records at your registrar.
 
