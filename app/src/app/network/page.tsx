@@ -144,7 +144,7 @@ export default function NetworkPage() {
         </div>
 
         <div style={{ marginTop: 44 }}>
-          <Plate caption="Plate i. — Agent operations" plateNo="global node footprint">
+          <Plate caption="Agent operations" plateNo="global node footprint">
             <AgentWorldMap totalAgents={counters?.agents_registered} />
           </Plate>
         </div>
@@ -158,7 +158,7 @@ export default function NetworkPage() {
           </div>
         ) : (
           <div className="network-grid" style={{ marginTop: 32 }}>
-            <Plate caption="Plate ii. — The council fabric" plateNo="live">
+            <Plate caption="The council fabric" plateNo="live">
               <div style={{ display: "grid", gap: 22 }}>
                 {!fabric ? (
                   <p className="mono" style={{ fontSize: 10, letterSpacing: "0.14em", color: "var(--ink-faint)" }}>Unrolling the fabric…</p>
@@ -249,7 +249,7 @@ export default function NetworkPage() {
         )}
 
         <div className="network-grid" style={{ marginTop: 32 }}>
-          <Plate caption="Plate iii. — The event stream" plateNo="newest first">
+          <Plate caption="The event stream" plateNo="newest first">
             {feed.length === 0 ? (
               <p style={{ fontSize: 15, fontStyle: "italic", color: "var(--ink-faint)" }}>
                 No live events yet — submit a paper in <Link href="/console">the app</Link> to start the pipeline.

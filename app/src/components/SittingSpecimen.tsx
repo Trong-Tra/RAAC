@@ -58,7 +58,7 @@ export default function SittingSpecimen() {
   }, [examinerIdx, chars, holding]);
 
   return (
-    <Plate caption="Plate 0. — A sitting, abridged" plateNo="specimen">
+    <Plate caption="A sitting, abridged" plateNo="specimen">
       <div style={{ minHeight: 296, display: "flex", flexDirection: "column" }}>
         {EXAMINERS.map((e, i) => {
           const active = i === examinerIdx && !holding;

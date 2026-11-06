@@ -137,7 +137,7 @@ export default function CataloguePage() {
 
         <div style={{ marginTop: 36 }}>
           <Plate
-            caption="Plate i. — Entries in the volume"
+            caption="Entries in the volume"
             plateNo={papers == null ? "…" : `${list.length} shown`}
           >
             {err ? (

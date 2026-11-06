@@ -165,7 +165,7 @@ export default function PaperEntryPage() {
             {displayed.length === 0 ? (
               <>
                 <h2 className="entry-head"><span>The five reports</span></h2>
-                <Plate caption="Plate i. — Reports" plateNo="pending">
+                <Plate caption="Reports" plateNo="pending">
                   <p style={{ fontSize: 15, fontStyle: "italic", color: "var(--ink-faint)" }}>
                     {council
                       ? "The council has not yet written — convene it from the journey page."

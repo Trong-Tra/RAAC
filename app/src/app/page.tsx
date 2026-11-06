@@ -105,6 +105,28 @@ export default function Home() {
               registered ERC-8004 agents that examines research papers: five examiners are ranked by reputation,
               signed in by the author, and each writes an independent report, hashed on Base Sepolia.
             </p>
+            <div style={{ marginTop: 18, paddingTop: 14, borderTop: "1px solid var(--rule-soft)", maxWidth: 620 }}>
+              <p className="sc" style={{ fontSize: 11, letterSpacing: "0.1em", color: "var(--ink-faint)", marginBottom: 6 }}>
+                foundation research · IEEE MAPR 2026
+              </p>
+              <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.6, color: "var(--ink-soft)" }}>
+                <a
+                  href="https://ieeexplore.ieee.org/abstract/document/11685704"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "var(--ink)", fontWeight: 600, textDecoration: "none", borderBottom: "1px solid var(--rule)" }}
+                >
+                  Verifiable AI Reviewers: Decentralized Skill Matching and Soulbound Reputation for Multi-Agent Peer Review
+                </a>
+                <span className="mono" style={{ fontSize: 11, color: "var(--ink-faint)", marginLeft: 8 }}>
+                  DOI 10.1109/MAPR72750.2026.11685704
+                </span>
+                <br />
+                <span style={{ fontSize: 12.5, color: "var(--ink-faint)" }}>
+                  Tra Minh Trong, Bao Huynh, Huynh Ngoc Nhi, Tong Thuan Nguyen, Nguyen Phat Tai, Nguyen Minh, Tuan-Dung Tran, Van-Hau Pham — the framework this application builds on.
+                </span>
+              </p>
+            </div>
             <div style={{ marginTop: 30, display: "flex", gap: 14, flexWrap: "wrap" }}>
               <Link href="/console" className="btn-action">Submit a paper →</Link>
               <Link href="/network" className="btn-outline">Browse the network</Link>
@@ -138,7 +160,7 @@ export default function Home() {
             ))}
           </div>
           <Reveal delay={0.2} style={{ marginTop: 34 }}>
-            <Plate caption="Plate ii. — The evidence" plateNo="sourced">
+            <Plate caption="The evidence" plateNo="sourced">
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))", gap: "20px 32px" }}>
                 {CRISIS_STATS.map((s) => (
                   <div key={s.l}>
@@ -173,7 +195,7 @@ export default function Home() {
 
         {/* Specimen plate — live from the volume */}
         <Reveal style={{ marginTop: "13vh" }}>
-          <Plate caption="Plate iii. — The volume at present" plateNo="84532 · live">
+          <Plate caption="The volume at present" plateNo="84532 · live">
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "18px 32px" }}>
               {[
                 { v: stats?.papers_submitted ?? papers.length, l: "papers submitted" },
@@ -213,6 +235,18 @@ export default function Home() {
           <p className="orn" aria-hidden>✦ ✦ ✦</p>
           <p className="sc" style={{ marginTop: 14, fontSize: 13.5, color: "var(--ink-soft)" }}>
             Set in the ERC-8004 registry · ranked through The Graph · committed to Base Sepolia
+          </p>
+          <p style={{ marginTop: 10, fontSize: 12.5, color: "var(--ink-faint)", maxWidth: 560, marginLeft: "auto", marginRight: "auto", lineHeight: 1.6 }}>
+            Built on{" "}
+            <a
+              href="https://ieeexplore.ieee.org/abstract/document/11685704"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--ink-soft)", textDecoration: "none", borderBottom: "1px solid var(--rule)" }}
+            >
+              Verifiable AI Reviewers
+            </a>{" "}
+            (Trong et al., IEEE MAPR 2026).
           </p>
           <p style={{ marginTop: 16 }}>
             <Link href="/console" className="btn-action">Open the lexicon →</Link>
