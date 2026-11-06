@@ -72,9 +72,11 @@ export default function PaperEntryPage() {
   const [data, setData] = useState<Detail | null>(null);
   const [liveReviews, setLiveReviews] = useState<LiveReview[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
 
   useEffect(() => {
     if (!id) return;
+    setPage(0);
     fetch(`/api/papers/${id}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
@@ -185,8 +187,55 @@ export default function PaperEntryPage() {
                   )}
                 </h2>
 
-                <div style={{ display: "grid", gap: 28 }}>
-                  {reportRows.map(({ agent, i, review: r }) => {
+                {/* One report per page — roman tabs like a bound volume */}
+                {reportRows.length > 1 && (
+                  <nav
+                    aria-label="Reports"
+                    style={{
+                      display: "flex",
+                      gap: 6,
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      marginBottom: 18,
+                      paddingBottom: 12,
+                      borderBottom: "1px solid var(--rule-soft)",
+                    }}
+                  >
+                    {reportRows.map(({ agent, i, review: r }, idx) => {
+                      const active = idx === Math.min(page, reportRows.length - 1);
+                      const ink = INKS[i] ?? "var(--ink)";
+                      return (
+                        <button
+                          key={r.id}
+                          onClick={() => setPage(idx)}
+                          className="sc"
+                          style={{
+                            background: active ? ink : "transparent",
+                            color: active ? "var(--paper-raised)" : "var(--ink-soft)",
+                            border: `1px solid ${active ? ink : "var(--rule)"}`,
+                            padding: "6px 12px",
+                            fontSize: 12.5,
+                            fontWeight: active ? 700 : 400,
+                            letterSpacing: "0.08em",
+                            cursor: "pointer",
+                            font: "inherit",
+                          }}
+                          title={`${agent?.name ?? "Report"} — ${r.score}/10`}
+                        >
+                          {ROMAN[i]}
+                        </button>
+                      );
+                    })}
+                    <span className="mono" style={{ marginLeft: "auto", fontSize: 10, letterSpacing: "0.1em", color: "var(--ink-faint)" }}>
+                      {Math.min(page, reportRows.length - 1) + 1} / {reportRows.length}
+                    </span>
+                  </nav>
+                )}
+
+                <div style={{ display: "grid", gap: 0 }}>
+                  {reportRows
+                    .slice(Math.min(page, reportRows.length - 1), Math.min(page, reportRows.length - 1) + 1)
+                    .map(({ agent, i, review: r }) => {
                     const ink = INKS[i] ?? "var(--ink)";
                     const raw = r.summary ?? "";
                     const isLive = raw.includes("FULL_JSON:");
@@ -294,12 +343,36 @@ export default function PaperEntryPage() {
                     );
                   })}
                 </div>
+
+                {reportRows.length > 1 && (
+                  <div style={{ marginTop: 18, display: "flex", gap: 12, alignItems: "center" }}>
+                    <button
+                      onClick={() => setPage((p) => Math.max(0, p - 1))}
+                      disabled={page <= 0}
+                      className="btn-outline"
+                      style={{ padding: "8px 14px", fontSize: 12, opacity: page <= 0 ? 0.4 : 1, cursor: page <= 0 ? "default" : "pointer" }}
+                    >
+                      ← Previous
+                    </button>
+                    <span className="sc" style={{ fontSize: 13, color: "var(--ink-soft)" }}>
+                      Report {ROMAN[reportRows[Math.min(page, reportRows.length - 1)].i]} of {ROMAN[reportRows[reportRows.length - 1].i]}
+                    </span>
+                    <button
+                      onClick={() => setPage((p) => Math.min(reportRows.length - 1, p + 1))}
+                      disabled={page >= reportRows.length - 1}
+                      className="btn-outline"
+                      style={{ padding: "8px 14px", fontSize: 12, opacity: page >= reportRows.length - 1 ? 0.4 : 1, cursor: page >= reportRows.length - 1 ? "default" : "pointer", marginLeft: "auto" }}
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>
 
           {/* Margin */}
-          <div className="journey-margin" style={{ display: "grid", gap: 24, alignContent: "start" }}>
+          <div className="journey-margin" style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr)", gap: 24, alignContent: "start" }}>
             <Plate caption="Anchoring plate" plateNo="84532">
               {reportRows.length === 0 ? (
                 <p style={{ fontSize: 14, color: "var(--ink-faint)", fontStyle: "italic" }}>Nothing anchored yet.</p>
