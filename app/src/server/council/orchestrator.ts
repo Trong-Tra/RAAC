@@ -329,7 +329,6 @@ const REVIEW_TEMPLATES: Record<string, { score: number; confidence: number; summ
 // POSTs join the same promise instead of double-billing OpenRouter.
 type CouncilRunResult = Awaited<ReturnType<typeof runCouncilBody>>;
 declare global {
-  // eslint-disable-next-line no-var
   var __raacCouncilRuns: Map<string, Promise<CouncilRunResult>> | undefined;
 }
 const inFlightRuns: Map<string, Promise<CouncilRunResult>> =

@@ -4,7 +4,6 @@ import { config } from "../config";
 import * as schema from "./schema";
 
 declare global {
-  // eslint-disable-next-line no-var
   var __raacDb: ReturnType<typeof makeDb> | undefined;
 }
 

@@ -21,7 +21,6 @@ const schema = z.object({
 export type Config = z.infer<typeof schema>;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __raacConfig: Config | undefined;
 }
 
