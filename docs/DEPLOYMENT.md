@@ -18,6 +18,11 @@ Assumed starting point: clean `main`, `typecheck` / `lint` / `build` green.
 | Smart contracts | **none** | `contracts/` is unused Foundry scaffold — nothing to deploy |
 | File storage | **none** | papers are arXiv links + abstracts in Postgres |
 
+### Sizing reality check (measured 2026-11-06)
+
+The whole shared DB — 5 papers, 25 full 7-section reviews, transcripts, audit trails, indexes — is **9.7 MB**. A full review row averages **6.7 KB** (max 8.4 KB); council messages avg 170 B. Extrapolation: 10k reviews ≈ 70 MB, 100k ≈ 0.7 GB. PDFs never enter the DB (architecture rule), so no binary bloat.
+Against **Neon Free** (1 GB/project, 100 CU-hours/mo, autoscale to 2 CU, scale-to-zero after 5 min) that is ~100× headroom at demo scale. Past it → Launch plan, unlimited storage at $0.35/GB-month, no minimum. First thing to outgrow is the append-only `audit_events`/`network_events` logs (224 KB today), not reviews.
+
 ## 2. Accounts — status check
 
 | Account | Status |
