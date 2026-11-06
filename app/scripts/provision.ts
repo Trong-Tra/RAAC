@@ -4,6 +4,7 @@ import { seedRoster } from "../src/server/demo/seed";
 async function main(): Promise<void> {
   const { agents } = await seedRoster();
   console.log(`provision: tenant + roster ready (${agents} agents)`);
+  process.exit(0);
 }
 
 main().catch((e) => {
