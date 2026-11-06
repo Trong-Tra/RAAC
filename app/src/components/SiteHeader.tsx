@@ -42,13 +42,13 @@ export default function SiteHeader({ active }: { active?: string }) {
           <span
             className="mono"
             style={{
-              fontSize: 9,
+              fontSize: 11,
               letterSpacing: "0.12em",
               color: isCorrectChain ? "var(--emerald)" : "var(--chrome)",
               border: `1px solid ${isCorrectChain ? "var(--emerald)" : "var(--chrome)"}`,
               padding: "0 12px",
-              minWidth: 116,
-              height: 32,
+              minWidth: 124,
+              height: 36,
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -62,13 +62,13 @@ export default function SiteHeader({ active }: { active?: string }) {
             className="btn-outline"
             style={{
               cursor: "pointer",
-              fontSize: 10,
+              fontSize: 13,
               letterSpacing: "0.12em",
-              maxWidth: 150,
+              maxWidth: 160,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              height: 32,
+              height: 36,
               padding: "0 14px",
               display: "inline-flex",
               alignItems: "center",
@@ -86,9 +86,9 @@ export default function SiteHeader({ active }: { active?: string }) {
           className="btn-outline"
           style={{
             cursor: "pointer",
-            fontSize: 10,
+            fontSize: 13,
             letterSpacing: "0.14em",
-            height: 32,
+            height: 36,
             padding: "0 14px",
             display: "inline-flex",
             alignItems: "center",

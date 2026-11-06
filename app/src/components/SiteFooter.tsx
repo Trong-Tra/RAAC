@@ -37,7 +37,7 @@ export default function SiteFooter() {
           <Logo fontSize={24} />
           <p
             className="sc"
-            style={{ marginTop: 12, fontSize: 13, color: "var(--ink-soft)", lineHeight: 1.8 }}
+            style={{ marginTop: 12, fontSize: 15, color: "var(--ink-soft)", lineHeight: 1.8 }}
           >
             Routing, Accountability, and Auditable Councils.
           </p>
@@ -45,17 +45,17 @@ export default function SiteFooter() {
 
         {COLS.map((c) => (
           <div key={c.head}>
-            <p className="sc" style={{ fontSize: 12, color: "var(--ink-faint)", borderBottom: "1px solid var(--rule-soft)", paddingBottom: 4 }}>
+            <p className="sc" style={{ fontSize: 14, color: "var(--ink-faint)", borderBottom: "1px solid var(--rule-soft)", paddingBottom: 4 }}>
               {c.head}
             </p>
-            <div style={{ marginTop: 12, display: "grid", gap: 9 }}>
+            <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
               {c.links.map((l) =>
                 l.href.startsWith("/") ? (
-                  <Link key={l.label} href={l.href} className="link" style={{ fontSize: 14 }}>
+                  <Link key={l.label} href={l.href} className="link" style={{ fontSize: 16 }}>
                     {l.label}
                   </Link>
                 ) : (
-                  <a key={l.label} href={l.href} className="link" style={{ fontSize: 14 }}>
+                  <a key={l.label} href={l.href} className="link" style={{ fontSize: 16 }}>
                     {l.label}
                   </a>
                 )
@@ -75,7 +75,7 @@ export default function SiteFooter() {
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: "10px 20px",
-          fontSize: 10,
+          fontSize: 12,
           letterSpacing: "0.12em",
           color: "var(--ink-faint)",
         }}
