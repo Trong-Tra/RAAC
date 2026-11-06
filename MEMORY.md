@@ -39,7 +39,7 @@ Everything Cubic-flavored was deleted, not deprecated:
 - **Deps removed:** `@x402/hedera`, `@hiero-ledger/sdk`, `@modelcontextprotocol/sdk`. `app/package.json` renamed `@raac/app` — run filters as `pnpm --filter @raac/app …`.
 - **Tests:** 21 Cubic suites deleted. Remaining: `seed.test` (6 agents, 0 papers), `config.test`, `raac-adversarial.test` (low-rep exclusion via live reputation < 0.3, unsigned-council block, tampered EIP-712), `src/server/logging.test`. **9/9 green.** Adversarial test inserts its own paper fixture (`makePaper`) because seed no longer seeds papers.
 - **Landing `MarketSection`** rewired from Cubic agent-security narrative to RAAC peer-review thesis (TAM 5M papers/yr STM, SAM 120k ICLR/Decoder, SOM 55k RAAC estimate + 5 sourced overload signals).
-- **Docs purged:** `docs/ledger.md`, `docs/demo-script/`. GitNexus block removed from AGENTS.md (index dir no longer exists). CLAUDE.md/GEMINI.md are copies of AGENTS.md.
+- **Docs purged:** `docs/ledger.md`, `docs/demo-script/`. GitNexus block removed from AGENTS.md (index dir no longer exists). CLAUDE.md/GEMINI.md symlink shims removed (2026-11-06) — AGENTS.md is the single agent entrypoint.
 - **Agent dirs consolidated (2026-11-02):** `.claude/`, `.openchamber/`, `.opencode/` deleted (dead tooling + old screenshots). `.agents/` now holds **only `skills/`** (ponytail suite + caveman, locked in `skills-lock.json`); old `plans/`, `dispatch/`, `guides/` (pre-RAAC build plans) deleted — history lives in git.
 - Build green: **24 routes**, all RAAC.
 
