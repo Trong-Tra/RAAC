@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import CountUp from "@/components/CountUp";
+import FieldVsCouncil from "@/components/FieldVsCouncil";
 import Plate from "@/components/Plate";
 import Reveal from "@/components/Reveal";
 import SiteFooter from "@/components/SiteFooter";
@@ -15,6 +16,27 @@ type Stats = {
   councils_formed: number;
   reviews_submitted: number;
   reviews_anchored: number;
+};
+
+type Comparison = {
+  livePending: boolean;
+  counts: { maskReviews: number; liveReviews: number; papers: number };
+  effectiveness: {
+    scorePct: number;
+    parts: { key: string; label: string; value: number; weight: number; points: number }[];
+    tradeoffs: {
+      scoreStdRatio: number;
+      recommendationEntropyRatio: number;
+      structuralRatePct: number;
+    };
+    supporting: {
+      taxonomyCoveragePct: number;
+      categoryLiftPct: number;
+      liveCategories: number;
+      maskCategories: number;
+      unionCategories: number;
+    };
+  } | null;
 };
 
 type Paper = {
@@ -65,6 +87,7 @@ const ENTRIES = [
 export default function Home() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [papers, setPapers] = useState<Paper[]>([]);
+  const [comparison, setComparison] = useState<Comparison | null>(null);
 
   useEffect(() => {
     fetch("/api/network/stats", { cache: "no-store" })
@@ -75,7 +98,13 @@ export default function Home() {
       .then((r) => r.json())
       .then((j) => { if (j.ok) setPapers((j.data as Paper[]).slice(0, 4)); })
       .catch(() => {});
+    fetch("/api/baseline/comparison", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => { if (j.ok) setComparison(j.data as Comparison); })
+      .catch(() => {});
   }, []);
+
+  const eff = comparison && !comparison.livePending ? comparison.effectiveness : null;
 
   return (
     <main style={{ minHeight: "100dvh", background: "var(--paper)", display: "flex", flexDirection: "column" }}>
@@ -180,6 +209,9 @@ export default function Home() {
             </Plate>
           </Reveal>
         </Reveal>
+
+        {/* Professionals vs the sitting — the wow plate */}
+        <FieldVsCouncil effectiveness={eff} professionalCount={15} manuscriptCount={5} />
 
         {/* The three entries of the acronym */}
         <div style={{ marginTop: "13vh", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 40 }}>
