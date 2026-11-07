@@ -53,11 +53,7 @@ app/.impeccable/mocks/
 app/.impeccable/questions/
 app/.impeccable/review/
 
-# Local study — never committed, never deployed (data, script, route, module)
+# Local study docs + one-off seed script — never committed
 docs/baseline-comparison.md
 docs/baseline-comparison/
 app/scripts/seed-baseline.ts
-app/src/server/baseline/
-app/src/app/api/baseline/
-app/src/app/comparison/
-app/src/components/FieldVsCouncil.tsx
